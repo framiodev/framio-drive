@@ -379,6 +379,16 @@ impl Fs {
         }
         let _ = l.file.sync_all();
         drop(l.file);
+        {
+            let n = ctx.name.lock().unwrap().to_lowercase();
+            let junk = ["thumbs.db", "desktop.ini", ".ds_store"].contains(&n.as_str()) || n.starts_with("~$");
+            if junk {
+                // Windows/Office'in urettigi gecici dosyalar Drive'a yuklenmez
+                self.core.pending.lock().unwrap().remove(&ctx.id());
+                let _ = std::fs::remove_file(&l.path);
+                return;
+            }
+        }
         let size = std::fs::metadata(&l.path).map(|m| m.len()).unwrap_or(0);
         let mtime = ctx.mtime.load(Ordering::SeqCst);
         let id = ctx.id();
@@ -413,7 +423,14 @@ impl Fs {
                         None => d.start_upload(&name, &parent, size).await,
                     }
                     .map_err(|e| format!("{e:?}"))?;
-                    d.upload_file(&session, &l.path, |_| {}).await.map_err(|e| format!("{e:?}"))?;
+                    let mut last = 0u64;
+                    d.upload_file(&session, &l.path, |c| {
+                        let pct = c * 100 / size.max(1);
+                        if pct >= last + 10 || c >= size {
+                            last = pct;
+                            println!("[drivefs] yukleniyor: {name} %{pct} ({:.0} / {:.0} MB)", c as f64 / 1048576.0, size as f64 / 1048576.0);
+                        }
+                    }).await.map_err(|e| format!("{e:?}"))?;
                     Ok(())
                 }
                 .await;
@@ -816,6 +833,31 @@ fn main() {
     let mut host = FileSystemHost::<Fs, FineGuard>::new(vp, fs).expect("FileSystemHost olusturulamadi");
     host.mount(&letter).expect("mount basarisiz");
     host.start().expect("dispatcher baslamadi");
+
+    // Drive'daki (web/baska cihaz) degisiklikleri izle; olunca listeleri tazele.
+    {
+        let c = core.clone();
+        core.rt.spawn(async move {
+            let mut token: Option<String> = None;
+            loop {
+                tokio::time::sleep(Duration::from_secs(15)).await;
+                let Ok(tok) = auth::access_token(&c.client, &c.email).await else { continue };
+                let d = Drive::new(tok);
+                match &token {
+                    None => token = d.changes_start_token().await.ok(),
+                    Some(t) => match d.changes_since(t).await {
+                        Ok((chs, next)) => {
+                            token = Some(next);
+                            if !chs.is_empty() {
+                                c.lists.lock().unwrap().clear();
+                            }
+                        }
+                        Err(_) => {}
+                    },
+                }
+            }
+        });
+    }
 
     println!("Baglandi: {letter}  hesap: {email}  (okuma + yazma)");
     println!("Cikmak icin Enter'a bas...");
