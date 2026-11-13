@@ -94,7 +94,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .tabs{display:flex;gap:6px;padding:0 4px}
 .tabs a{padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);transition:background .25s,color .25s}
 .tabs a:hover{background:var(--glass)}.tabs a.on{background:var(--glass2);color:var(--text);border:1px solid var(--stroke)}
-.tab{flex:1;min-height:0}.tab.files{display:flex;flex-direction:column;gap:12px}
+.tab{flex:1;min-height:0}.tab.tfiles{display:flex;flex-direction:column;gap:12px}
 .fbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
 .flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
 .flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
@@ -158,7 +158,7 @@ select option{background:#222;color:#fff}
       <button class="btn" id="pauseTop"></button>
       <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
-    <div class="tab files" id="t_files">
+    <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
         <button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
