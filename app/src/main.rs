@@ -198,14 +198,14 @@ async fn fs_list(email: String, parent: String) -> Result<Value, String> {
     });
     Ok(json!(v.iter().map(|f| json!({
         "id": f.id, "name": f.name, "folder": f.mime_type == "application/vnd.google-apps.folder",
-        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type
+        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type, "thumb": f.thumbnail_link
     })).collect::<Vec<_>>()))
 }
 
 fn items_json(v: Vec<drivenet::DriveFile>) -> Value {
     json!(v.iter().map(|f| json!({
         "id": f.id, "name": f.name, "folder": f.mime_type == "application/vnd.google-apps.folder",
-        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type
+        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type, "thumb": f.thumbnail_link
     })).collect::<Vec<_>>())
 }
 fn clean_name(n: &str) -> String { n.chars().map(|c| if "\\/:*?\"<>|".contains(c) { '_' } else { c }).collect() }

@@ -98,9 +98,13 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .fbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
 .flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
 .flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
-.fr{display:grid;grid-template-columns:18px 24px 1fr 90px 130px 190px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
+.fr{user-select:none;display:grid;grid-template-columns:18px 34px 1fr 90px 130px 190px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
 .fr:hover{background:var(--glass2)}.fr.d{cursor:pointer}
-.fr svg{width:20px;height:20px;stroke:var(--acc2);fill:none;stroke-width:1.7}
+.fr svg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;justify-self:center}
+.fr .th{width:34px;height:34px;object-fit:cover;border-radius:8px;background:var(--track)}
+.fr.dropt{background:color-mix(in srgb,var(--acc) 28%,transparent);outline:2px solid var(--acc)}
+.crumbs a.dropt{background:color-mix(in srgb,var(--acc) 40%,transparent)}
+.dragghost{position:fixed;z-index:60;pointer-events:none;padding:6px 12px;border-radius:10px;background:var(--glass2);border:1px solid var(--acc);backdrop-filter:blur(10px);font-size:13px;box-shadow:var(--shadow)}
 .fr .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:550}
 .fr .m{color:var(--mut);font-size:12.5px;text-align:right}
 .fr .x{display:flex;gap:4px;justify-content:flex-end;opacity:0;transition:opacity .2s}.fr:hover .x{opacity:1}
@@ -337,7 +341,22 @@ chkUpd();setInterval(chkUpd,600000);
 
 /* sekmeler + uygulama içi Drive gezgini */
 let tab='files',fPath=[{id:'root',name:'Drive'}],fFor=null,fBusy=false;
-const FILE_I='<svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4"/></svg>';
+const IC={img:['#3ddc97','<rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 17l5-5 4 4 3-3 4 4"/>'],
+ vid:['#b48cff','<rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/>'],
+ aud:['#ff7eb6','<path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/>'],
+ pdf:['#ff6b6b','<path d="M6 3h8l4 4v14H6zM14 3v4h4"/><path d="M9 15h6M9 18h4"/>'],
+ zip:['#f2c14b','<path d="M6 3h8l4 4v14H6zM14 3v4h4"/><path d="M10 8h2M10 11h2M10 14h2"/><rect x="9.5" y="16" width="3" height="3" rx=".6"/>'],
+ doc:['#5aa9ff','<path d="M6 3h8l4 4v14H6zM14 3v4h4"/><path d="M9 12h6M9 15h6M9 18h4"/>'],
+ xls:['#3ddc97','<path d="M6 3h8l4 4v14H6zM14 3v4h4"/><path d="M9 12h6M9 16h6M12 11v7"/>'],
+ gen:['var(--acc2)','<path d="M6 3h8l4 4v14H6zM14 3v4h4"/>']};
+function fcat(f){const m=String(f.mime||''),e=(f.name.split('.').pop()||'').toLowerCase();
+ if(m.startsWith('image/'))return 'img';if(m.startsWith('video/'))return 'vid';if(m.startsWith('audio/'))return 'aud';if(m=='application/pdf'||e=='pdf')return 'pdf';
+ if(['zip','rar','7z','tar','gz'].includes(e))return 'zip';if(['doc','docx','txt','odt','rtf','md'].includes(e)||m=='application/vnd.google-apps.document')return 'doc';
+ if(['xls','xlsx','csv','ods'].includes(e)||m=='application/vnd.google-apps.spreadsheet')return 'xls';
+ if(['jpg','jpeg','png','gif','webp','heic','raw','arw','cr2','nef','dng'].includes(e))return 'img';if(['mp4','mov','mkv','avi','webm'].includes(e))return 'vid';if(['mp3','wav','flac','m4a'].includes(e))return 'aud';return 'gen'}
+function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var(--acc2)"><path d="M3 7h6l2 2h10v10H3z"/></svg>`;const [c,p]=IC[fcat(f)];
+ const svg=`<svg viewBox="0 0 24 24" style="stroke:${c}">${p}</svg>`;
+ if(f.thumb&&/^https:/.test(f.thumb))return `<img class="th" src="${esc(f.thumb)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(svg)}">`;return svg}
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
@@ -350,7 +369,7 @@ async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'roo
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}"><input type="checkbox" class="ck">${f.folder?FOLDER:FILE_I}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder||nat?'':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder||nat?'':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
@@ -377,6 +396,23 @@ async function upFiles(paths){if(!paths.length||!sel)return;toast(paths.length+'
 try{window.__TAURI__.webview.getCurrentWebview().onDragDropEvent(ev=>{const t=ev.payload.type;
  if(tab!='files')return;if(t=='enter'||t=='over'){$('fdrop').classList.add('drag');$('dropmsg').classList.remove('hide')}
  else{$('fdrop').classList.remove('drag');$('dropmsg').classList.add('hide');if(t=='drop')upFiles(ev.payload.paths||[])}})}catch(e){console.error(e)}
+
+/* sürükleyerek klasöre taşı (işaretçi tabanlı; pencere dosya bırakmayla çakışmaz) */
+(function(){let dr=null,gh=null,tgt=null;
+ const clr=()=>{document.querySelectorAll('.dropt').forEach(x=>x.classList.remove('dropt'))};
+ $('frows').addEventListener('mousedown',e=>{if(e.button||e.target.closest('.ck,.x,input,b'))return;const r=e.target.closest('.fr');if(!r||fSearch)return;dr={r,x:e.clientX,y:e.clientY,on:false}});
+ document.addEventListener('mousemove',e=>{if(!dr)return;
+  if(!dr.on){if(Math.hypot(e.clientX-dr.x,e.clientY-dr.y)<8)return;dr.on=true;
+   const ids=sel_ids(dr.r);gh=document.createElement('div');gh.className='dragghost';gh.textContent=ids.length>1?ids.length+' öğe':dr.r.dataset.n;document.body.appendChild(gh)}
+  gh.style.left=e.clientX+12+'px';gh.style.top=e.clientY+8+'px';clr();tgt=null;
+  const el=document.elementFromPoint(e.clientX,e.clientY);const fr=el&&el.closest('.fr.d'),cr=el&&el.closest('#fcrumbs a[data-i]');
+  if(fr&&fr!==dr.r&&!(sel_rows(dr.r).includes(fr))){fr.classList.add('dropt');tgt=fr.dataset.id}
+  else if(cr&&fPath[+cr.dataset.i]&&fPath[+cr.dataset.i].id!=curId()){cr.classList.add('dropt');tgt=fPath[+cr.dataset.i].id}});
+ document.addEventListener('mouseup',async()=>{if(!dr)return;const d=dr;dr=null;if(gh){gh.remove();gh=null}clr();if(!d.on||!tgt)return;const t=tgt;tgt=null;
+  const rows=sel_rows(d.r);let bad=0;for(const r of rows){try{await invoke('fs_rename',{email:sel,id:r.dataset.id,name:r.dataset.n,parent:t})}catch(x){bad++;toast(String(x),true)}}
+  toast(`${rows.length-bad} öğe taşındı`);loadFiles()});
+ window.sel_rows=r=>{const c=[...document.querySelectorAll('#frows .ck:checked')].map(x=>x.closest('.fr'));return c.includes(r)?c:[r]};
+ window.sel_ids=r=>sel_rows(r).map(x=>x.dataset.id)})();
 setInterval(()=>{if(tab=='files'&&sel&&!fSearch&&!document.querySelector('#frows .ck:checked')&&!document.hidden&&!$('view').classList.contains('hide'))loadFiles()},20000);
 applyTheme();refresh();setInterval(refresh,1500);
 </script></body></html>
