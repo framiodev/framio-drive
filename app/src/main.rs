@@ -393,6 +393,14 @@ fn default_label(email: &str) -> String {
     if !name.is_empty() { sanitize(&name) } else { email.split('@').next().unwrap_or("Drive").to_string() }
 }
 
+/// Gezgin'de "ad (\\sunucu) (X:)" yerine yalnızca "ad (X:)" görünsün: ağ sürücüsünü yeniden adlandırmak
+/// Windows'ta MountPoints2 altına `_LabelFromReg` yazar; aynısını biz yazıyoruz.
+fn set_net_label(label: &str) {
+    let share = label.replace(' ', "_");
+    let key = format!("HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\MountPoints2\\##Framio#{share}");
+    run_hidden("reg", &["add", &key, "/v", "_LabelFromReg", "/t", "REG_SZ", "/d", label, "/f"]);
+}
+
 /// Açık olan tüm bağlı sürücüleri kapatır; bekleyen yüklemelerin bitmesini bekler (en çok 120 sn).
 fn shutdown_mounts(app: &AppHandle) {
     let ms: Vec<drivefs::Mount> = { let st = app.state::<App>(); let mut g = st.mounts.lock().unwrap(); g.drain().map(|(_, m)| m).collect() };
@@ -426,6 +434,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         if Path::new(&format!("{letter}:\\")).exists() { return Err(format!("{letter}: harfi başka bir sürücüde kullanılıyor")); }
         if !drivefs::winfsp_installed() { return Err("WinFsp yüklü değil — önce \"WinFsp'yi yükle\"ye bas".into()); }
         let client = auth::Client::load()?;
+        set_net_label(&label);
         let m = drivefs::start(&email, &letter, &label, client)?;
         st.mounts.lock().unwrap().insert(email.clone(), m);
         save_vcfg(&email, true, &letter, &label);
@@ -572,6 +581,7 @@ fn main() {
                         let (on, letter, label) = vcfg(&e);
                         if !on || letter.is_empty() || st.mounts.lock().unwrap().contains_key(&e) { continue; }
                         let label = if label.is_empty() { default_label(&e) } else { label };
+                        set_net_label(&label);
                         match drivefs::start(&e, &letter, &label, client.clone()) {
                             Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); }
                             Err(err) => drivesync::flog!("bağlı sürücü başlatılamadı ({e}): {err}"),
