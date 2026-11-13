@@ -43,7 +43,9 @@ jobs:
       - name: Surumu etiketten al ve guncelleyici anahtarini yaz
         shell: pwsh
         run: |
-          $v = "${{ github.ref_name }}".TrimStart('v')
+          $m = [regex]::Match("${{ github.ref_name }}", '\d+\.\d+\.\d+')
+          if (-not $m.Success) { throw "Etiket vX.Y.Z bicimde olmali (ornek v0.2.0), gelen: ${{ github.ref_name }}" }
+          $v = $m.Value
           $p = "app/tauri.conf.json"
           $j = Get-Content $p -Raw | ConvertFrom-Json
           $j.version = $v
