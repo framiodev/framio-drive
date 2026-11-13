@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 drivecore = { path = "../drivecore" }
 drivenet = { path = "../drivenet" }
-tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }
 winfsp = { version = "0.13", features = ["system"] }
 winfsp-sys = "0.12"
 
