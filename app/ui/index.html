@@ -241,7 +241,9 @@ async function refresh(){if(busy)return;busy=true;try{
 }catch(e){console.error(e)}finally{busy=false}}
 $('savec').onclick=async()=>{try{await invoke('save_client',{id:$('cid').value,secret:$('csec').value});$('csec').value='';refresh()}catch(e){toast(String(e),true)}};
 $('add').onclick=async()=>{toast('Tarayıcıda Google ile giriş yap…');try{sel=await invoke('add_account');localStorage.setItem('sel',sel);toast('Hesap eklendi');refresh()}catch(e){toast('Hesap eklenemedi: '+e,true)}};
-$('rename').onclick=async()=>{const a=list.find(x=>x.email==sel);const n=await ask('Görünen ad',a.name||'');if(n!==null){await invoke('rename_account',{email:sel,name:n});refresh()}};
+$('rename').onclick=async()=>{const a=list.find(x=>x.email==sel);const n=await ask('Görünen ad',a.name||'');if(n!==null){const e=sel;const was=await invoke('vdrive_info',{email:e});await invoke('rename_account',{email:e,name:n});const now=await invoke('vdrive_info',{email:e});
+ if(was.mounted&&was.label!=now.label){toast('Sürücü adı güncelleniyor…');try{await invoke('set_vdrive',{email:e,on:false,letter:was.letter,label:was.label});await invoke('set_vdrive',{email:e,on:true,letter:was.letter,label:now.label});toast('Sürücü adı: '+now.label)}catch(x){toast(String(x),true)}}
+ vFor=null;refresh()}};
 
 /* vurgu rengi: halka + iç kare (Photoshop tarzı renk tekerleği) */
 const DEF='#b3122b',PRE=['#b3122b','#d4162f','#e8590c','#c2255c','#7048e8','#1c7ed6','#0ca678','#868e96'];

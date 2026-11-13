@@ -503,9 +503,15 @@ async fn add_account(app: State<'_, App>) -> Result<String, String> {
 
 #[tauri::command]
 fn rename_account(email: String, name: String) -> Result<(), String> {
+    let email = email.to_lowercase();
+    let old_default = default_label(&email);
     let mut n = load_names();
-    n.insert(email.to_lowercase(), json!(name.trim()));
-    std::fs::write(names_path(), Value::Object(n).to_string()).map_err(|e| e.to_string())
+    n.insert(email.clone(), json!(name.trim()));
+    std::fs::write(names_path(), Value::Object(n).to_string()).map_err(|e| e.to_string())?;
+    // Sürücü adı hesap adını izliyorsa (elle değiştirilmemişse) yeni adı kaydet
+    let (on, letter, label) = vcfg(&email);
+    if label.is_empty() || label == old_default { save_vcfg(&email, on, &letter, &default_label(&email)); }
+    Ok(())
 }
 
 #[tauri::command]
