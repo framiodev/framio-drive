@@ -221,6 +221,83 @@ async fn send_files(app: State<'_, App>, email: String, rel: String, paths: Vec<
     }).await.map_err(|e| e.to_string())?
 }
 
+// ---------- Uygulama içi Drive gezgini (Drive API) ----------
+async fn drv(email: &str) -> Result<drivenet::Drive, String> {
+    let c = auth::Client::load()?;
+    Ok(drivenet::Drive::new(auth::access_token(&c, &email.to_lowercase()).await?))
+}
+fn de<E: std::fmt::Debug>(e: E) -> String { format!("{e:?}") }
+fn bad_name(n: &str) -> bool { n.is_empty() || n.contains(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) }
+
+#[tauri::command]
+async fn fs_list(email: String, parent: String) -> Result<Value, String> {
+    let d = drv(&email).await?;
+    let mut v = d.list_children(&parent).await.map_err(de)?;
+    v.sort_by(|a, b| {
+        let fa = a.mime_type == "application/vnd.google-apps.folder"; let fb = b.mime_type == "application/vnd.google-apps.folder";
+        fb.cmp(&fa).then(a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+    Ok(json!(v.iter().map(|f| json!({
+        "id": f.id, "name": f.name, "folder": f.mime_type == "application/vnd.google-apps.folder",
+        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type
+    })).collect::<Vec<_>>()))
+}
+
+#[tauri::command]
+async fn fs_usage(email: String) -> Result<Value, String> {
+    let (limit, used) = drv(&email).await?.storage_quota().await.map_err(de)?;
+    Ok(json!({ "limit": limit, "used": used }))
+}
+
+#[tauri::command]
+async fn fs_mkdir(email: String, parent: String, name: String) -> Result<String, String> {
+    let name = name.trim().to_string();
+    if bad_name(&name) { return Err("geçersiz klasör adı".into()); }
+    drv(&email).await?.create_folder(&name, &parent).await.map_err(de)
+}
+
+#[tauri::command]
+async fn fs_rename(email: String, id: String, name: String, parent: String) -> Result<(), String> {
+    let name = name.trim().to_string();
+    if bad_name(&name) { return Err("geçersiz ad".into()); }
+    drv(&email).await?.move_rename(&id, &name, &parent).await.map_err(de)
+}
+
+#[tauri::command]
+async fn fs_trash(email: String, id: String) -> Result<(), String> {
+    drv(&email).await?.trash(&id).await.map_err(de)
+}
+
+/// Sürükle-bırak ile gelen dosyaları (klasör değil) Drive'daki açık klasöre yükler.
+#[tauri::command]
+async fn fs_upload(email: String, parent: String, paths: Vec<String>) -> Result<Value, String> {
+    let d = drv(&email).await?;
+    let (mut sent, mut failed) = (0u32, vec![]);
+    for p in paths {
+        let path = PathBuf::from(&p);
+        let Some(name) = path.file_name().map(|n| n.to_string_lossy().into_owned()) else { continue };
+        let Ok(meta) = std::fs::metadata(&path) else { failed.push(name); continue };
+        if !meta.is_file() { failed.push(format!("{name} (klasör desteklenmiyor)")); continue; }
+        let r: Result<(), String> = async {
+            let sess = d.start_upload(&name, &parent, meta.len()).await.map_err(de)?;
+            d.upload_file(&sess, &path, |_| {}).await.map_err(de)?;
+            Ok(())
+        }.await;
+        match r { Ok(()) => sent += 1, Err(e) => { drivesync::flog!("yüklenemedi {name}: {e}"); failed.push(name) } }
+    }
+    Ok(json!({ "sent": sent, "failed": failed }))
+}
+
+/// Sürücü bağlıysa Gezgin'de ilgili klasörü açar.
+#[tauri::command]
+fn fs_reveal(app: State<App>, email: String, rel: String) -> Result<(), String> {
+    let email = email.to_lowercase();
+    if !app.mounts.lock().unwrap().contains_key(&email) { return Err("Sürücü bağlı değil (Ayarlar'dan bağla)".into()); }
+    let (_, letter, _) = vcfg(&email);
+    let rel = rel.replace('/', "\\");
+    std::process::Command::new("explorer.exe").arg(format!("{}:\\{}", letter.trim_end_matches(':'), rel)).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 fn client_status() -> bool { auth::Client::load().is_ok() }
 
@@ -579,7 +656,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

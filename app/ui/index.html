@@ -91,6 +91,24 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .modal .glass{padding:22px;width:360px;animation:pop .4s var(--ease) both;background:var(--glass2)}
 @keyframes fade{from{opacity:0}}@keyframes pop{from{transform:scale(.92) translateY(10px);opacity:0}}
 @keyframes in{from{opacity:0;transform:translateY(12px)}}
+.tabs{display:flex;gap:6px;padding:0 4px}
+.tabs a{padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);transition:background .25s,color .25s}
+.tabs a:hover{background:var(--glass)}.tabs a.on{background:var(--glass2);color:var(--text);border:1px solid var(--stroke)}
+.tab{flex:1;min-height:0}.tab.files{display:flex;flex-direction:column;gap:12px}
+.fbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
+.flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
+.flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
+.fr{display:grid;grid-template-columns:24px 1fr 90px 130px 64px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
+.fr:hover{background:var(--glass2)}.fr.d{cursor:pointer}
+.fr svg{width:20px;height:20px;stroke:var(--acc2);fill:none;stroke-width:1.7}
+.fr .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:550}
+.fr .m{color:var(--mut);font-size:12.5px;text-align:right}
+.fr .x{display:flex;gap:4px;justify-content:flex-end;opacity:0;transition:opacity .2s}.fr:hover .x{opacity:1}
+.fr .x b{cursor:pointer;padding:3px 7px;border-radius:8px;font-weight:500;font-size:12px;color:var(--mut);background:var(--track)}.fr .x b:hover{color:var(--text)}
+.dropmsg{position:absolute;inset:0;display:grid;place-items:center;font-size:18px;font-weight:650;background:color-mix(in srgb,var(--bg) 70%,transparent);border-radius:18px}
+.fusage{display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:16px}
+.ubar{width:220px;height:8px;border-radius:9px;background:var(--track);overflow:hidden;flex:none}.ubar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .8s var(--ease)}
+.tab.scroll{overflow:auto;display:flex;flex-direction:column;gap:14px}.tab.scroll.hide{display:none!important}
 .hide{display:none!important}
 ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--track);border-radius:9px}
 @media (max-width:1100px){.grid{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}}
@@ -139,8 +157,16 @@ select option{background:#222;color:#fff}
       <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
       <button class="btn" id="pauseTop"></button>
       <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
-    <div class="path" id="folder"></div>
-    <div class="scroll">
+    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
+    <div class="tab files" id="t_files">
+      <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
+        <button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <button class="btn sm" id="freload">Yenile</button>
+        <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
+      <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
+      <div class="glass fusage"><div class="ubar"><i id="ufill"></i></div><span class="mut" id="utext"></span><span class="mut" style="margin-left:auto">Dosyaları pencereye sürükleyip bırakarak yükleyebilirsin</span></div>
+    </div>
+    <div class="tab scroll hide" id="t_act">
       <div class="grid">
         <div class="glass card hero"><div class="ring"><svg width="86" height="86" viewBox="0 0 86 86"><circle class="tr" cx="43" cy="43" r="36"/><circle class="fg" id="rfg" cx="43" cy="43" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/></svg><div class="c" id="rp">100%</div></div>
           <div><div class="l">Eşitleme</div><div style="font-weight:650;font-size:16px;margin-top:3px" id="syncT">Güncel</div><div class="mut" id="syncS"></div></div></div>
@@ -153,13 +179,20 @@ select option{background:#222;color:#fff}
           <div class="big" id="cacheB">0 MB</div><div class="mut" id="cacheF"></div>
           <div class="acts"><button class="btn pri" id="clr"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Yer aç</button><button class="btn" id="clr30">30 günden eskileri</button></div>
           <div class="mut" id="clrmsg" style="margin-top:10px;min-height:18px"></div>
-          <h2 style="margin-top:16px">Sürücü <span>Gezgin'de gerçek sürücü: hesap kotasını gösterir, yer kaplamaz</span></h2><div class="mut" id="vnote" style="margin-bottom:6px"></div><div style="display:grid;grid-template-columns:110px 1fr;gap:8px"><select id="vletter"></select><input id="vlabel" placeholder="Sürücü adı" style="margin:0 0 6px"></div><div class="acts" style="margin-top:2px"><button class="btn sm pri" id="von">Bağla</button><button class="btn sm" id="voff">Ayır</button><button class="btn sm" id="vinst" style="display:none">WinFsp'yi yükle</button><span class="mut" id="vmsg"></span></div><h2 style="margin-top:16px">Hesap</h2>
-          <div class="acts" style="margin-top:0"><button class="btn sm" id="open"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Klasörü aç</button><button class="btn sm" id="rename">Adı değiştir</button><button class="btn sm danger" id="disc">Bağlantıyı kes</button><button class="btn sm danger" id="signout">Çıkış yap</button></div></div>
+          </div>
         <div class="glass panel"><h2>Yükleme kuyruğu <span id="qn"></span><span style="flex:1"></span>
           <button class="btn sm" id="retry">Hataları tekrar dene</button></h2>
           <div id="jobs"></div></div>
       </div>
       <div class="glass panel"><h2>Etkinlik günlüğü</h2><div class="log" id="log"></div></div>
+    </div>
+    <div class="tab scroll hide" id="t_set">
+      <div class="glass panel"><h2>Sürücü <span>Gezgin'de gerçek sürücü olarak görünür, hesap kotasını gösterir, yer kaplamaz</span></h2>
+        <div class="mut" id="vnote" style="margin-bottom:10px"></div>
+        <div style="display:grid;grid-template-columns:110px 1fr;gap:8px"><select id="vletter"></select><input id="vlabel" placeholder="Sürücü adı" style="margin:0 0 6px"></div>
+        <div class="acts" style="margin-top:2px"><button class="btn pri" id="von">Bağla</button><button class="btn" id="voff">Ayır</button><button class="btn" id="vinst" style="display:none">WinFsp'yi yükle</button><span class="mut" id="vmsg"></span></div></div>
+      <div class="glass panel"><h2>Hesap</h2>
+        <div class="acts" style="margin-top:0"><button class="btn" id="rename">Adı değiştir</button><button class="btn danger" id="signout">Çıkış yap</button></div></div>
     </div>
   </div>
 </main></div>
@@ -200,7 +233,7 @@ function renderJobs(s){const box=$('jobs');const keep=new Set();
  [...box.children].forEach(c=>{if(c.classList.contains('empty')||!keep.has(c.dataset.p))c.remove()});
  if(!s.jobs.length&&!box.querySelector('.empty'))box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg><div>Kuyruk boş — her şey güncel</div></div>';
  $('qn').textContent=s.jobs.length?`${s.jobs.length} iş`:''}
-function renderMain(a){const s=a.status;$('title').textContent=a.name||a.email;$('folder').textContent=s.folder;
+function renderMain(a){const s=a.status;$('title').textContent=a.name||a.email;
  const c=s.counts;num('c_p',c.pending);num('c_u',c.uploading);num('c_f',c.failed);
  const total=c.pending+c.uploading+c.failed+c.done,pct=total?Math.round(c.done/total*100):100;
  $('rfg').style.strokeDashoffset=226.2*(1-pct/100);$('rp').textContent=pct+'%';
@@ -223,16 +256,14 @@ async function refresh(){if(busy)return;busy=true;try{
  if(!list.length){$('emptyT').textContent='Henüz hesap yok';$('emptyP').textContent='Soldaki “Google ile hesap ekle” düğmesiyle başla; tarayıcıda Google hesabını seçmen yeterli.'}
  else if(a&&!a.connected){$('emptyT').textContent='Bağlanıyor…';$('emptyP').textContent='Hesap bağlanıyor, birkaç saniye sürebilir.'}
  else if(!a){$('emptyT').textContent='Bir hesap seç';$('emptyP').textContent='Soldan bir hesap seç ya da Google ile yeni hesap ekle.'}
- if(ok){renderMain(a);if(vFor!=a.email)loadV(a.email)}
+ if(ok){renderMain(a);if(vFor!=a.email)loadV(a.email);if(fFor!=a.email&&tab=='files')loadFiles()}
  try{await pollPending()}catch(e){}
  const L=await invoke('logs',{since:seq});if(L.length){const p=$('log');L.forEach(([n,t])=>{seq=n;const d=document.createElement('div');d.textContent=t;p.appendChild(d)});while(p.children.length>300)p.firstChild.remove();p.scrollTop=p.scrollHeight}
 }catch(e){console.error(e)}finally{busy=false}}
 $('savec').onclick=async()=>{try{await invoke('save_client',{id:$('cid').value,secret:$('csec').value});$('csec').value='';refresh()}catch(e){toast(String(e),true)}};
 $('add').onclick=async()=>{toast('Tarayıcıda Google ile giriş yap…');try{sel=await invoke('add_account');localStorage.setItem('sel',sel);toast('Hesap eklendi');refresh()}catch(e){toast('Hesap eklenemedi: '+e,true)}};
-$('open').onclick=()=>invoke('open_folder',{email:sel}).catch(e=>toast(String(e),true));
 $('pauseTop').onclick=async()=>{const a=list.find(x=>x.email==sel);await invoke('set_paused',{email:sel,paused:!a.status.paused});refresh()};
 $('retry').onclick=async()=>{await invoke('retry',{email:sel});toast('Hatalı işler yeniden denenecek');refresh()};
-$('disc').onclick=async()=>{await invoke('disconnect',{email:sel});toast('Bağlantı kesildi');refresh()};
 $('rename').onclick=async()=>{const a=list.find(x=>x.email==sel);const n=await ask('Görünen ad',a.name||'');if(n!==null){await invoke('rename_account',{email:sel,name:n});refresh()}};
 async function clr(d){$('clrmsg').textContent='Temizleniyor…';try{const r=await invoke('clear_cache',{email:sel,days:d});$('clrmsg').textContent=`${r.freed_files} dosya, ${mb(r.freed_bytes)} boşaltıldı`+(r.skipped_pinned?` · ${r.skipped_pinned} sabitlenmiş atlandı`:'')+(r.failed.length?` · ${r.failed.length} atlanamadı`:'');toast(`${mb(r.freed_bytes)} yer açıldı`)}catch(e){$('clrmsg').textContent='';toast(String(e),true)}refresh()}
 $('clr').onclick=()=>clr(null);$('clr30').onclick=()=>clr(30);
@@ -309,11 +340,11 @@ async function loadDirs(){const fl=sm.querySelector('#flist');fl.innerHTML='<div
  fl.onclick=e=>{const f=e.target.closest('.fi');if(f){sPath.push(f.dataset.d);loadDirs()}}}
 
 
-let vFor=null;
+let vFor=null,mountedLetter='';
 async function loadV(email){vFor=email;try{const d=await invoke('vdrive_info',{email});if(vFor!=email)return;
  $('vletter').innerHTML='<option value="">Harf seç</option>'+d.letters.map(l=>`<option value="${l}">${l}:</option>`).join('');$('vletter').value=d.letter||(d.letters.includes('X')?'X':'');$('vlabel').value=d.label;
  $('vinst').style.display=d.installed?'none':'';$('von').disabled=!d.installed;
- $('vnote').textContent=!d.installed?'Bunun için WinFsp gerekli (ücretsiz sürücü bileşeni).':d.mounted?`Bağlı: ${d.letter}:`:(d.on?'Açık ama bağlanamadı'+(d.err?': '+d.err:'')+' — Bağla’ya basıp tekrar dene.':'Bağlı değil.');$('vmsg').textContent=''}catch(e){}}
+ $('vnote').textContent=!d.installed?'Bunun için WinFsp gerekli (ücretsiz sürücü bileşeni).':d.mounted?`Bağlı: ${d.letter}:`:(d.on?'Açık ama bağlanamadı'+(d.err?': '+d.err:'')+' — Bağla’ya basıp tekrar dene.':'Bağlı değil.');$('von').style.display=d.mounted?'none':'';$('voff').style.display=d.mounted?'':'none';$('vletter').disabled=$('vlabel').disabled=!!d.mounted;$('vmsg').textContent='';if(d.mounted)mountedLetter=d.letter;else mountedLetter=''}catch(e){}}
 $('von').onclick=async()=>{$('vmsg').textContent='Bağlanıyor…';try{await invoke('set_vdrive',{email:sel,on:true,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü bağlandı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true);vFor=null;loadV(sel)}};
 $('voff').onclick=async()=>{$('vmsg').textContent='Ayrılıyor…';try{await invoke('set_vdrive',{email:sel,on:false,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü ayrıldı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true)}};
 $('vinst').onclick=async()=>{$('vmsg').textContent='WinFsp yükleniyor… (izin penceresi çıkabilir)';$('vinst').disabled=true;try{await invoke('install_winfsp');toast('WinFsp yüklendi');vFor=null;loadV(sel)}catch(e){toast(String(e),true)}$('vmsg').textContent='';$('vinst').disabled=false};
@@ -327,5 +358,36 @@ async function chkUpd(manual){try{const v=await invoke('check_update');const b=$
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
 chkUpd();setInterval(chkUpd,600000);
+
+/* sekmeler + uygulama içi Drive gezgini */
+let tab='files',fPath=[{id:'root',name:'Drive'}],fFor=null,fBusy=false;
+const FILE_I='<svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v4h4"/></svg>';
+const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
+const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
+function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
+ $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles()}
+$('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
+const curId=()=>fPath[fPath.length-1].id;
+async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}]}
+ const me=sel,box=$('frows');if(!box.children.length)box.innerHTML='<div class="mut" style="padding:14px">Yükleniyor…</div>';
+ $('fcrumbs').innerHTML=fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
+ try{const items=await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
+  box.innerHTML=items.length?items.map(f=>`<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}">${f.folder?FOLDER:FILE_I}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="ren">Ad</b><b data-a="del">Sil</b></span></div>`).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>Bu klasör boş — dosya sürükleyip bırakabilirsin</div></div>'}
+ catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
+ try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
+$('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){fPath=fPath.slice(0,+i+1);loadFiles()}};
+$('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r)return;const a=e.target.dataset.a;
+ if(a=='ren'){const n=await ask('Yeni ad',r.dataset.n);if(n&&n!==r.dataset.n){try{await invoke('fs_rename',{email:sel,id:r.dataset.id,name:n,parent:curId()});loadFiles()}catch(x){toast(String(x),true)}}return}
+ if(a=='del'){if(!await confirmBox('Çöp kutusuna taşı',`“${r.dataset.n}” Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;try{await invoke('fs_trash',{email:sel,id:r.dataset.id});loadFiles()}catch(x){toast(String(x),true)}return}
+ if(r.dataset.f=='1'){fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles()}};
+$('fnew').onclick=async()=>{const n=await ask('Yeni klasör adı');if(n){try{await invoke('fs_mkdir',{email:sel,parent:curId(),name:n});loadFiles()}catch(x){toast(String(x),true)}}};
+$('freload').onclick=()=>loadFiles();
+$('freveal').onclick=()=>invoke('fs_reveal',{email:sel,rel:fPath.slice(1).map(p=>p.name).join('\\')}).catch(e=>toast(String(e),true));
+async function upFiles(paths){if(!paths.length||!sel)return;toast(paths.length+' öğe yükleniyor…');
+ try{const r=await invoke('fs_upload',{email:sel,parent:curId(),paths});toast(`${r.sent} dosya yüklendi`+(r.failed.length?` · atlanan/başarısız: ${r.failed.join(', ')}`:''),!!r.failed.length);loadFiles()}catch(e){toast(String(e),true)}}
+try{window.__TAURI__.webview.getCurrentWebview().onDragDropEvent(ev=>{const t=ev.payload.type;
+ if(tab!='files')return;if(t=='enter'||t=='over'){$('fdrop').classList.add('drag');$('dropmsg').classList.remove('hide')}
+ else{$('fdrop').classList.remove('drag');$('dropmsg').classList.add('hide');if(t=='drop')upFiles(ev.payload.paths||[])}})}catch(e){console.error(e)}
+setInterval(()=>{if(tab=='files'&&sel&&!document.hidden&&!$('view').classList.contains('hide'))loadFiles()},20000);
 applyTheme();refresh();setInterval(refresh,1500);
 </script></body></html>
