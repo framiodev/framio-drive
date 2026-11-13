@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Framio Drive",
+  "version": "0.1.0",
+  "identifier": "app.framio.drive",
+  "build": { "frontendDist": "./ui" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [ { "title": "Framio Drive", "width": 1180, "height": 760, "minWidth": 900, "minHeight": 600 } ],
+    "security": { "csp": null }
+  },
+  "bundle": { "active": false, "icon": ["icons/icon.png", "icons/icon.ico"] }
+}

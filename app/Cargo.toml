@@ -1,0 +1,18 @@
+[package]
+name = "framio-drive"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png", "image-ico"] }
+serde_json = "1"
+tauri-plugin-single-instance = "2"
+drivesync = { path = "../drivesync" }
+drivenet = { path = "../drivenet" }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

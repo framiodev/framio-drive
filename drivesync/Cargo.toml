@@ -1,0 +1,23 @@
+[package]
+name = "drivesync"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "drivesync"
+path = "src/lib.rs"
+
+[[bin]]
+name = "drivesync"
+path = "src/main.rs"
+
+[dependencies]
+drivecore = { path = "../drivecore" }
+drivenet = { path = "../drivenet" }
+cloud-filter = "0.0.6"
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "fs"] }
+
+# cloud-filter 0.0.6 kök klasörde null işaretçiden boş dilim oluşturuyor; debug'daki UB denetimi bunu panic yapıyor.
+[profile.dev.package.cloud-filter]
+debug-assertions = false

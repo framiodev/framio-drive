@@ -1,0 +1,6 @@
+target/
+*.pdb
+.env
+client.json
+*.key
+*.key.pub.bak

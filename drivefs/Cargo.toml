@@ -1,0 +1,17 @@
+[package]
+name = "drivefs"
+version = "0.1.0"
+edition = "2021"
+
+# Ana projeden bagimsiz derlenir (kendi Cargo.lock'u olur)
+[workspace]
+
+[dependencies]
+drivecore = { path = "../drivecore" }
+drivenet = { path = "../drivenet" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+winfsp = { version = "0.13", features = ["system"] }
+winfsp-sys = "0.12"
+
+[build-dependencies]
+winfsp = { version = "0.13", features = ["system"] }
