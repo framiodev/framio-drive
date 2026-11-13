@@ -223,7 +223,7 @@ async function refresh(){if(busy)return;busy=true;try{
  if(!list.length){$('emptyT').textContent='Henüz hesap yok';$('emptyP').textContent='Soldaki “Google ile hesap ekle” düğmesiyle başla; tarayıcıda Google hesabını seçmen yeterli.'}
  else if(a&&!a.connected){$('emptyT').textContent='Bağlanıyor…';$('emptyP').textContent='Hesap bağlanıyor, birkaç saniye sürebilir.'}
  else if(!a){$('emptyT').textContent='Bir hesap seç';$('emptyP').textContent='Soldan bir hesap seç ya da Google ile yeni hesap ekle.'}
- if(ok){renderMain(a);if(driveFor!=a.email)loadDrive(a.email);if(vFor!=a.email)loadV(a.email)}
+ if(ok){renderMain(a);if(vFor!=a.email)loadV(a.email)}
  try{await pollPending()}catch(e){}
  const L=await invoke('logs',{since:seq});if(L.length){const p=$('log');L.forEach(([n,t])=>{seq=n;const d=document.createElement('div');d.textContent=t;p.appendChild(d)});while(p.children.length>300)p.firstChild.remove();p.scrollTop=p.scrollHeight}
 }catch(e){console.error(e)}finally{busy=false}}
@@ -317,10 +317,6 @@ async function loadV(email){vFor=email;try{const d=await invoke('vdrive_info',{e
 $('von').onclick=async()=>{$('vmsg').textContent='Bağlanıyor…';try{await invoke('set_vdrive',{email:sel,on:true,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü bağlandı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true);vFor=null;loadV(sel)}};
 $('voff').onclick=async()=>{$('vmsg').textContent='Ayrılıyor…';try{await invoke('set_vdrive',{email:sel,on:false,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü ayrıldı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true)}};
 $('vinst').onclick=async()=>{$('vmsg').textContent='WinFsp yükleniyor… (izin penceresi çıkabilir)';$('vinst').disabled=true;try{await invoke('install_winfsp');toast('WinFsp yüklendi');vFor=null;loadV(sel)}catch(e){toast(String(e),true)}$('vmsg').textContent='';$('vinst').disabled=false};
-let driveFor=null;
-async function loadDrive(email){driveFor=email;try{const d=await invoke('drive_info',{email});if(driveFor!=email)return;
- $('dletter').innerHTML='<option value="">Harf yok</option>'+d.letters.map(l=>`<option value="${l}">${l}:</option>`).join('');$('dletter').value=d.letter;$('dlabel').value=d.label;$('dmsg').textContent=''}catch(e){}}
-$('dapply').onclick=async()=>{$('dmsg').textContent='Uygulanıyor…';try{await invoke('set_drive',{email:sel,letter:$('dletter').value,label:$('dlabel').value});$('dmsg').textContent='Uygulandı';toast('Sürücü ayarları güncellendi — Gezgin\'de F5 ile yenile');driveFor=null;loadDrive(sel)}catch(e){$('dmsg').textContent='';toast(String(e),true)}};
 function confirmBox(title,msg,ok){return new Promise(r=>{const m=document.createElement('div');m.className='modal';m.innerHTML=`<div class="glass"><div style="font-weight:650;margin-bottom:8px">${esc(title)}</div><div class="mut" style="margin-bottom:14px;line-height:1.5">${esc(msg)}</div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sm" id="cn">Vazgeç</button><button class="btn sm pri" id="cy">${esc(ok)}</button></div></div>`;document.body.appendChild(m);const d=v=>{m.remove();r(v)};m.querySelector('#cn').onclick=()=>d(false);m.querySelector('#cy').onclick=()=>d(true);m.onclick=e=>{if(e.target==m)d(false)}})}
 $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
  if(!await confirmBox('Hesaptan çıkış yap',`${a.name||a.email} bu bilgisayardan çıkarılacak: bağlantı, sürücü harfi ve Gezgin kısayolu kaldırılır, indirilmiş yerel kopyalar silinir. Drive'daki dosyalar etkilenmez.`,'Çıkış yap'))return;

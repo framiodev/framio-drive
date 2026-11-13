@@ -32,6 +32,11 @@ jobs:
           if ($LASTEXITCODE -eq 0) { "skip=true" >> $env:GITHUB_OUTPUT; Write-Host "v$ver zaten yayinlanmis, atlaniyor" } else { "skip=false" >> $env:GITHUB_OUTPUT }
           $global:LASTEXITCODE = 0
 
+      - name: Arayuz betigi kontrolu
+        if: steps.chk.outputs.skip != 'true'
+        shell: pwsh
+        run: node .github/scripts/check-ui.js
+
       - name: WinFsp kur (gelistirici dosyalariyla)
         if: steps.chk.outputs.skip != 'true'
         shell: pwsh
