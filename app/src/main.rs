@@ -1,7 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod logo;
 use drivenet::auth;
-use drivesync::Engine;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::{Component, Path, PathBuf};
@@ -17,7 +16,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { engines: Mutex<HashMap<String, Engine>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
+struct App { pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -177,49 +176,9 @@ fn copy_any(src: &Path, dst: &Path) -> std::io::Result<()> {
 #[tauri::command]
 fn take_pending(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.pending.lock().unwrap()) }
 
-#[tauri::command]
-async fn list_dirs(email: String, rel: String) -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let dir = drivesync::root_path(&email)?.join(safe_rel(&rel)?);
-        let mut v: Vec<String> = vec![];
-        for e in std::fs::read_dir(&dir).map_err(|e| e.to_string())?.flatten() {
-            if e.metadata().map(|m| m.is_dir()).unwrap_or(false) { v.push(e.file_name().to_string_lossy().into_owned()); }
-        }
-        v.sort_by_key(|s| s.to_lowercase());
-        Ok::<Value, String>(json!(v))
-    }).await.map_err(|e| e.to_string())?
-}
 
-#[tauri::command]
-async fn make_dir(email: String, rel: String, name: String) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let name = name.trim().to_string();
-        if name.is_empty() || name.contains(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) { return Err("geçersiz klasör adı".to_string()); }
-        let dir = drivesync::root_path(&email)?.join(safe_rel(&rel)?).join(name);
-        std::fs::create_dir(&dir).map_err(|e| e.to_string())
-    }).await.map_err(|e| e.to_string())?
-}
 
 /// Seçilen dosyaları hesabın seçilen klasörüne kopyalar; yükleme kuyruğu gerisini halleder.
-#[tauri::command]
-async fn send_files(app: State<'_, App>, email: String, rel: String, paths: Vec<String>) -> Result<Value, String> {
-    if !app.engines.lock().unwrap().contains_key(&email.to_lowercase()) { return Err("hesap bağlı değil".into()); }
-    tauri::async_runtime::spawn_blocking(move || {
-        let dir = drivesync::root_path(&email)?.join(safe_rel(&rel)?);
-        if !dir.is_dir() { return Err("hedef klasör bulunamadı".to_string()); }
-        let (mut sent, mut failed) = (0u32, vec![]);
-        for p in paths {
-            let src = PathBuf::from(&p);
-            let Some(name) = src.file_name() else { continue };
-            let dst = unique_dest(&dir, name);
-            match copy_any(&src, &dst) {
-                Ok(()) => { sent += 1; drivesync::flog!("gönderildi: {} -> {}", src.display(), dst.display()); }
-                Err(e) => { drivesync::flog!("gönderilemedi {}: {e}", src.display()); failed.push(p); }
-            }
-        }
-        Ok::<Value, String>(json!({ "sent": sent, "failed": failed }))
-    }).await.map_err(|e| e.to_string())?
-}
 
 // ---------- Uygulama içi Drive gezgini (Drive API) ----------
 async fn drv(email: &str) -> Result<drivenet::Drive, String> {
@@ -268,22 +227,37 @@ async fn fs_trash(email: String, id: String) -> Result<(), String> {
     drv(&email).await?.trash(&id).await.map_err(de)
 }
 
-/// Sürükle-bırak ile gelen dosyaları (klasör değil) Drive'daki açık klasöre yükler.
+async fn put_file(d: &drivenet::Drive, path: &Path, name: &str, parent: &str) -> Result<(), String> {
+    let len = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
+    let sess = d.start_upload(name, parent, len).await.map_err(de)?;
+    d.upload_file(&sess, path, |_| {}).await.map_err(de)?;
+    Ok(())
+}
+
+/// Dosya ve klasörleri (alt klasörleriyle) Drive'daki verilen klasöre yükler.
 #[tauri::command]
 async fn fs_upload(email: String, parent: String, paths: Vec<String>) -> Result<Value, String> {
     let d = drv(&email).await?;
     let (mut sent, mut failed) = (0u32, vec![]);
-    for p in paths {
-        let path = PathBuf::from(&p);
+    let mut stack: Vec<(PathBuf, String)> = vec![];
+    let junk = |n: &str| matches!(n.to_lowercase().as_str(), "thumbs.db" | "desktop.ini" | ".ds_store");
+    let mut items: Vec<(PathBuf, String)> = paths.into_iter().map(|p| (PathBuf::from(p), parent.clone())).collect();
+    items.reverse();
+    loop {
+        let (path, par) = match items.pop() { Some(x) => x, None => match stack.pop() {
+            Some((dir, pid)) => {
+                if let Ok(rd) = std::fs::read_dir(&dir) { for e in rd.flatten() { items.push((e.path(), pid.clone())); } }
+                continue;
+            }
+            None => break,
+        } };
         let Some(name) = path.file_name().map(|n| n.to_string_lossy().into_owned()) else { continue };
         let Ok(meta) = std::fs::metadata(&path) else { failed.push(name); continue };
-        if !meta.is_file() { failed.push(format!("{name} (klasör desteklenmiyor)")); continue; }
-        let r: Result<(), String> = async {
-            let sess = d.start_upload(&name, &parent, meta.len()).await.map_err(de)?;
-            d.upload_file(&sess, &path, |_| {}).await.map_err(de)?;
-            Ok(())
-        }.await;
-        match r { Ok(()) => sent += 1, Err(e) => { drivesync::flog!("yüklenemedi {name}: {e}"); failed.push(name) } }
+        if meta.is_dir() {
+            match d.create_folder(&name, &par).await { Ok(id) => stack.push((path, id)), Err(e) => { drivesync::flog!("klasör açılamadı {name}: {e:?}"); failed.push(name) } }
+        } else if !junk(&name) {
+            match put_file(&d, &path, &name, &par).await { Ok(()) => sent += 1, Err(e) => { drivesync::flog!("yüklenemedi {name}: {e}"); failed.push(name) } }
+        }
     }
     Ok(json!({ "sent": sent, "failed": failed }))
 }
@@ -307,31 +281,16 @@ fn save_client(id: String, secret: String) -> Result<(), String> { auth::Client:
 #[tauri::command]
 fn accounts(app: State<App>) -> Value {
     let names = load_names();
-    let engines = app.engines.lock().unwrap();
+    let mounts = app.mounts.lock().unwrap();
     let list: Vec<Value> = auth::accounts().into_iter().map(|e| {
-        let st = engines.get(&e).map(|g| g.status());
-        json!({ "email": e, "name": names.get(&e).and_then(|v| v.as_str()).unwrap_or(""), "connected": st.is_some(), "status": st })
+        let e = e.to_lowercase();
+        let m = mounts.get(&e);
+        json!({ "email": e, "name": names.get(&e).and_then(|v| v.as_str()).unwrap_or(""), "connected": true, "mounted": m.is_some(), "pending": m.map(|m| m.pending()).unwrap_or(0) })
     }).collect();
     json!(list)
 }
 
-#[tauri::command]
-fn connect(app: State<App>, email: String) -> Result<(), String> {
-    let email = email.to_lowercase();
-    if app.engines.lock().unwrap().contains_key(&email) { return Ok(()); }
-    let client = auth::Client::load()?;
-    let eng = Engine::start(&email, client)?;
-    app.engines.lock().unwrap().insert(email.clone(), eng);
-    std::thread::spawn(move || ensure_network_location(&email));
-    Ok(())
-}
 
-#[tauri::command]
-async fn disconnect(app: State<'_, App>, email: String) -> Result<(), String> {
-    let email = email.to_lowercase();
-    let eng = app.engines.lock().unwrap().remove(&email);
-    tauri::async_runtime::spawn_blocking(move || { if let Some(e) = eng { e.shutdown(); } remove_drive_mapping(&email); }).await.map_err(|e| e.to_string())
-}
 
 /// Hesaptan çıkış: bağlantıyı kapatır, eşitleme kaydını, sürücü harfini ve kısayolu siler, yerel klasörü temizler, token'ı unutur.
 /// Yüklenmemiş dosya varsa reddeder. Drive'daki dosyalara dokunulmaz.
@@ -344,17 +303,7 @@ async fn sign_out(app: State<'_, App>, email: String) -> Result<(), String> {
     let vm = app.mounts.lock().unwrap().remove(&email);
     if vm.is_some() { tauri::async_runtime::spawn_blocking(move || drop(vm)).await.map_err(|e| e.to_string())?; }
     { let (_, l, n) = vcfg(&email); save_vcfg(&email, false, &l, &n); }
-    let eng = app.engines.lock().unwrap().remove(&email);
-    if let Some(e) = &eng {
-        let (p, u, f, _) = e.summary();
-        if p + u + f > 0 {
-            let n = p + u + f;
-            app.engines.lock().unwrap().insert(email.clone(), eng.unwrap());
-            return Err(format!("Yüklenmemiş {n} dosya var. Önce yüklemelerin bitmesini bekle ya da hatalı olanları çöz."));
-        }
-    }
     tauri::async_runtime::spawn_blocking(move || {
-        if let Some(e) = eng { e.shutdown(); }
         remove_drive_mapping(&email);
         let _ = drivesync::unregister(&email);
         let (_, _, nl) = drive_cfg(&email);
@@ -506,30 +455,13 @@ async fn add_account(app: State<'_, App>) -> Result<String, String> {
     let client = auth::Client::load()?;
     let email = auth::login(&client).await?.to_lowercase();
     drivesync::flog!("hesap eklendi: {email}");
-    let eng = Engine::start(&email, client)?;
-    app.engines.lock().unwrap().insert(email.clone(), eng);
-    let e2 = email.clone();
-    std::thread::spawn(move || ensure_network_location(&e2));
+    let _ = (&app, client);
     Ok(email)
 }
 
-#[tauri::command]
-fn clear_cache(app: State<App>, email: String, days: Option<u64>) -> Result<Value, String> {
-    let g = app.engines.lock().unwrap();
-    Ok(g.get(&email.to_lowercase()).ok_or("hesap bağlı değil")?.clear(days))
-}
 
-#[tauri::command]
-fn retry(app: State<App>, email: String) { if let Some(e) = app.engines.lock().unwrap().get(&email.to_lowercase()) { e.retry(); } }
 
-#[tauri::command]
-fn set_paused(app: State<App>, email: String, paused: bool) { if let Some(e) = app.engines.lock().unwrap().get(&email.to_lowercase()) { e.set_paused(paused); } }
 
-#[tauri::command]
-fn open_folder(email: String) -> Result<(), String> {
-    let p = drivesync::root_path(&email)?;
-    std::process::Command::new("explorer").arg(p).spawn().map(|_| ()).map_err(|e| e.to_string())
-}
 
 #[tauri::command]
 fn rename_account(email: String, name: String) -> Result<(), String> {
@@ -596,9 +528,8 @@ fn main() {
                     std::thread::sleep(std::time::Duration::from_millis(80));
                     tick += 1;
                     if tick % 6 == 1 {
-                        let (mut busy, mut fail, mut any, mut allp) = (0usize, 0usize, false, true);
-                        { let a = th.state::<App>(); let g = a.engines.lock().unwrap();
-                          for e in g.values() { let (p, u, f, pz) = e.summary(); any = true; if !pz { busy += p + u; fail += f; } allp &= pz; } }
+                        let busy: usize = { let a = th.state::<App>(); let g = a.mounts.lock().unwrap(); g.values().map(|m| m.pending()).sum() };
+                        let (fail, any, allp) = (0usize, false, false);
                         st = if any && allp { St::Pause } else if fail > 0 { St::Err } else if busy > 0 { St::Sync } else { St::Idle };
                         let t = match st { St::Pause => "Eşitleme duraklatıldı".to_string(), St::Err => format!("{fail} yükleme hatası"), St::Sync => format!("{busy} dosya yükleniyor"), St::Idle => "Framio Drive — güncel".to_string() };
                         if t != tip { if let Some(tr) = th.tray_by_id("main") { let _ = tr.set_tooltip(Some(t.clone())); } tip = t; }
@@ -620,14 +551,15 @@ fn main() {
             let h = app.handle().clone();
             std::thread::spawn(move || {
                 let st = h.state::<App>();
-                if let Ok(client) = auth::Client::load() {
-                    for e in auth::accounts() {
-                        let e = e.to_lowercase();
-                        if st.engines.lock().unwrap().contains_key(&e) { continue; }
-                        match Engine::start(&e, client.clone()) {
-                            Ok(eng) => { st.engines.lock().unwrap().insert(e.clone(), eng); ensure_network_location(&e); }
-                            Err(err) => drivesync::flog!("otomatik bağlanma başarısız ({e}): {err}"),
-                        }
+                // Eski eşitleme motorundan kalanları (kenar çubuğu girişi, harf, kısayol) bir kez temizle
+                for e in auth::accounts() {
+                    let e = e.to_lowercase();
+                    let _ = drivesync::unregister(&e);
+                    let mut cfg = load_settings();
+                    if cfg["legacy_done"][&e].as_bool() != Some(true) {
+                        cleanup_legacy_view(&e);
+                        cfg["legacy_done"][&e] = json!(true);
+                        save_settings(&cfg);
                     }
                 }
                 // Bağlı sürücü açık olan hesapları bağla
@@ -656,7 +588,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

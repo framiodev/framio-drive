@@ -155,8 +155,7 @@ select option{background:#222;color:#fff}
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
       <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
-      <button class="btn" id="pauseTop"></button>
-      <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
+            <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
@@ -167,24 +166,8 @@ select option{background:#222;color:#fff}
       <div class="glass fusage"><div class="ubar"><i id="ufill"></i></div><span class="mut" id="utext"></span><span class="mut" style="margin-left:auto">Dosyaları pencereye sürükleyip bırakarak yükleyebilirsin</span></div>
     </div>
     <div class="tab scroll hide" id="t_act">
-      <div class="grid">
-        <div class="glass card hero"><div class="ring"><svg width="86" height="86" viewBox="0 0 86 86"><circle class="tr" cx="43" cy="43" r="36"/><circle class="fg" id="rfg" cx="43" cy="43" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/></svg><div class="c" id="rp">100%</div></div>
-          <div><div class="l">Eşitleme</div><div style="font-weight:650;font-size:16px;margin-top:3px" id="syncT">Güncel</div><div class="mut" id="syncS"></div></div></div>
-        <div class="glass card" style="animation-delay:.05s"><div class="l">Bekleyen</div><div class="v" id="c_p">0</div></div>
-        <div class="glass card" style="animation-delay:.1s"><div class="l">Yükleniyor</div><div class="v" id="c_u">0</div></div>
-        <div class="glass card" style="animation-delay:.15s"><div class="l">Hatalı</div><div class="v" id="c_f">0</div></div>
-      </div>
-      <div class="row2">
-        <div class="glass panel"><h2>Bu bilgisayardaki yer <span>indirilmiş dosyalar</span></h2>
-          <div class="big" id="cacheB">0 MB</div><div class="mut" id="cacheF"></div>
-          <div class="acts"><button class="btn pri" id="clr"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Yer aç</button><button class="btn" id="clr30">30 günden eskileri</button></div>
-          <div class="mut" id="clrmsg" style="margin-top:10px;min-height:18px"></div>
-          </div>
-        <div class="glass panel"><h2>Yükleme kuyruğu <span id="qn"></span><span style="flex:1"></span>
-          <button class="btn sm" id="retry">Hataları tekrar dene</button></h2>
-          <div id="jobs"></div></div>
-      </div>
-      <div class="glass panel"><h2>Etkinlik günlüğü</h2><div class="log" id="log"></div></div>
+      <div class="glass panel"><h2>Sürücü durumu</h2><div class="big" id="actT">—</div><div class="mut" id="actS"></div></div>
+      <div class="glass panel"><h2>Etkinlik günlüğü</h2><div class="log" id="log" style="height:340px"></div></div>
     </div>
     <div class="tab scroll hide" id="t_set">
       <div class="glass panel"><h2>Sürücü <span>Gezgin'de gerçek sürücü olarak görünür, hesap kotasını gösterir, yer kaplamaz</span></h2>
@@ -199,6 +182,7 @@ select option{background:#222;color:#fff}
 <div class="toasts" id="toasts"></div>
 <script>
 const {invoke}=window.__TAURI__.core;const $=i=>document.getElementById(i);
+const vLetterOf=a=>'';
 let sel=localStorage.getItem('sel')||null,list=[],seq=0,cur=null;
 const mb=b=>b>=1073741824?(b/1073741824).toFixed(2)+' GB':(b/1048576).toFixed(1)+' MB';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -219,42 +203,25 @@ const shown={};function num(id,v){const el=$(id),from=shown[id]??0;shown[id]=v;i
 /* hesap listesi (anahtarlı güncelleme: animasyon yeniden başlamaz) */
 function renderAccs(){const box=$('accs');const keep=new Set();list.forEach((a,i)=>{keep.add(a.email);let el=box.querySelector(`[data-e="${CSS.escape(a.email)}"]`);
  if(!el){el=document.createElement('div');el.className='acc';el.dataset.e=a.email;el.style.animationDelay=i*60+'ms';el.innerHTML='<div class="av"><span></span><b></b></div><div class="t"><div></div><small></small></div>';el.onclick=()=>pick(a.email);box.appendChild(el)}
- el.classList.toggle('sel',a.email==sel);const title=a.name||a.email;el.querySelector('.av span').textContent=(title[0]||'?').toUpperCase();el.querySelector('.av b').className=a.connected?'on':'';
- el.querySelector('.t div').textContent=title;el.querySelector('small').textContent=a.connected?(a.name?a.email:'Bağlı'):'Bağlı değil · bağlanmak için tıkla'});
+ el.classList.toggle('sel',a.email==sel);const title=a.name||a.email;el.querySelector('.av span').textContent=(title[0]||'?').toUpperCase();el.querySelector('.av b').className=a.mounted?'on':'';
+ el.querySelector('.t div').textContent=title;el.querySelector('small').textContent=a.mounted?(a.pending?`Sürücü bağlı · ${a.pending} dosya yükleniyor`:'Sürücü bağlı'):(a.name?a.email:'Hesap bağlı')});
  [...box.children].forEach(c=>{if(!keep.has(c.dataset.e))c.remove()})}
-async function pick(e){sel=e;localStorage.setItem('sel',e);const a=list.find(x=>x.email==e);if(a&&!a.connected){try{await invoke('connect',{email:e})}catch(x){toast(String(x),true)}}refresh()}
-function renderJobs(s){const box=$('jobs');const keep=new Set();
- s.jobs.forEach(j=>{keep.add(j.path);let el=[...box.children].find(c=>c.dataset.p==j.path);
-  if(!el){el=document.createElement('div');el.dataset.p=j.path;el.innerHTML='<div class="r"><span class="n"></span><span class="s"></span></div><div class="bw"></div><div class="e"></div>';box.appendChild(el)}
-  el.className='job '+j.state;el.querySelector('.n').textContent=j.name;
-  el.querySelector('.s').textContent=`${mb(j.size)} · ${j.state}${j.retry_in?` · ${j.retry_in} sn sonra tekrar`:''}`;
-  const bw=el.querySelector('.bw');if(j.state=='yükleniyor'){if(!bw.firstChild)bw.innerHTML='<div class="bar"><i style="width:0"></i></div>';bw.firstChild.firstChild.style.width=Math.max(2,Math.round(j.progress*100))+'%'}else bw.innerHTML='';
-  const e=el.querySelector('.e');e.textContent=j.error||'';e.classList.toggle('hide',!j.error)});
- [...box.children].forEach(c=>{if(c.classList.contains('empty')||!keep.has(c.dataset.p))c.remove()});
- if(!s.jobs.length&&!box.querySelector('.empty'))box.innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg><div>Kuyruk boş — her şey güncel</div></div>';
- $('qn').textContent=s.jobs.length?`${s.jobs.length} iş`:''}
-function renderMain(a){const s=a.status;$('title').textContent=a.name||a.email;
- const c=s.counts;num('c_p',c.pending);num('c_u',c.uploading);num('c_f',c.failed);
- const total=c.pending+c.uploading+c.failed+c.done,pct=total?Math.round(c.done/total*100):100;
- $('rfg').style.strokeDashoffset=226.2*(1-pct/100);$('rp').textContent=pct+'%';
- let st='ok',t='Güncel',sub='Her şey eşitlendi';
- if(s.paused){st='pause';t='Duraklatıldı';sub='Yüklemeler beklemede'}
- else if(c.failed){st='err';t=c.failed+' hata';sub='Otomatik tekrar denenecek'}
- else if(c.uploading||c.pending){st='busy';t='Yükleniyor';sub=(c.uploading+c.pending)+' dosya sırada'}
- $('syncT').textContent=t;$('syncS').textContent=sub;const p=$('pill');p.className='pill '+({ok:'',busy:'busy',err:'err',pause:'pause'}[st]);$('pillT').textContent=t;
- $('cacheB').textContent=mb(s.cache.bytes);$('cacheF').textContent=`${s.cache.files} dosya`+(s.cache.pinned?` · ${s.cache.pinned} sabitlenmiş (korunuyor)`:'');
- $('pauseTop').textContent=s.paused?'Eşitlemeyi sürdür':'Eşitlemeyi durdur';$('pauseTop').classList.toggle('pri',!!s.paused);renderJobs(s)}
+function pick(e){sel=e;localStorage.setItem('sel',e);refresh()}
+function renderMain(a){$('title').textContent=a.name||a.email;
+ const n=a.pending||0;let t='Hazır',sub='Dosyalar Drive\'da; sürücü bağlı değil. Ayarlar\'dan bağlayabilirsin.',cls='';
+ if(n){t='Yükleniyor · '+n;sub=n+' dosya Drive\'a yükleniyor';cls='busy'}else if(a.mounted){t='Bağlı';sub='Sürücü Gezgin\'de açık; bekleyen yükleme yok'}
+ const p=$('pill');p.className='pill '+cls;$('pillT').textContent=t;$('actT').textContent=t;$('actS').textContent=sub}
 let busy=false;
 async function refresh(){if(busy)return;busy=true;try{
  if(!(await invoke('client_status'))){$('setup').classList.remove('hide');$('view').classList.add('hide');$('empty').classList.add('hide');return}
  $('setup').classList.add('hide');list=await invoke('accounts');renderAccs();
- document.body.classList.toggle('syncing',list.some(a=>a.status&&!a.status.paused&&(a.status.counts.uploading+a.status.counts.pending)>0));
+ document.body.classList.toggle('syncing',list.some(a=>a.pending>0));
  const a=list.find(x=>x.email==sel);
  if(!a&&list.length==1){sel=list[0].email}
- const ok=a&&a.connected&&a.status;
+ const ok=!!a;
  $('view').classList.toggle('hide',!ok);$('empty').classList.toggle('hide',!!ok);
  if(!list.length){$('emptyT').textContent='Henüz hesap yok';$('emptyP').textContent='Soldaki “Google ile hesap ekle” düğmesiyle başla; tarayıcıda Google hesabını seçmen yeterli.'}
- else if(a&&!a.connected){$('emptyT').textContent='Bağlanıyor…';$('emptyP').textContent='Hesap bağlanıyor, birkaç saniye sürebilir.'}
+
  else if(!a){$('emptyT').textContent='Bir hesap seç';$('emptyP').textContent='Soldan bir hesap seç ya da Google ile yeni hesap ekle.'}
  if(ok){renderMain(a);if(vFor!=a.email)loadV(a.email);if(fFor!=a.email&&tab=='files')loadFiles()}
  try{await pollPending()}catch(e){}
@@ -262,11 +229,7 @@ async function refresh(){if(busy)return;busy=true;try{
 }catch(e){console.error(e)}finally{busy=false}}
 $('savec').onclick=async()=>{try{await invoke('save_client',{id:$('cid').value,secret:$('csec').value});$('csec').value='';refresh()}catch(e){toast(String(e),true)}};
 $('add').onclick=async()=>{toast('Tarayıcıda Google ile giriş yap…');try{sel=await invoke('add_account');localStorage.setItem('sel',sel);toast('Hesap eklendi');refresh()}catch(e){toast('Hesap eklenemedi: '+e,true)}};
-$('pauseTop').onclick=async()=>{const a=list.find(x=>x.email==sel);await invoke('set_paused',{email:sel,paused:!a.status.paused});refresh()};
-$('retry').onclick=async()=>{await invoke('retry',{email:sel});toast('Hatalı işler yeniden denenecek');refresh()};
 $('rename').onclick=async()=>{const a=list.find(x=>x.email==sel);const n=await ask('Görünen ad',a.name||'');if(n!==null){await invoke('rename_account',{email:sel,name:n});refresh()}};
-async function clr(d){$('clrmsg').textContent='Temizleniyor…';try{const r=await invoke('clear_cache',{email:sel,days:d});$('clrmsg').textContent=`${r.freed_files} dosya, ${mb(r.freed_bytes)} boşaltıldı`+(r.skipped_pinned?` · ${r.skipped_pinned} sabitlenmiş atlandı`:'')+(r.failed.length?` · ${r.failed.length} atlanamadı`:'');toast(`${mb(r.freed_bytes)} yer açıldı`)}catch(e){$('clrmsg').textContent='';toast(String(e),true)}refresh()}
-$('clr').onclick=()=>clr(null);$('clr30').onclick=()=>clr(30);
 
 /* vurgu rengi: halka + iç kare (Photoshop tarzı renk tekerleği) */
 const DEF='#b3122b',PRE=['#b3122b','#d4162f','#e8590c','#c2255c','#7048e8','#1c7ed6','#0ca678','#868e96'];
@@ -307,14 +270,14 @@ $('rst').onclick=()=>setAccent(DEF);
 $('pal').onclick=e=>{e.stopPropagation();$('pop').classList.toggle('hide')};
 document.addEventListener('click',e=>{if(!e.target.closest('#pop'))$('pop').classList.add('hide')});
 setAccent(localStorage.getItem('accent')||DEF,false);
-/* sağ tık "Framio Drive'a gönder" penceresi */
+/* sağ tık "Framio Drive'a gönder" penceresi (Drive'a doğrudan yükler) */
 let pend=[],sm=null,sAcc=null,sPath=[];
 const FOLDER='<svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>';
 async function pollPending(){const n=await invoke('take_pending');if(n.length){n.forEach(x=>{if(!pend.includes(x))pend.push(x)});openSend()}}
-function connected(){return list.filter(a=>a.connected)}
+const sid=()=>sPath.length?sPath[sPath.length-1].id:'root';
 function openSend(){
  if(sm){sm.querySelector('.files').innerHTML=pend.map(p=>esc(p)).join('<br>');sm.querySelector('#scount').textContent=pend.length+' öğe';return}
- const cs=connected();if(!cs.length){toast('Önce bir hesap bağlı olmalı',true);pend=[];return}
+ const cs=list;if(!cs.length){toast('Önce bir hesap eklemelisin',true);pend=[];return}
  sAcc=cs.find(a=>a.email==localStorage.getItem('sendAcc'))?.email||cs.find(a=>a.email==sel)?.email||cs[0].email;
  sm=document.createElement('div');sm.className='modal';
  sm.innerHTML=`<div class="glass wide"><div style="font-weight:650;font-size:16px;margin-bottom:2px">Framio Drive'a gönder <span class="mut" id="scount"></span></div>
@@ -322,23 +285,22 @@ function openSend(){
  <div class="crumbs" id="crumbs"></div><div class="flist" id="flist"></div>
  <div style="display:flex;gap:8px"><button class="btn sm" id="snew">+ Yeni klasör</button><span style="flex:1"></span><button class="btn sm" id="scancel">Vazgeç</button><button class="btn sm pri" id="sgo">Buraya gönder</button></div></div>`;
  document.body.appendChild(sm);openSend();
- const sel2=sm.querySelector('#sacc');sel2.value=sAcc;
- let saved=[];try{saved=JSON.parse(localStorage.getItem('sendDest_'+sAcc)||'[]')}catch(e){}sPath=saved;
- sel2.onchange=()=>{sAcc=sel2.value;localStorage.setItem('sendAcc',sAcc);try{sPath=JSON.parse(localStorage.getItem('sendDest_'+sAcc)||'[]')}catch(e){sPath=[]}loadDirs()};
+ const sel2=sm.querySelector('#sacc');sel2.value=sAcc;sPath=[];
+ sel2.onchange=()=>{sAcc=sel2.value;localStorage.setItem('sendAcc',sAcc);sPath=[];loadDirs()};
  sm.querySelector('#scancel').onclick=closeSend;
- sm.querySelector('#snew').onclick=async()=>{const n=await ask('Yeni klasör adı');if(n){try{await invoke('make_dir',{email:sAcc,rel:sPath.join('\\'),name:n});loadDirs()}catch(e){toast(String(e),true)}}};
- sm.querySelector('#sgo').onclick=async()=>{const b=sm.querySelector('#sgo');b.disabled=true;try{const r=await invoke('send_files',{email:sAcc,rel:sPath.join('\\'),paths:pend});localStorage.setItem('sendAcc',sAcc);localStorage.setItem('sendDest_'+sAcc,JSON.stringify(sPath));
-   toast(`${r.sent} öğe ${sPath.length?sPath.join(' › '):'ana klasör'} içine gönderildi`+(r.failed.length?` · ${r.failed.length} başarısız`:''),!!r.failed.length);closeSend()}catch(e){toast(String(e),true);b.disabled=false}};
+ sm.querySelector('#snew').onclick=async()=>{const n=await ask('Yeni klasör adı');if(n){try{await invoke('fs_mkdir',{email:sAcc,parent:sid(),name:n});loadDirs()}catch(e){toast(String(e),true)}}};
+ sm.querySelector('#sgo').onclick=async()=>{const b=sm.querySelector('#sgo');b.disabled=true;const where=sPath.length?sPath.map(p=>p.name).join(' › '):'ana klasör';toast('Yükleniyor…');
+  try{const r=await invoke('fs_upload',{email:sAcc,parent:sid(),paths:pend});localStorage.setItem('sendAcc',sAcc);
+   toast(`${r.sent} dosya ${where} içine yüklendi`+(r.failed.length?` · ${r.failed.length} başarısız`:''),!!r.failed.length);closeSend();if(tab=='files')loadFiles()}catch(e){toast(String(e),true);b.disabled=false}};
  loadDirs()}
 function closeSend(){if(sm){sm.remove();sm=null}pend=[]}
 async function loadDirs(){const fl=sm.querySelector('#flist');fl.innerHTML='<div class="mut" style="padding:10px">Yükleniyor…</div>';
- let dirs;try{dirs=await invoke('list_dirs',{email:sAcc,rel:sPath.join('\\')})}catch(e){if(sPath.length){sPath=[];return loadDirs()}fl.innerHTML='<div class="mut" style="padding:10px">'+esc(e)+'</div>';return}
+ let items;try{items=(await invoke('fs_list',{email:sAcc,parent:sid()})).filter(f=>f.folder)}catch(e){fl.innerHTML='<div class="mut" style="padding:10px">'+esc(e)+'</div>';return}
  const a=list.find(x=>x.email==sAcc);const cr=sm.querySelector('#crumbs');
- cr.innerHTML=`<a data-i="-1">${esc(a?.name||sAcc)}</a>`+sPath.map((p,i)=>`<span>›</span><a data-i="${i}">${esc(p)}</a>`).join('');
+ cr.innerHTML=`<a data-i="-1">${esc(a?.name||sAcc)}</a>`+sPath.map((p,i)=>`<span>›</span><a data-i="${i}">${esc(p.name)}</a>`).join('');
  cr.onclick=e=>{const i=e.target.dataset.i;if(i!==undefined){sPath=sPath.slice(0,+i+1);loadDirs()}};
- fl.innerHTML=dirs.length?dirs.map(d=>`<div class="fi" data-d="${esc(d)}">${FOLDER}<span>${esc(d)}</span></div>`).join(''):'<div class="mut" style="padding:10px">Alt klasör yok — buraya gönderebilirsin.</div>';
- fl.onclick=e=>{const f=e.target.closest('.fi');if(f){sPath.push(f.dataset.d);loadDirs()}}}
-
+ fl.innerHTML=items.length?items.map(d=>`<div class="fi" data-id="${esc(d.id)}" data-n="${esc(d.name)}">${FOLDER}<span>${esc(d.name)}</span></div>`).join(''):'<div class="mut" style="padding:10px">Alt klasör yok — buraya gönderebilirsin.</div>';
+ fl.onclick=e=>{const f=e.target.closest('.fi');if(f){sPath.push({id:f.dataset.id,name:f.dataset.n});loadDirs()}}}
 
 let vFor=null,mountedLetter='';
 async function loadV(email){vFor=email;try{const d=await invoke('vdrive_info',{email});if(vFor!=email)return;
