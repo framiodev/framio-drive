@@ -102,8 +102,22 @@ fn free_letters() -> Vec<String> {
     ('D'..='Z').filter(|c| !Path::new(&format!("{c}:\\")).exists()).map(|c| c.to_string()).collect()
 }
 
+/// Eski "eşitleme klasörü" görünümünü kaldırır: sürücü harfi (subst) + "Ağdaki konumlar" kısayolu.
+/// Bağlı sürücü (WinFsp) açıkken Gezgin'de tek, gerçek sürücü kalsın diye kullanılır.
+fn cleanup_legacy_view(email: &str) {
+    let (letter, label, nl) = drive_cfg(email);
+    remove_drive_mapping(email);
+    if !nl.is_empty() {
+        let base = Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("Microsoft").join("Windows").join("Network Shortcuts");
+        run_hidden("cmd", &["/C", "rmdir", "/S", "/Q", &base.join(&nl).display().to_string()]);
+    }
+    save_drive_cfg(email, &letter, &label, "");
+    ps("& ie4uinit.exe -show");
+}
+
 /// Hesabın Windows bütünleşmesi: sürücü harfi + adı, "Ağdaki konumlar" kısayolu, kenar çubuğu simgesi/adı.
 fn ensure_network_location(email: &str) {
+    if vcfg(email).0 { cleanup_legacy_view(email); return; } // bağlı sürücü açıkken eski görünüm yok
     let Ok(root) = drivesync::root_path(email) else { return };
     let icon = ensure_drive_icon();
     let (letter, label, old_nl) = drive_cfg(email);
@@ -406,7 +420,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         // Önce varsa eski bağlantıyı kapat
         let old = st.mounts.lock().unwrap().remove(&email);
         if let Some(m) = old { m.wait_uploads(60); drop(m); }
-        if !on { save_vcfg(&email, false, &letter, &label); return Ok(()); }
+        if !on { save_vcfg(&email, false, &letter, &label); ensure_network_location(&email); return Ok(()); }
         if !(letter.len() == 1 && letter.chars().all(|c| c.is_ascii_uppercase())) { return Err("Bir sürücü harfi seç".to_string()); }
         if label.is_empty() || label.chars().any(|c| c.is_control() || "<>:\"/\\|?*".contains(c)) { return Err("Sürücü adı boş ya da geçersiz karakter içeriyor".into()); }
         if Path::new(&format!("{letter}:\\")).exists() { return Err(format!("{letter}: harfi başka bir sürücüde kullanılıyor")); }
@@ -415,6 +429,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         let m = drivefs::start(&email, &letter, &label, client)?;
         st.mounts.lock().unwrap().insert(email.clone(), m);
         save_vcfg(&email, true, &letter, &label);
+        cleanup_legacy_view(&email);
         Ok(())
     }).await.map_err(|e| e.to_string())?
 }
