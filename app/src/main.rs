@@ -115,44 +115,17 @@ fn cleanup_legacy_view(email: &str) {
     ps("& ie4uinit.exe -show");
 }
 
-/// Hesabın Windows bütünleşmesi: sürücü harfi + adı, "Ağdaki konumlar" kısayolu, kenar çubuğu simgesi/adı.
+/// Hesabın Windows bütünleşmesi. Eski "eşitleme klasörü" görünümü (sürücü harfi + Ağdaki konumlar kısayolu)
+/// kaldırıldı; tek sürücü, WinFsp ile bağlanan sürücüdür. Burada yalnızca kenar çubuğundaki
+/// eşitleme klasörünün adı/simgesi ayarlanır ve eski görünümün artıkları temizlenir.
 fn ensure_network_location(email: &str) {
-    if vcfg(email).0 { cleanup_legacy_view(email); return; } // bağlı sürücü açıkken eski görünüm yok
-    let Ok(root) = drivesync::root_path(email) else { return };
+    cleanup_legacy_view(email);
     let icon = ensure_drive_icon();
-    let (letter, label, old_nl) = drive_cfg(email);
-    let nl_name = if label.trim().is_empty() { format!("Framio Drive ({email})") } else { sanitize(&label) };
-    let nl_base = Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("Microsoft").join("Windows").join("Network Shortcuts");
-    if !old_nl.is_empty() && old_nl != nl_name { run_hidden("cmd", &["/C", "rmdir", "/S", "/Q", &nl_base.join(&old_nl).display().to_string()]); }
-    let nl = nl_base.join(&nl_name);
-    let _ = std::fs::create_dir_all(&nl);
-    let ini = nl.join("desktop.ini");
-    run_hidden("attrib", &["-s", "-h", &ini.display().to_string()]);
-    let text = format!("[.ShellClassInfo]\r\nCLSID2={{0AFACED1-E828-11D1-9187-B532F1E9575D}}\r\nFlags=2\r\nIconFile={}\r\nIconIndex=0\r\n", icon.display());
-    let mut bytes: Vec<u8> = vec![0xFF, 0xFE];
-    for u in text.encode_utf16() { bytes.extend_from_slice(&u.to_le_bytes()); }
-    let _ = std::fs::write(&ini, bytes);
-    save_drive_cfg(email, &letter, &label, &nl_name);
-
-    // sürücü harfi
-    if !letter.is_empty() {
-        if !Path::new(&format!("{letter}:\\")).exists() {
-            if !run_hidden("subst", &[&format!("{letter}:"), &root.display().to_string()]) { drivesync::flog!("sürücü harfi atanamadı: {letter}:"); }
-        }
-        let key = drive_key(&letter);
-        if label.trim().is_empty() { run_hidden("reg", &["delete", &key, "/f"]); }
-        else {
-            run_hidden("reg", &["add", &format!("{key}\\DefaultLabel"), "/ve", "/d", label.trim(), "/f"]);
-            run_hidden("reg", &["add", &format!("{key}\\DefaultIcon"), "/ve", "/d", &format!("{},0", icon.display()), "/f"]);
-        }
-    }
-    let shown = if label.trim().is_empty() { format!("Framio Drive ({email})") } else { label.trim().to_string() };
+    let (_, label, _) = vcfg(email);
+    let shown = if label.trim().is_empty() { default_label(email) } else { label.trim().to_string() };
     let script = format!(
-        "$s=(New-Object -ComObject WScript.Shell).CreateShortcut('{lnk}'); $s.TargetPath='{target}'; $s.IconLocation='{icon},0'; $s.Save(); \
-         attrib +r '{nl}'; attrib +s +h '{ini}'; \
-         Get-ChildItem 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager' -ErrorAction SilentlyContinue | Where-Object {{ $_.PSChildName -like 'FramioDrive!*{email}' }} | ForEach-Object {{ Set-ItemProperty -Path $_.PSPath -Name IconResource -Value '{icon},0'; Set-ItemProperty -Path $_.PSPath -Name DisplayNameResource -Value '{shown}' }}; & ie4uinit.exe -show",
-        lnk = q(&nl.join("target.lnk").display().to_string()), target = q(&if !letter.is_empty() && Path::new(&format!("{letter}:\\")).exists() { format!("{letter}:\\") } else { root.display().to_string() }), icon = q(&icon.display().to_string()),
-        nl = q(&nl.display().to_string()), ini = q(&ini.display().to_string()), email = q(email), shown = q(&shown));
+        "Get-ChildItem 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\SyncRootManager' -ErrorAction SilentlyContinue | Where-Object {{ $_.PSChildName -like 'FramioDrive!*{email}' }} | ForEach-Object {{ Set-ItemProperty -Path $_.PSPath -Name IconResource -Value '{icon},0'; Set-ItemProperty -Path $_.PSPath -Name DisplayNameResource -Value '{shown}' }}; & ie4uinit.exe -show",
+        icon = q(&icon.display().to_string()), email = q(email), shown = q(&shown));
     ps(&script);
 }
 
@@ -428,7 +401,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         // Önce varsa eski bağlantıyı kapat
         let old = st.mounts.lock().unwrap().remove(&email);
         if let Some(m) = old { m.wait_uploads(60); drop(m); }
-        if !on { save_vcfg(&email, false, &letter, &label); ensure_network_location(&email); return Ok(()); }
+        if !on { save_vcfg(&email, false, &letter, &label); return Ok(()); }
         if !(letter.len() == 1 && letter.chars().all(|c| c.is_ascii_uppercase())) { return Err("Bir sürücü harfi seç".to_string()); }
         if label.is_empty() || label.chars().any(|c| c.is_control() || "<>:\"/\\|?*".contains(c)) { return Err("Sürücü adı boş ya da geçersiz karakter içeriyor".into()); }
         if Path::new(&format!("{letter}:\\")).exists() { return Err(format!("{letter}: harfi başka bir sürücüde kullanılıyor")); }
