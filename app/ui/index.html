@@ -98,7 +98,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .fbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
 .flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
 .flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
-.fr{user-select:none;display:grid;grid-template-columns:18px 34px 1fr 90px 130px 190px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
+.fr{user-select:none;display:grid;grid-template-columns:18px 34px 1fr 90px 130px 250px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
 .fr:hover{background:var(--glass2)}.fr.d{cursor:pointer}
 .fr svg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;justify-self:center}
 .fr .th{width:34px;height:34px;object-fit:cover;border-radius:8px;background:var(--track)}
@@ -169,7 +169,7 @@ select option{background:#222;color:#fff}
     <h1 id="emptyT">Bir hesap seç</h1><p id="emptyP">Soldan bir hesap seç ya da Google ile yeni hesap ekle. Drive'ın bilgisayarında bir klasör gibi görünecek.</p></div></div>
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
-      <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
+      <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
@@ -345,6 +345,7 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
 
 let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
 async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+$('gem').onclick=()=>invoke('open_gemini').catch(e=>toast(String(e),true));
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
 chkUpd();setInterval(chkUpd,600000);
@@ -382,7 +383,7 @@ async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'roo
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
@@ -395,6 +396,7 @@ $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows 
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
 $('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 $('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;const a=e.target.dataset.a;
+ if(a=='gem'){invoke('gemini_ask',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).then(()=>toast('İstem panoya kopyalandı — Gemini penceresinde Ctrl+V ile yapıştır')).catch(x=>toast(String(x),true));return}
  if(a=='web'){invoke('fs_web',{email:sel,id:r.dataset.id,mime:r.dataset.m}).catch(x=>toast(String(x),true));return}
  if(a=='open'){toast('Açılıyor…');invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true));return}
  if(a=='dl'){toast('İndiriliyor…');invoke('fs_download',{email:sel,id:r.dataset.id,name:r.dataset.n}).then(p=>toast('İndirildi: '+p)).catch(x=>toast(String(x),true));return}

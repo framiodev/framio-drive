@@ -149,6 +149,113 @@ fn send_args(argv: &[String]) -> Vec<String> {
     out
 }
 
+fn act_args(argv: &[String]) -> Vec<(String, String)> {
+    let mut out = vec![];
+    let mut it = argv.iter();
+    while let Some(a) = it.next() { if a == "--act" { if let (Some(k), Some(p)) = (it.next(), it.next()) { out.push((k.clone(), p.clone())); } } }
+    out
+}
+
+/// Bağlı sürücüdeki dosyalar için sağ tık komutları (yalnızca o sürücü harfinde görünür). `None` kaldırır.
+fn drive_menu(letter: Option<&str>) {
+    let Ok(exe) = std::env::current_exe() else { return };
+    let icon = ensure_icon();
+    let mut script = String::new();
+    let items: [(&str, &str, &str, bool); 3] = [
+        ("FramioLink", "link", "Framio Drive: Paylaşım bağlantısını kopyala", true),
+        ("FramioWeb", "web", "Framio Drive: Web'de aç", true),
+        ("FramioGemini", "gemini", "Framio Drive: Gemini ile özetle / açıkla", false),
+    ];
+    for (key, act, title, dirs) in items {
+        for (kind, is_dir) in [("*", false), ("Directory", true)] {
+            if is_dir && !dirs { continue; }
+            let base = format!("Software\\Classes\\{kind}\\shell\\{key}");
+            match letter {
+                Some(l) => script += &format!(
+                    "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('{base}'); $k.SetValue('', '{title}'); $k.SetValue('Icon','{icon}'); $k.SetValue('AppliesTo','System.ItemPathDisplay:~<\"{l}:\\\"'); \
+                     $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act {act} \"%1\"'); ",
+                    base = base, title = q(title), icon = q(&icon.display().to_string()), l = l.trim_end_matches(':'), exe = q(&exe.display().to_string()), act = act),
+                None => script += &format!("[Microsoft.Win32.Registry]::CurrentUser.DeleteSubKeyTree('{base}', $false); ", base = base),
+            }
+        }
+    }
+    ps(&script);
+}
+
+fn popup(msg: &str) {
+    ps(&format!("(New-Object -ComObject Wscript.Shell).Popup('{}', 3, 'Framio Drive', 64) | Out-Null", q(msg)));
+}
+
+fn set_clip(text: &str) { ps(&format!("Set-Clipboard -Value '{}'", q(text))); }
+
+fn share_url(id: &str, mime: &str) -> String {
+    match mime {
+        "application/vnd.google-apps.folder" => format!("https://drive.google.com/drive/folders/{id}"),
+        "application/vnd.google-apps.document" => format!("https://docs.google.com/document/d/{id}/edit"),
+        "application/vnd.google-apps.spreadsheet" => format!("https://docs.google.com/spreadsheets/d/{id}/edit"),
+        "application/vnd.google-apps.presentation" => format!("https://docs.google.com/presentation/d/{id}/edit"),
+        _ => format!("https://drive.google.com/file/d/{id}/view"),
+    }
+}
+
+fn open_gemini_window(app: &AppHandle) -> Result<(), String> {
+    if let Some(w) = app.get_webview_window("gemini") { let _ = w.show(); let _ = w.unminimize(); let _ = w.set_focus(); return Ok(()); }
+    let url: tauri::Url = "https://gemini.google.com/app".parse().map_err(|_| "adres hatalı".to_string())?;
+    tauri::WebviewWindowBuilder::new(app, "gemini", tauri::WebviewUrl::External(url))
+        .title("Gemini").inner_size(1100.0, 820.0).build().map(|_| ()).map_err(|e| e.to_string())
+}
+
+fn gemini_prompt(name: &str, url: &str) -> String {
+    format!("Bu Google Drive dosyasını incele, ne olduğunu açıkla ve özetle: \"{name}\"\nBağlantı: {url}")
+}
+
+/// Sürücü yolundaki (X:\klasör\dosya) öğeyi Drive'da bulur: (hesap, öğe).
+async fn resolve_drive_path(app: &AppHandle, path: &str) -> Result<(String, drivenet::DriveFile), String> {
+    let p = path.trim().trim_matches('"').to_string();
+    let letter = p.chars().next().ok_or("yol boş")?.to_ascii_uppercase().to_string();
+    let email = {
+        let st = app.state::<App>();
+        let g = st.mounts.lock().unwrap();
+        g.keys().find(|e| vcfg(e).1 == letter).cloned()
+    }.ok_or("Bu dosya Framio Drive sürücüsünde değil")?;
+    let d = drv(&email).await?;
+    let mut parent = "root".to_string();
+    let mut found: Option<drivenet::DriveFile> = None;
+    for comp in p.get(3..).unwrap_or("").split('\\').filter(|c| !c.is_empty()) {
+        let kids = d.list_children(&parent).await.map_err(de)?;
+        let f = kids.into_iter().find(|k| k.name.eq_ignore_ascii_case(comp)).ok_or_else(|| format!("Drive'da bulunamadı: {comp}"))?;
+        parent = f.id.clone();
+        found = Some(f);
+    }
+    Ok((email, found.ok_or("Sürücü kökü seçilemez")?))
+}
+
+fn run_action(app: AppHandle, act: String, path: String) {
+    tauri::async_runtime::spawn(async move {
+        let r: Result<String, String> = async {
+            let (email, f) = resolve_drive_path(&app, &path).await?;
+            match act.as_str() {
+                "link" => { let u = share_url(&f.id, &f.mime_type); set_clip(&u); Ok("Bağlantı panoya kopyalandı".to_string()) }
+                "web" => { std::process::Command::new("cmd").args(["/C", "start", "", &web_url(&email, &f.id, &f.mime_type)]).spawn().map_err(|e| e.to_string())?; Ok(String::new()) }
+                "gemini" => { set_clip(&gemini_prompt(&f.name, &share_url(&f.id, &f.mime_type))); open_gemini_window(&app)?; Ok("İstem panoya kopyalandı — Gemini'de Ctrl+V ile yapıştır".to_string()) }
+                _ => Err("bilinmeyen komut".to_string()),
+            }
+        }.await;
+        match r { Ok(m) if !m.is_empty() => popup(&m), Ok(_) => {}, Err(e) => popup(&e) }
+    });
+}
+
+#[tauri::command]
+fn open_gemini(app: AppHandle) -> Result<(), String> { open_gemini_window(&app) }
+
+/// Dosya için Gemini istemini panoya koyar ve Gemini penceresini açar.
+#[tauri::command]
+fn gemini_ask(app: AppHandle, email: String, id: String, name: String, mime: String) -> Result<(), String> {
+    let _ = email;
+    set_clip(&gemini_prompt(&name, &share_url(&id, &mime)));
+    open_gemini_window(&app)
+}
+
 fn safe_rel(rel: &str) -> Result<PathBuf, String> {
     let p = PathBuf::from(rel.replace('/', "\\"));
     if p.components().any(|c| !matches!(c, Component::Normal(_))) { return Err("geçersiz yol".into()); }
@@ -493,7 +600,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         // Önce varsa eski bağlantıyı kapat
         let old = st.mounts.lock().unwrap().remove(&email);
         if let Some(m) = old { m.wait_uploads(60); drop(m); }
-        if !on { save_vcfg(&email, false, &letter, &label); return Ok(()); }
+        if !on { save_vcfg(&email, false, &letter, &label); drive_menu(None); return Ok(()); }
         if !(letter.len() == 1 && letter.chars().all(|c| c.is_ascii_uppercase())) { return Err("Bir sürücü harfi seç".to_string()); }
         if label.is_empty() || label.chars().any(|c| c.is_control() || "<>:\"/\\|?*".contains(c)) { return Err("Sürücü adı boş ya da geçersiz karakter içeriyor".into()); }
         if Path::new(&format!("{letter}:\\")).exists() { return Err(format!("{letter}: harfi başka bir sürücüde kullanılıyor")); }
@@ -503,6 +610,7 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
         let m = drivefs::start(&email, &letter, &label, client)?;
         st.mounts.lock().unwrap().insert(email.clone(), m);
         save_vcfg(&email, true, &letter, &label);
+        drive_menu(Some(&letter));
         cleanup_legacy_view(&email);
         Ok(())
     }).await.map_err(|e| e.to_string())?
@@ -571,8 +679,10 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let files = send_args(&argv);
+            let acts = act_args(&argv);
+            for (k, p) in acts.clone() { run_action(app.clone(), k, p); }
             if !files.is_empty() { app.state::<App>().pending.lock().unwrap().extend(files); }
-            show_window(app);
+            if acts.is_empty() { show_window(app); } else if !files.is_empty() { show_window(app); }
         }))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(App::default())
@@ -619,6 +729,8 @@ fn main() {
             let args: Vec<String> = std::env::args().collect();
             let first = send_args(&args);
             if !first.is_empty() { app.state::<App>().pending.lock().unwrap().extend(first); }
+            let h0 = app.handle().clone();
+            std::thread::spawn(move || { std::thread::sleep(std::time::Duration::from_secs(6)); for (k, p) in act_args(&std::env::args().collect::<Vec<_>>()) { run_action(h0.clone(), k, p); } });
             // Bilinen hesapları açılışta otomatik bağla (arka planda)
             let h = app.handle().clone();
             std::thread::spawn(move || {
@@ -646,7 +758,7 @@ fn main() {
                         let mut last = String::new();
                         for attempt in 0..8 {
                             match drivefs::start(&e, &letter, &label, client.clone()) {
-                                Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); st.verr.lock().unwrap().remove(&e); last.clear(); break; }
+                                Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); st.verr.lock().unwrap().remove(&e); drive_menu(Some(&letter)); last.clear(); break; }
                                 Err(err) => { last = err; drivesync::flog!("bağlı sürücü başlatılamadı ({e}), deneme {}: {last}", attempt + 1); std::thread::sleep(std::time::Duration::from_secs(4)); }
                             }
                         }
@@ -658,9 +770,9 @@ fn main() {
         })
         .on_window_event(|w, ev| {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
-            if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
+            if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
