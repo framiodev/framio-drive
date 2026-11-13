@@ -17,7 +17,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { engines: Mutex<HashMap<String, Engine>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>> }
+struct App { engines: Mutex<HashMap<String, Engine>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -415,7 +415,7 @@ fn vdrive_info(app: State<App>, email: String) -> Value {
     let mounted = app.mounts.lock().unwrap().contains_key(&email);
     let mut letters = free_letters();
     if !letter.is_empty() && !letters.contains(&letter) { letters.push(letter.clone()); letters.sort(); }
-    json!({ "installed": drivefs::winfsp_installed(), "mounted": mounted, "on": on, "letter": letter, "label": if label.is_empty() { default_label(&email) } else { label }, "letters": letters })
+    json!({ "installed": drivefs::winfsp_installed(), "mounted": mounted, "on": on, "letter": letter, "label": if label.is_empty() { default_label(&email) } else { label }, "letters": letters, "err": app.verr.lock().unwrap().get(&email).cloned().unwrap_or_default() })
 }
 
 #[tauri::command]
@@ -507,6 +507,9 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     let u = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?
         .ok_or_else(|| "Güncelleme bulunamadı".to_string())?;
     u.download_and_install(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+    // Yeniden başlamadan önce bağlı sürücüleri düzgünce kapat (harf yeni sürece serbest kalsın)
+    let h = app.clone();
+    let _ = tauri::async_runtime::spawn_blocking(move || shutdown_mounts(&h)).await;
     app.restart();
 }
 
@@ -585,10 +588,15 @@ fn main() {
                         if !on || letter.is_empty() || st.mounts.lock().unwrap().contains_key(&e) { continue; }
                         let label = if label.is_empty() { default_label(&e) } else { label };
                         set_net_label(&label);
-                        match drivefs::start(&e, &letter, &label, client.clone()) {
-                            Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); }
-                            Err(err) => drivesync::flog!("bağlı sürücü başlatılamadı ({e}): {err}"),
+                        // Güncelleme/yeniden başlatma sırasında eski süreç harfi henüz bırakmamış olabilir: birkaç kez dene
+                        let mut last = String::new();
+                        for attempt in 0..8 {
+                            match drivefs::start(&e, &letter, &label, client.clone()) {
+                                Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); st.verr.lock().unwrap().remove(&e); last.clear(); break; }
+                                Err(err) => { last = err; drivesync::flog!("bağlı sürücü başlatılamadı ({e}), deneme {}: {last}", attempt + 1); std::thread::sleep(std::time::Duration::from_secs(4)); }
+                            }
                         }
+                        if !last.is_empty() { st.verr.lock().unwrap().insert(e.clone(), last); }
                     }
                 }
             });
