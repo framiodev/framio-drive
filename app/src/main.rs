@@ -17,7 +17,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { engines: Mutex<HashMap<String, Engine>>, pending: Mutex<Vec<String>> }
+struct App { engines: Mutex<HashMap<String, Engine>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -274,6 +274,12 @@ async fn disconnect(app: State<'_, App>, email: String) -> Result<(), String> {
 #[tauri::command]
 async fn sign_out(app: State<'_, App>, email: String) -> Result<(), String> {
     let email = email.to_lowercase();
+    if let Some(m) = app.mounts.lock().unwrap().get(&email) {
+        if m.pending() > 0 { return Err(format!("{} dosya hâlâ yükleniyor; bitince tekrar dene", m.pending())); }
+    }
+    let vm = app.mounts.lock().unwrap().remove(&email);
+    if vm.is_some() { tauri::async_runtime::spawn_blocking(move || drop(vm)).await.map_err(|e| e.to_string())?; }
+    { let (_, l, n) = vcfg(&email); save_vcfg(&email, false, &l, &n); }
     let eng = app.engines.lock().unwrap().remove(&email);
     if let Some(e) = &eng {
         let (p, u, f, _) = e.summary();
@@ -356,6 +362,71 @@ async fn set_drive(email: String, letter: String, label: String) -> Result<(), S
     }).await.map_err(|e| e.to_string())?
 }
 
+// ---- Bağlı sürücü (WinFsp): Gezgin'de gerçek ağ sürücüsü, hesap kotasını gösterir ----
+fn vcfg(email: &str) -> (bool, String, String) {
+    let s = load_settings();
+    let d = &s["vdrive"][email];
+    (d["on"].as_bool().unwrap_or(false), d["letter"].as_str().unwrap_or("").to_string(), d["label"].as_str().unwrap_or("").to_string())
+}
+fn save_vcfg(email: &str, on: bool, letter: &str, label: &str) {
+    let mut s = load_settings();
+    s["vdrive"][email] = json!({ "on": on, "letter": letter, "label": label });
+    save_settings(&s);
+}
+fn default_label(email: &str) -> String {
+    let n = load_names();
+    let name = n.get(email).and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+    if !name.is_empty() { sanitize(&name) } else { email.split('@').next().unwrap_or("Drive").to_string() }
+}
+
+/// Açık olan tüm bağlı sürücüleri kapatır; bekleyen yüklemelerin bitmesini bekler (en çok 120 sn).
+fn shutdown_mounts(app: &AppHandle) {
+    let ms: Vec<drivefs::Mount> = { let st = app.state::<App>(); let mut g = st.mounts.lock().unwrap(); g.drain().map(|(_, m)| m).collect() };
+    for m in &ms { m.wait_uploads(120); }
+    drop(ms);
+}
+
+#[tauri::command]
+fn vdrive_info(app: State<App>, email: String) -> Value {
+    let email = email.to_lowercase();
+    let (on, letter, label) = vcfg(&email);
+    let mounted = app.mounts.lock().unwrap().contains_key(&email);
+    let mut letters = free_letters();
+    if !letter.is_empty() && !letters.contains(&letter) { letters.push(letter.clone()); letters.sort(); }
+    json!({ "installed": drivefs::winfsp_installed(), "mounted": mounted, "on": on, "letter": letter, "label": if label.is_empty() { default_label(&email) } else { label }, "letters": letters })
+}
+
+#[tauri::command]
+async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, label: String) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let email = email.to_lowercase();
+        let letter = letter.trim().trim_end_matches(':').to_uppercase();
+        let label = label.trim().to_string();
+        let st = app.state::<App>();
+        // Önce varsa eski bağlantıyı kapat
+        let old = st.mounts.lock().unwrap().remove(&email);
+        if let Some(m) = old { m.wait_uploads(60); drop(m); }
+        if !on { save_vcfg(&email, false, &letter, &label); return Ok(()); }
+        if !(letter.len() == 1 && letter.chars().all(|c| c.is_ascii_uppercase())) { return Err("Bir sürücü harfi seç".to_string()); }
+        if label.is_empty() || label.chars().any(|c| c.is_control() || "<>:\"/\\|?*".contains(c)) { return Err("Sürücü adı boş ya da geçersiz karakter içeriyor".into()); }
+        if Path::new(&format!("{letter}:\\")).exists() { return Err(format!("{letter}: harfi başka bir sürücüde kullanılıyor")); }
+        if !drivefs::winfsp_installed() { return Err("WinFsp yüklü değil — önce \"WinFsp'yi yükle\"ye bas".into()); }
+        let client = auth::Client::load()?;
+        let m = drivefs::start(&email, &letter, &label, client)?;
+        st.mounts.lock().unwrap().insert(email.clone(), m);
+        save_vcfg(&email, true, &letter, &label);
+        Ok(())
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn install_winfsp() -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let ok = run_hidden("winget", &["install", "--id", "WinFsp.WinFsp", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"]);
+        if drivefs::winfsp_installed() { Ok(()) } else if ok { Err("Yükleme tamamlandı ama WinFsp algılanamadı; uygulamayı yeniden başlat".into()) } else { Err("WinFsp yüklenemedi. winget yoksa https://winfsp.dev adresinden elle kur".into()) }
+    }).await.map_err(|e| e.to_string())?
+}
+
 #[tauri::command]
 async fn add_account(app: State<'_, App>) -> Result<String, String> {
     let client = auth::Client::load()?;
@@ -429,7 +500,7 @@ fn main() {
             if let Some(c) = load_settings()["accent"].as_str().and_then(parse_hex) { *ACCENT.lock().unwrap() = c; }
             let img = |st: logo::St, ph: f32| tauri::image::Image::new_owned(logo::render(32, accent(), st, ph), 32, 32);
             TrayIconBuilder::with_id("main").icon(img(logo::St::Idle, 0.0)).tooltip("Framio Drive").menu(&menu).show_menu_on_left_click(false)
-                .on_menu_event(|app, ev| match ev.id.as_ref() { "open" => show_window(app), "quit" => app.exit(0), _ => {} })
+                .on_menu_event(|app, ev| match ev.id.as_ref() { "open" => show_window(app), "quit" => { let h = app.clone(); std::thread::spawn(move || { shutdown_mounts(&h); h.exit(0); }); }, _ => {} })
                 .on_tray_icon_event(|tray, ev| {
                     if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = ev { show_window(tray.app_handle()); }
                 })
@@ -479,6 +550,19 @@ fn main() {
                         }
                     }
                 }
+                // Bağlı sürücü açık olan hesapları bağla
+                if let Ok(client) = auth::Client::load() {
+                    for e in auth::accounts() {
+                        let e = e.to_lowercase();
+                        let (on, letter, label) = vcfg(&e);
+                        if !on || letter.is_empty() || st.mounts.lock().unwrap().contains_key(&e) { continue; }
+                        let label = if label.is_empty() { default_label(&e) } else { label };
+                        match drivefs::start(&e, &letter, &label, client.clone()) {
+                            Ok(m) => { st.mounts.lock().unwrap().insert(e.clone(), m); }
+                            Err(err) => drivesync::flog!("bağlı sürücü başlatılamadı ({e}): {err}"),
+                        }
+                    }
+                }
             });
             Ok(())
         })
@@ -486,7 +570,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, check_update, install_update])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, check_update, install_update])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

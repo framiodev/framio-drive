@@ -3,6 +3,14 @@ name = "drivefs"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "drivefs"
+path = "src/lib.rs"
+
+[[bin]]
+name = "drivefs"
+path = "src/main.rs"
+
 # Ana projeden bagimsiz derlenir (kendi Cargo.lock'u olur)
 [workspace]
 

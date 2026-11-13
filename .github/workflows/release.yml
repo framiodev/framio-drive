@@ -17,6 +17,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: WinFsp kur (gelistirici dosyalariyla)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release download -R winfsp/winfsp -p '*.msi' -D $env:RUNNER_TEMP
+          $msi = Get-ChildItem $env:RUNNER_TEMP -Filter 'winfsp*.msi' | Select-Object -First 1
+          Start-Process msiexec -ArgumentList '/i', "`"$($msi.FullName)`"", '/qn', 'ADDLOCAL=ALL' -Wait
+          if (-not (Test-Path 'C:\Program Files (x86)\WinFsp\inc')) { throw 'WinFsp inc klasoru yok' }
+
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: swatinem/rust-cache@v2
