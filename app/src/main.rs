@@ -679,10 +679,11 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
             let files = send_args(&argv);
+            let has_files = !files.is_empty();
             let acts = act_args(&argv);
             for (k, p) in acts.clone() { run_action(app.clone(), k, p); }
             if !files.is_empty() { app.state::<App>().pending.lock().unwrap().extend(files); }
-            if acts.is_empty() { show_window(app); } else if !files.is_empty() { show_window(app); }
+            if acts.is_empty() || has_files { show_window(app); }
         }))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(App::default())
