@@ -27,6 +27,25 @@ const FOLDER: &str = "application/vnd.google-apps.folder";
 fn st(code: u32) -> FspError {
     FspError::NTSTATUS(code as i32)
 }
+static LOGS: Mutex<Vec<(u64, String)>> = Mutex::new(Vec::new());
+static LOGSEQ: AtomicU64 = AtomicU64::new(0);
+static UP_OK: AtomicU64 = AtomicU64::new(0);
+static UP_FAIL: AtomicU64 = AtomicU64::new(0);
+/// Etkinlik günlüğüne satır ekler (uygulama arayüzü okur).
+pub fn push_log(s: String) {
+    println!("{s}");
+    let n = LOGSEQ.fetch_add(1, Ordering::SeqCst) + 1;
+    let mut g = LOGS.lock().unwrap();
+    g.push((n, s));
+    let l = g.len();
+    if l > 300 { g.drain(0..l - 300); }
+}
+pub fn recent_logs(since: u64) -> Vec<(u64, String)> { LOGS.lock().unwrap().iter().filter(|(n, _)| *n > since).cloned().collect() }
+/// (başarıyla yüklenen, başarısız) — bu oturumda.
+pub fn stats() -> (u64, u64) { (UP_OK.load(Ordering::SeqCst), UP_FAIL.load(Ordering::SeqCst)) }
+pub fn note_ok(name: &str) { UP_OK.fetch_add(1, Ordering::SeqCst); push_log(format!("Yüklendi: {name}")); }
+pub fn note_fail(name: &str, why: &str) { UP_FAIL.fetch_add(1, Ordering::SeqCst); push_log(format!("Yüklenemedi: {name} — {why}")); }
+
 fn not_found() -> FspError {
     st(0xC000_0034) // STATUS_OBJECT_NAME_NOT_FOUND
 }
@@ -422,6 +441,7 @@ impl Fs {
                         None => d.start_upload(&name, &parent, size).await,
                     }
                     .map_err(|e| format!("{e:?}"))?;
+                    push_log(format!("Yükleniyor: {name} ({:.1} MB)", size as f64 / 1048576.0));
                     let mut last = 0u64;
                     d.upload_file(&session, &l.path, |c| {
                         let pct = c * 100 / size.max(1);
@@ -438,13 +458,13 @@ impl Fs {
                         core.pending.lock().unwrap().remove(&tid);
                         let _ = std::fs::remove_file(&l.path);
                         core.invalidate(&parent);
-                        println!("[drivefs] yuklendi: {name}");
+                        note_ok(&name);
                         break;
                     }
                     Err(e) => {
                         eprintln!("[drivefs] yukleme hatasi ({name}), deneme {attempt}: {e}");
                         if attempt >= 8 {
-                            eprintln!("[drivefs] {name} yuklenemedi; yerel kopya: {}", l.path.display());
+                            note_fail(&name, &format!("yerel kopya: {}", l.path.display()));
                             break;
                         }
                         tokio::time::sleep(Duration::from_secs(5 * attempt as u64)).await;

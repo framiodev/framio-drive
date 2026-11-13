@@ -92,6 +92,19 @@ impl Drive {
         }
     }
 
+    /// Ada göre arama (çöpteki dosyalar hariç, ilk 100 sonuç).
+    pub async fn search(&self, text: &str) -> Result<Vec<DriveFile>, Error> {
+        let esc = text.replace('\\', "\\\\").replace('\'', "\\'");
+        let r = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
+            ("q", format!("name contains '{esc}' and trashed=false")),
+            ("fields", "files(id,name,mimeType,size,md5Checksum,modifiedTime,thumbnailLink,parents)".to_string()),
+            ("pageSize", "100".to_string()),
+        ]).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let l: FileList = r.json().await?;
+        Ok(l.files)
+    }
+
     /// Değişiklik akışının başlangıç işareti (bundan sonrası "yeni" sayılır).
     pub async fn changes_start_token(&self) -> Result<String, Error> {
         let r = self.http.get(format!("{API}/changes/startPageToken")).bearer_auth(&self.token).send().await?;

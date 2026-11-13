@@ -202,6 +202,44 @@ async fn fs_list(email: String, parent: String) -> Result<Value, String> {
     })).collect::<Vec<_>>()))
 }
 
+fn items_json(v: Vec<drivenet::DriveFile>) -> Value {
+    json!(v.iter().map(|f| json!({
+        "id": f.id, "name": f.name, "folder": f.mime_type == "application/vnd.google-apps.folder",
+        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.modified_time, "mime": f.mime_type
+    })).collect::<Vec<_>>())
+}
+fn clean_name(n: &str) -> String { n.chars().map(|c| if "\\/:*?\"<>|".contains(c) { '_' } else { c }).collect() }
+
+#[tauri::command]
+async fn fs_search(email: String, q: String) -> Result<Value, String> {
+    Ok(items_json(drv(&email).await?.search(q.trim()).await.map_err(de)?))
+}
+
+/// Dosyayı geçici klasöre indirip varsayılan uygulamayla açar.
+#[tauri::command]
+async fn fs_open(email: String, id: String, name: String) -> Result<(), String> {
+    let d = drv(&email).await?;
+    let dir = std::env::temp_dir().join("FramioOpen");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let dest = dir.join(format!("{}_{}", &id[..id.len().min(6)], clean_name(&name)));
+    d.download(&id, &dest).await.map_err(de)?;
+    std::process::Command::new("cmd").args(["/C", "start", "", &dest.display().to_string()]).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Dosyayı İndirilenler klasörüne indirir; yolunu döndürür.
+#[tauri::command]
+async fn fs_download(email: String, id: String, name: String) -> Result<String, String> {
+    let d = drv(&email).await?;
+    let dir = Path::new(&std::env::var("USERPROFILE").unwrap_or_default()).join("Downloads");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let base = clean_name(&name);
+    let mut dest = dir.join(&base);
+    let mut i = 1;
+    while dest.exists() { dest = dir.join(format!("({i}) {base}")); i += 1; }
+    d.download(&id, &dest).await.map_err(de)?;
+    Ok(dest.display().to_string())
+}
+
 #[tauri::command]
 async fn fs_usage(email: String) -> Result<Value, String> {
     let (limit, used) = drv(&email).await?.storage_quota().await.map_err(de)?;
@@ -254,9 +292,9 @@ async fn fs_upload(email: String, parent: String, paths: Vec<String>) -> Result<
         let Some(name) = path.file_name().map(|n| n.to_string_lossy().into_owned()) else { continue };
         let Ok(meta) = std::fs::metadata(&path) else { failed.push(name); continue };
         if meta.is_dir() {
-            match d.create_folder(&name, &par).await { Ok(id) => stack.push((path, id)), Err(e) => { drivesync::flog!("klasör açılamadı {name}: {e:?}"); failed.push(name) } }
+            match d.create_folder(&name, &par).await { Ok(id) => stack.push((path, id)), Err(e) => { drivefs::note_fail(&name, &format!("{e:?}")); failed.push(name) } }
         } else if !junk(&name) {
-            match put_file(&d, &path, &name, &par).await { Ok(()) => sent += 1, Err(e) => { drivesync::flog!("yüklenemedi {name}: {e}"); failed.push(name) } }
+            match put_file(&d, &path, &name, &par).await { Ok(()) => { sent += 1; drivefs::note_ok(&name) } Err(e) => { drivefs::note_fail(&name, &e); failed.push(name) } }
         }
     }
     Ok(json!({ "sent": sent, "failed": failed }))
@@ -285,7 +323,7 @@ fn accounts(app: State<App>) -> Value {
     let list: Vec<Value> = auth::accounts().into_iter().map(|e| {
         let e = e.to_lowercase();
         let m = mounts.get(&e);
-        json!({ "email": e, "name": names.get(&e).and_then(|v| v.as_str()).unwrap_or(""), "connected": true, "mounted": m.is_some(), "pending": m.map(|m| m.pending()).unwrap_or(0) })
+        json!({ "email": e, "name": names.get(&e).and_then(|v| v.as_str()).unwrap_or(""), "connected": true, "mounted": m.is_some(), "pending": m.map(|m| m.pending()).unwrap_or(0), "up_ok": drivefs::stats().0, "up_fail": drivefs::stats().1 })
     }).collect();
     json!(list)
 }
@@ -471,7 +509,7 @@ fn rename_account(email: String, name: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn logs(since: u64) -> Value { json!(drivesync::recent_logs(since)) }
+fn logs(since: u64) -> Value { json!(drivefs::recent_logs(since)) }
 
 #[tauri::command]
 fn app_version(app: tauri::AppHandle) -> String { app.package_info().version.to_string() }
@@ -588,7 +626,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
