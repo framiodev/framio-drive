@@ -113,6 +113,16 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .fusage{display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:16px}
 .ubar{width:220px;height:8px;border-radius:9px;background:var(--track);overflow:hidden;flex:none}.ubar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .8s var(--ease)}
 .tab.scroll{overflow:auto;display:flex;flex-direction:column;gap:14px}.tab.scroll.fr input.ck{width:16px;height:16px;padding:0;margin:0;accent-color:var(--acc)}
+.seg{display:flex;border:1px solid var(--stroke);border-radius:10px;overflow:hidden}.seg b{padding:5px 10px;cursor:pointer;font-weight:500;color:var(--mut);background:var(--glass)}.seg b.on{background:var(--glass2);color:var(--text)}
+#frows.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cw),1fr));gap:12px;padding:6px}
+#frows.g.m{--cw:170px;--ch:118px}#frows.g.x{--cw:270px;--ch:200px}
+#frows.g .fr{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px;position:relative}
+#frows.g .fr .ck{position:absolute;left:14px;top:14px;z-index:2}
+#frows.g .fr .th{width:100%;height:var(--ch);border-radius:10px}
+#frows.g .fr>svg{width:100%;height:var(--ch);padding:calc(var(--ch)*.24);background:var(--track);border-radius:10px;stroke-width:1.4}
+#frows.g .fr .n{text-align:center;font-size:13px}#frows.g .fr .m{text-align:center}#frows.g .fr .m+.m{display:none}
+#frows.g .fr .x{position:absolute;right:12px;top:12px;flex-wrap:wrap;max-width:75%}
+#frows.g .empty{grid-column:1/-1}
 .hide{display:none!important}
 .hide{display:none!important}
 ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--track);border-radius:9px}
@@ -164,7 +174,7 @@ select option{background:#222;color:#fff}
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
@@ -356,20 +366,23 @@ function fcat(f){const m=String(f.mime||''),e=(f.name.split('.').pop()||'').toLo
  if(['jpg','jpeg','png','gif','webp','heic','raw','arw','cr2','nef','dng'].includes(e))return 'img';if(['mp4','mov','mkv','avi','webm'].includes(e))return 'vid';if(['mp3','wav','flac','m4a'].includes(e))return 'aud';return 'gen'}
 function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var(--acc2)"><path d="M3 7h6l2 2h10v10H3z"/></svg>`;const [c,p]=IC[fcat(f)];
  const svg=`<svg viewBox="0 0 24 24" style="stroke:${c}">${p}</svg>`;
- if(f.thumb&&/^https:/.test(f.thumb))return `<img class="th" src="${esc(f.thumb)}" referrerpolicy="no-referrer" loading="lazy" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(svg)}">`;return svg}
+ if(f.thumb&&/^https:/.test(f.thumb))return `<img class="th" src="${esc(f.thumb.replace(/=s\d+(-c)?$/,'=s'+(vmode=='x'?480:vmode=='m'?320:96)))}" referrerpolicy="no-referrer" loading="lazy" onerror="this.outerHTML=this.dataset.fb" data-fb="${esc(svg)}">`;return svg}
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
  $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage()}
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 const curId=()=>fPath[fPath.length-1].id;
-let fSearch='';
+let fSearch='',vmode=localStorage.getItem('vmode')||'l';
+function applyVM(){const b=$('frows');b.className=vmode=='l'?'':'g '+vmode;document.querySelectorAll('#vmodes b').forEach(x=>x.classList.toggle('on',x.dataset.m==vmode))}
+$('vmodes').onclick=e=>{const m=e.target.dataset.m;if(m){vmode=m;localStorage.setItem('vmode',m);applyVM();loadFiles(true)}};
+applyVM();
 async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}];fSearch=''}
  const me=sel,box=$('frows');if(!box.children.length)box.innerHTML='<div class="mut" style="padding:14px">Yükleniyor…</div>';
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder||nat?'':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
@@ -382,13 +395,17 @@ $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows 
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
 $('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 $('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;const a=e.target.dataset.a;
+ if(a=='web'){invoke('fs_web',{email:sel,id:r.dataset.id,mime:r.dataset.m}).catch(x=>toast(String(x),true));return}
  if(a=='open'){toast('Açılıyor…');invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true));return}
  if(a=='dl'){toast('İndiriliyor…');invoke('fs_download',{email:sel,id:r.dataset.id,name:r.dataset.n}).then(p=>toast('İndirildi: '+p)).catch(x=>toast(String(x),true));return}
  if(a=='ren'){const n=await ask('Yeni ad',r.dataset.n);if(n&&n!==r.dataset.n){try{await invoke('fs_rename',{email:sel,id:r.dataset.id,name:n,parent:curId()});loadFiles()}catch(x){toast(String(x),true)}}return}
  if(a=='del'){if(!await confirmBox('Çöp kutusuna taşı',`“${r.dataset.n}” Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;try{await invoke('fs_trash',{email:sel,id:r.dataset.id});loadFiles()}catch(x){toast(String(x),true)}return}
  if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles()}};
-$('frows').ondblclick=e=>{const r=e.target.closest('.fr');if(r&&r.dataset.f=='0'&&!e.target.dataset.a&&!e.target.classList.contains('ck'))invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true))};
+$('frows').ondblclick=e=>{const r=e.target.closest('.fr');if(r&&r.dataset.f=='0'&&!e.target.dataset.a&&!e.target.classList.contains('ck'))invoke(String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).catch(x=>toast(String(x),true))};
 $('fnew').onclick=async()=>{const n=await ask('Yeni klasör adı');if(n){try{await invoke('fs_mkdir',{email:sel,parent:curId(),name:n});loadFiles()}catch(x){toast(String(x),true)}}};
+$('fdoc').onclick=async()=>{const k=await new Promise(r=>{const m=document.createElement('div');m.className='modal';m.innerHTML='<div class="glass"><div style="font-weight:650;margin-bottom:12px">Yeni Google belgesi</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn" data-k="doc">Doküman (Docs)</button><button class="btn" data-k="sheet">Tablo (Sheets)</button><button class="btn" data-k="slides">Sunum (Slides)</button><button class="btn" data-k="">Vazgeç</button></div></div>';m.onclick=e=>{const b=e.target.closest('[data-k]');if(b||e.target==m){m.remove();r(b?b.dataset.k:'')}};document.body.appendChild(m)});
+ if(!k)return;const n=await ask('Belge adı','Adsız '+({doc:'doküman',sheet:'tablo',slides:'sunum'}[k]));if(!n)return;
+ try{await invoke('fs_new_doc',{email:sel,parent:curId(),name:n,kind:k});toast('Oluşturuldu, tarayıcıda açılıyor…');loadFiles()}catch(x){toast(String(x),true)}};
 $('freload').onclick=()=>loadFiles();
 $('freveal').onclick=()=>invoke('fs_reveal',{email:sel,rel:fPath.slice(1).map(p=>p.name).join('\\')}).catch(e=>toast(String(e),true));
 async function upFiles(paths){if(!paths.length||!sel)return;toast(paths.length+' öğe yükleniyor…');

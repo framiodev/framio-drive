@@ -207,6 +207,15 @@ impl Drive {
         v["id"].as_str().map(String::from).ok_or(Error::Protocol("id yok"))
     }
 
+    /// Verilen türde (ör. Google Doc/Sheet) boş bir öğe oluşturur; kimliğini döndürür.
+    pub async fn create_item(&self, name: &str, parent: &str, mime: &str) -> Result<String, Error> {
+        let meta = serde_json::json!({ "name": name, "parents": [parent], "mimeType": mime });
+        let r = self.http.post(format!("{API}/files")).bearer_auth(&self.token).query(&[("fields", "id")]).json(&meta).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let v: serde_json::Value = r.json().await?;
+        v["id"].as_str().map(String::from).ok_or(Error::Protocol("id yok"))
+    }
+
     /// Dosya/klasörü Drive çöpüne atar (30 gün geri alınabilir). Zaten yoksa (404) başarı sayılır.
     pub async fn trash(&self, id: &str) -> Result<(), Error> {
         let r = self.http.patch(format!("{API}/files/{id}")).bearer_auth(&self.token)

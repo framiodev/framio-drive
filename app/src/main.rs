@@ -240,6 +240,34 @@ async fn fs_download(email: String, id: String, name: String) -> Result<String, 
     Ok(dest.display().to_string())
 }
 
+fn web_url(email: &str, id: &str, mime: &str) -> String {
+    let kind = match mime {
+        "application/vnd.google-apps.document" => "document",
+        "application/vnd.google-apps.spreadsheet" => "spreadsheets",
+        "application/vnd.google-apps.presentation" => "presentation",
+        _ => "",
+    };
+    let au = email.replace('@', "%40");
+    if kind.is_empty() { format!("https://drive.google.com/file/d/{id}/view?authuser={au}") }
+    else { format!("https://docs.google.com/{kind}/d/{id}/edit?authuser={au}") }
+}
+
+/// Google Doc/Sheet/Slides (ve diğer dosyaları) tarayıcıda, ilgili hesapla açar.
+#[tauri::command]
+fn fs_web(email: String, id: String, mime: String) -> Result<(), String> {
+    std::process::Command::new("cmd").args(["/C", "start", "", &web_url(&email, &id, &mime)]).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Yeni boş Google Doc / Sheet / Slides oluşturur ve açar.
+#[tauri::command]
+async fn fs_new_doc(email: String, parent: String, name: String, kind: String) -> Result<(), String> {
+    let mime = match kind.as_str() { "doc" => "application/vnd.google-apps.document", "sheet" => "application/vnd.google-apps.spreadsheet", "slides" => "application/vnd.google-apps.presentation", _ => return Err("bilinmeyen tür".into()) };
+    let name = name.trim().to_string();
+    if bad_name(&name) { return Err("geçersiz ad".into()); }
+    let id = drv(&email).await?.create_item(&name, &parent, mime).await.map_err(de)?;
+    fs_web(email, id, mime.to_string())
+}
+
 #[tauri::command]
 async fn fs_usage(email: String) -> Result<Value, String> {
     let (limit, used) = drv(&email).await?.storage_quota().await.map_err(de)?;
@@ -632,7 +660,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
