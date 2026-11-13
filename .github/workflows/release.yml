@@ -1,0 +1,57 @@
+name: Surum yayinla
+
+# Yeni surum cikarmak icin: git tag v0.2.0 && git push origin v0.2.0
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    env:
+      DRIVE_CLIENT_ID: ${{ secrets.DRIVE_CLIENT_ID }}
+      DRIVE_CLIENT_SECRET: ${{ secrets.DRIVE_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: app
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Tauri CLI kur
+        run: npm install -g @tauri-apps/cli@2
+
+      - name: Surumu etiketten al ve guncelleyici anahtarini yaz
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}".TrimStart('v')
+          $p = "app/tauri.conf.json"
+          $j = Get-Content $p -Raw | ConvertFrom-Json
+          $j.version = $v
+          $j.plugins.updater.pubkey = "${{ secrets.TAURI_UPDATER_PUBKEY }}"
+          if (-not $j.plugins.updater.pubkey) { throw "TAURI_UPDATER_PUBKEY secret tanimli degil" }
+          $j | ConvertTo-Json -Depth 20 | Set-Content $p -Encoding utf8
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: app
+          tauriScript: tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: Framio Drive ${{ github.ref_name }}
+          releaseBody: Framio Drive ${{ github.ref_name }}
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true

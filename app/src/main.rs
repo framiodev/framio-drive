@@ -396,6 +396,22 @@ fn rename_account(email: String, name: String) -> Result<(), String> {
 #[tauri::command]
 fn logs(since: u64) -> Value { json!(drivesync::recent_logs(since)) }
 
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let u = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
+    Ok(u.map(|u| u.version))
+}
+
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
+    use tauri_plugin_updater::UpdaterExt;
+    let u = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?
+        .ok_or_else(|| "Güncelleme bulunamadı".to_string())?;
+    u.download_and_install(|_, _| {}, || {}).await.map_err(|e| e.to_string())?;
+    app.restart();
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
@@ -403,6 +419,7 @@ fn main() {
             if !files.is_empty() { app.state::<App>().pending.lock().unwrap().extend(files); }
             show_window(app);
         }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(App::default())
         .setup(|app| {
             // Sistem tepsisi
@@ -469,7 +486,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, check_update, install_update])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
