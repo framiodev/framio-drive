@@ -1,9 +1,12 @@
 name: Surum yayinla
 
-# Yeni surum cikarmak icin: git tag v0.2.0 && git push origin v0.2.0
+# Yeni surum cikarmak icin app/tauri.conf.json icindeki "version" degerini artirip main'e gonder.
+# O surumun release'i yoksa derler, etiketi ve release'i kendisi olusturur.
 on:
   push:
-    tags: ['v*']
+    branches: [main]
+    paths: ['app/**', 'drivefs/**', 'drivenet/**', 'drivesync/**', 'drivecore/**', '.github/workflows/release.yml']
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,7 +20,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Surum zaten yayinlanmis mi?
+        id: chk
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $ver = (Get-Content app/tauri.conf.json -Raw | ConvertFrom-Json).version
+          "ver=$ver" >> $env:GITHUB_OUTPUT
+          gh release view "v$ver" 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) { "skip=true" >> $env:GITHUB_OUTPUT; Write-Host "v$ver zaten yayinlanmis, atlaniyor" } else { "skip=false" >> $env:GITHUB_OUTPUT }
+          $global:LASTEXITCODE = 0
+
       - name: WinFsp kur (gelistirici dosyalariyla)
+        if: steps.chk.outputs.skip != 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -28,32 +44,34 @@ jobs:
           if (-not (Test-Path 'C:\Program Files (x86)\WinFsp\inc')) { throw 'WinFsp inc klasoru yok' }
 
       - uses: dtolnay/rust-toolchain@stable
+        if: steps.chk.outputs.skip != 'true'
 
       - uses: swatinem/rust-cache@v2
+        if: steps.chk.outputs.skip != 'true'
         with:
           workspaces: app
 
       - uses: actions/setup-node@v4
+        if: steps.chk.outputs.skip != 'true'
         with:
           node-version: 22
 
       - name: Tauri CLI kur
+        if: steps.chk.outputs.skip != 'true'
         run: npm install -g @tauri-apps/cli@2
 
-      - name: Surumu etiketten al ve guncelleyici anahtarini yaz
+      - name: Guncelleyici acik anahtarini yaz
+        if: steps.chk.outputs.skip != 'true'
         shell: pwsh
         run: |
-          $m = [regex]::Match("${{ github.ref_name }}", '\d+\.\d+\.\d+')
-          if (-not $m.Success) { throw "Etiket vX.Y.Z bicimde olmali (ornek v0.2.0), gelen: ${{ github.ref_name }}" }
-          $v = $m.Value
           $p = "app/tauri.conf.json"
           $j = Get-Content $p -Raw | ConvertFrom-Json
-          $j.version = $v
           $j.plugins.updater.pubkey = "${{ secrets.TAURI_UPDATER_PUBKEY }}"
           if (-not $j.plugins.updater.pubkey) { throw "TAURI_UPDATER_PUBKEY secret tanimli degil" }
           $j | ConvertTo-Json -Depth 20 | Set-Content $p -Encoding utf8
 
       - uses: tauri-apps/tauri-action@v0
+        if: steps.chk.outputs.skip != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -61,9 +79,9 @@ jobs:
         with:
           projectPath: app
           tauriScript: tauri
-          tagName: ${{ github.ref_name }}
-          releaseName: Framio Drive ${{ github.ref_name }}
-          releaseBody: Framio Drive ${{ github.ref_name }}
+          tagName: v${{ steps.chk.outputs.ver }}
+          releaseName: Framio Drive v${{ steps.chk.outputs.ver }}
+          releaseBody: Framio Drive v${{ steps.chk.outputs.ver }}
           releaseDraft: false
           prerelease: false
           includeUpdaterJson: true
