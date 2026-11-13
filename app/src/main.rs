@@ -492,6 +492,9 @@ fn rename_account(email: String, name: String) -> Result<(), String> {
 fn logs(since: u64) -> Value { json!(drivesync::recent_logs(since)) }
 
 #[tauri::command]
+fn app_version(app: tauri::AppHandle) -> String { app.package_info().version.to_string() }
+
+#[tauri::command]
 async fn check_update(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_updater::UpdaterExt;
     let u = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
@@ -595,7 +598,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, check_update, install_update])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, connect, disconnect, add_account, clear_cache, retry, set_paused, open_folder, rename_account, logs, take_pending, list_dirs, make_dir, send_files, sign_out, set_accent, drive_info, set_drive, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

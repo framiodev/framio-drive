@@ -136,7 +136,7 @@ select option{background:#222;color:#fff}
     <h1 id="emptyT">Bir hesap seç</h1><p id="emptyP">Soldan bir hesap seç ya da Google ile yeni hesap ekle. Drive'ın bilgisayarında bir klasör gibi görünecek.</p></div></div>
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
-      <button class="btn pri" id="upd" style="display:none"></button>
+      <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
       <button class="btn" id="pauseTop"></button>
       <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="path" id="folder"></div>
@@ -326,8 +326,10 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
  if(!await confirmBox('Hesaptan çıkış yap',`${a.name||a.email} bu bilgisayardan çıkarılacak: bağlantı, sürücü harfi ve Gezgin kısayolu kaldırılır, indirilmiş yerel kopyalar silinir. Drive'daki dosyalar etkilenmez.`,'Çıkış yap'))return;
  try{await invoke('sign_out',{email:sel});toast('Çıkış yapıldı');sel=null;localStorage.removeItem('sel');refresh()}catch(e){toast(String(e),true)}};
 
-async function chkUpd(){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display=''}else{b.style.display='none'}}catch(e){}}
+let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
+async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+$('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
-chkUpd();setInterval(chkUpd,3600000);
+chkUpd();setInterval(chkUpd,600000);
 applyTheme();refresh();setInterval(refresh,1500);
 </script></body></html>
