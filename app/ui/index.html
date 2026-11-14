@@ -176,7 +176,7 @@ select option{background:#222;color:#fff}
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
       <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
-    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
+    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
         <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
@@ -195,6 +195,24 @@ select option{background:#222;color:#fff}
       <div class="glass panel hide" id="orgPrev"><h2>Önizleme <span>Kutulardaki değerleri düzeltebilirsin; sonuç sağda görünür</span></h2>
         <div id="orgRows"></div>
         <div class="acts"><button class="btn pri" id="orgApply">Uygula</button><span class="mut" id="orgApplyMsg"></span></div></div>
+    </div>
+    <div class="tab scroll hide" id="t_shr">
+      <div class="glass panel"><h2>Forumda paylaş <span>Foruma girmeden: görsel + imza + künye, seçtiğin başlığa yanıt olarak</span></h2>
+        <div class="mut" id="shrNo" style="margin-bottom:8px"></div>
+        <select id="shrForum"></select>
+        <div class="mut" style="margin:10px 0 4px">Görseller (ilki yapay zekâ analizi için kullanılır; sıra gönderideki sıradır)</div>
+        <div id="shrItems" class="mut" style="margin-bottom:6px"></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div>
+      <div class="glass panel"><h2>Künye <span>Forumdaki gibi: firma | plaka, marka model, çekim yeri / yıl</span></h2>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="shrCompany" placeholder="Firma"><input id="shrPlate" placeholder="Plaka"><input id="shrBrand" placeholder="Marka"><input id="shrModel" placeholder="Model"><input id="shrLoc" placeholder="Çekim yeri"><input id="shrYear" placeholder="Yıl"></div>
+        <div class="acts"><button class="btn" id="shrAi">Yapay zekâ ile doldur</button><span class="mut" id="shrAiMsg"></span></div></div>
+      <div class="glass panel"><h2>Başlık ve imza</h2>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="shrSug"></select><button class="btn sm" id="shrRoute">Başlık öner</button></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara (öneri uygun değilse)"><button class="btn sm" id="shrFind">Ara</button></div>
+        <div class="mut" style="margin:6px 0 4px">İmza (filigran)</div><select id="shrWm"></select>
+        <div class="mut" style="margin:10px 0 4px">Gönderi önizlemesi</div><pre id="shrPrev" style="white-space:pre-wrap;background:var(--track);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:12.5px Consolas,monospace;margin:0 0 10px"></pre>
+        <div class="acts"><button class="btn pri" id="shrGo">Paylaş</button><a class="btn hide" id="shrOpen">Gönderiyi aç</a></div>
+        <div class="bar" style="margin-top:12px"><i id="shrBar" style="width:0"></i></div><div class="mut" id="shrMsg" style="margin-top:6px;min-height:18px"></div></div>
     </div>
     <div class="tab scroll hide" id="t_act">
       <div class="grid">
@@ -290,6 +308,7 @@ async function refresh(){if(busy)return;busy=true;try{
  try{await pollPending()}catch(e){}
  try{await pollAsk()}catch(e){}
  try{await pollOrg()}catch(e){}
+ try{await pollShare()}catch(e){}
  const L=await invoke('logs',{since:seq});if(L.length){const p=$('log');L.forEach(([n,t])=>{seq=n;const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('tr-TR')+'  '+t;p.appendChild(d)});while(p.children.length>300)p.firstChild.remove();p.scrollTop=p.scrollHeight}
 }catch(e){console.error(e)}finally{busy=false}}
 $('savec').onclick=async()=>{try{await invoke('save_client',{id:$('cid').value,secret:$('csec').value});$('csec').value='';refresh()}catch(e){toast(String(e),true)}};
@@ -417,7 +436,7 @@ function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
- $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit()}
+ $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_shr').classList.toggle('hide',t!='shr');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit();if(t=='shr')shrInit()}
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 const curId=()=>fPath[fPath.length-1].id;
 let fSearch='',vmode=localStorage.getItem('vmode')||'l';
@@ -429,7 +448,7 @@ async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'roo
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':(fcat(f)=='img'?'<b data-a="gimg">Gemini’ye sor</b>':'')+'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':(fcat(f)=='img'?'<b data-a="gimg">Gemini’ye sor</b><b data-a="fshare">Forumda paylaş</b>':'')+'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
@@ -443,6 +462,7 @@ $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows 
 $('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 $('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;const a=e.target.dataset.a;
  if(a=='gimg'){askImage({name:r.dataset.n,id:r.dataset.id,mime:r.dataset.m});return}
+ if(a=='fshare'){if(!shrIt.some(x=>x.src.key==r.dataset.id))shrIt.push({name:r.dataset.n,src:{kind:'drive',email:sel,key:r.dataset.id}});setTab('shr');toast('Paylaş sekmesine eklendi');return}
  if(a=='gem'){invoke('gemini_ask',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).then(()=>toast('İstem panoya kopyalandı — Gemini penceresinde Ctrl+V ile yapıştır')).catch(x=>toast(String(x),true));return}
  if(a=='web'){invoke('fs_web',{email:sel,id:r.dataset.id,mime:r.dataset.m}).catch(x=>toast(String(x),true));return}
  if(a=='open'){toast('Açılıyor…');invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true));return}
@@ -563,6 +583,45 @@ evl('org-apply',e=>{$('orgApplyMsg').textContent=`Uygulanıyor… ${e.payload.i}
 $('orgUndo').onclick=async()=>{if(!await confirmBox('Geri al','Son düzenleme geri alınacak: dosyalar eski adlarına ve eski klasörlerine döner (oluşan boş klasörler kalır).','Geri al'))return;
  try{const r=await invoke('org_undo');toast(`${r.ok} dosya geri alındı`+(r.failed?` · ${r.failed} hata`:''),!!r.failed);$('orgUndo').style.display=r.failed?'':'none';if(tab=='files')loadFiles()}catch(e){toast(String(e),true)}};
 async function pollOrg(){const l=await invoke('take_askorg');if(l.length){$('orgPath').value=l[0];setTab('org')}}
+
+/* ---------- Forumda paylaş ---------- */
+let shrIt=[],shrMeta={},shrBusy=false,shrTopic=null,shrUrl='';
+const shrF=()=>({company:$('shrCompany').value.trim(),plate:$('shrPlate').value.trim(),brand:$('shrBrand').value.trim(),model:$('shrModel').value.trim(),location:$('shrLoc').value.trim(),year:$('shrYear').value.trim()});
+function shrKunye(f,theme){const j=(a,s)=>a.filter(Boolean).join(s);const l1=j([f.company,f.plate],' | '),l2=j([f.brand,f.model],' '),yy=f.year?"'"+f.year.slice(-2):'',l3=j([f.location,yy],' / ');
+ const L=[l1,l2,l3].filter(Boolean).map(l=>'- **'+l+'**');return L.length?`[framio-kunye theme="${theme||'classic'}"]\n${L.join('\n')}\n[/framio-kunye]`:''}
+function shrRender(){$('shrItems').innerHTML=shrIt.length?shrIt.map((x,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:3px 0"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i+1}. ${esc(x.name)}</span><button class="btn sm" data-up="${i}">↑</button><button class="btn sm danger" data-rm="${i}">×</button></div>`).join(''):'Henüz görsel yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…” ya da Dosyalar sekmesinden ekle.';shrPrevUp()}
+function shrPrevUp(){const m=shrMeta[$('shrForum').value]||{},f=shrF();const alt=[[f.company,f.plate].filter(Boolean).join(' | '),[f.brand,f.model].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
+ const tag=m.bbcodeTag||'görsel';$('shrPrev').textContent=shrIt.map(()=>`[${tag} id=… alt="${alt}"]`).join('\n')+(shrKunye(f,m.kunyeTheme)?'\n'+shrKunye(f,m.kunyeTheme):'')+'\n\nBaşlık: '+(shrTopic?shrTopic.title:'(seçilmedi)')}
+$('shrItems').onclick=e=>{const d=e.target.dataset;if(d.rm!==undefined)shrIt.splice(+d.rm,1);else if(d.up!==undefined&&+d.up>0){const i=+d.up;[shrIt[i-1],shrIt[i]]=[shrIt[i],shrIt[i-1]]}else return;shrRender()};
+function shrAddLocal(p){p=p.trim().replace(/^"|"$/g,'');if(!p)return;if(shrIt.some(x=>x.src.path==p))return;shrIt.push({name:p.split('\\').pop(),src:{kind:'local',path:p}})}
+$('shrAdd').onclick=()=>{shrAddLocal($('shrPath').value);$('shrPath').value='';shrRender()};
+async function shrInit(){let fl=[];try{fl=(await invoke('forum_list')).filter(f=>f.user)}catch(e){}
+ const cur=$('shrForum').value;$('shrForum').innerHTML=fl.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.user)})</option>`).join('');if(fl.some(f=>f.id==cur))$('shrForum').value=cur;
+ $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();if(fl.length)shrLoadMeta()}
+async function shrLoadMeta(){const id=$('shrForum').value;if(!id)return;try{const m=await invoke('forum_meta',{id});shrMeta[id]=m;const w=(m.watermarks&&m.watermarks.watermarks)||[];
+ $('shrWm').innerHTML='<option value="none">İmzasız</option>'+w.map(x=>`<option value="${esc(x.filename||x.id)}">${esc(x.label||x.filename)} — ${esc(x.filename||x.id)}</option>`).join('');shrPrevUp()}catch(e){toast(String(e),true)}}
+$('shrForum').onchange=()=>{shrTopic=null;$('shrSug').innerHTML='';shrLoadMeta()};
+['shrCompany','shrPlate','shrBrand','shrModel','shrLoc','shrYear'].forEach(i=>$(i).oninput=shrPrevUp);
+async function shrAiFill(){if(!shrIt.length){toast('Önce görsel ekle',true);return}$('shrAiMsg').textContent='Analiz ediliyor…';$('shrAi').disabled=true;
+ try{const r=await invoke('forum_ai_fill',{id:$('shrForum').value,src:shrIt[0].src,name:shrIt[0].name});$('shrCompany').value=r.company;$('shrPlate').value=r.plate;$('shrBrand').value=r.brand;$('shrModel').value=r.model;$('shrLoc').value=r.location;if(r.year)$('shrYear').value=r.year;$('shrAiMsg').textContent='Doldurdu; kontrol et.';shrPrevUp();await shrRoute()}
+ catch(e){$('shrAiMsg').textContent='';toast(String(e),true)}$('shrAi').disabled=false}
+$('shrAi').onclick=shrAiFill;
+function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join('');if(shrSugList.length){shrTopic=shrSugList[0];$('shrSug').value=0}else{shrTopic=null;$('shrSug').innerHTML='<option value="">Öneri yok — aşağıdan ara</option>'}shrPrevUp()}
+let shrSugList=[];
+async function shrRoute(){try{shrSug(await invoke('forum_route',{id:$('shrForum').value,fields:shrF(),hint:shrIt[0]?shrIt[0].name:''}))}catch(e){toast(String(e),true)}}
+$('shrRoute').onclick=shrRoute;
+$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrPrevUp()};
+$('shrFind').onclick=async()=>{const q=$('shrQ').value.trim();if(!q)return;try{shrSug(await invoke('forum_find_topic',{id:$('shrForum').value,q}))}catch(e){toast(String(e),true)}};
+$('shrQ').onkeydown=e=>{if(e.key=='Enter')$('shrFind').click()};
+$('shrGo').onclick=async()=>{if(shrBusy)return;const id=$('shrForum').value;if(!id){toast('Forum seç',true);return}if(!shrIt.length){toast('Görsel ekle',true);return}if(!shrTopic){toast('Bir başlık seç',true);return}
+ const f=shrF(),m=shrMeta[id]||{};if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak gönderilecek (${$('shrWm').value=='none'?'imzasız':'imzalı'}). Gönderi hemen yayınlanır.`,'Paylaş'))return;
+ shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='0';
+ try{const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items:shrIt,fields:f,watermark:$('shrWm').value,theme:m.kunyeTheme||''}});
+  shrUrl=r.url;$('shrMsg').textContent='Paylaşıldı ✓';$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı');shrIt=[];shrRender()}
+ catch(e){$('shrMsg').textContent='';toast(String(e),true)}shrBusy=false;$('shrGo').disabled=false};
+$('shrOpen').onclick=()=>{if(shrUrl)invoke('open_url',{url:shrUrl}).catch(er=>toast(String(er),true))};
+evl('forum-share',e=>{const d=e.payload;$('shrMsg').textContent=d.msg;$('shrBar').style.width=Math.min(100,(d.i/d.total)*100)+'%'});
+async function pollShare(){const l=await invoke('take_askshare');if(l.length){l.forEach(shrAddLocal);setTab('shr');const first=!$('shrCompany').value&&!$('shrPlate').value;await shrInit();if(first&&shrIt.length&&$('shrForum').value)shrAiFill()}}
 loadProfs();loadAi();
 
 /* ---------- Forumlar (Forumda paylaş: oturum) ---------- */

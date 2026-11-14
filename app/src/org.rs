@@ -66,7 +66,7 @@ pub fn ai_key_clear() { gemini::clear_key(); }
 
 #[tauri::command]
 pub fn open_url(url: String) -> Result<(), String> {
-    if !url.starts_with("https://aistudio.google.com/") { return Err("izin verilmeyen adres".into()); }
+    if !(url.starts_with("https://aistudio.google.com/") || crate::forum::bases().iter().any(|b| url.starts_with(&format!("{b}/")))) { return Err("izin verilmeyen adres".into()); }
     std::process::Command::new("cmd").args(["/C", "start", "", &url]).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 

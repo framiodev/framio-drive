@@ -18,7 +18,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { askorg: Mutex<Vec<String>>, askimg: Mutex<Vec<String>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
+struct App { askshare: Mutex<Vec<String>>, askorg: Mutex<Vec<String>>, askimg: Mutex<Vec<String>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -146,6 +146,10 @@ fn ensure_context_menu() {
          $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act gimg \"%1\"'); ",
         icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
     script += &format!(
+        "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\Classes\\SystemFileAssociations\\image\\shell\\FramioForum'); $k.SetValue('', \"Framio ile forumda paylaş…\"); $k.SetValue('Icon','{icon}'); \
+         $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act forumshare \"%1\"'); ",
+        icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
+    script += &format!(
         "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\Classes\\Directory\\shell\\FramioOrganize'); $k.SetValue('', \"Framio ile akıllı düzenle…\"); $k.SetValue('Icon','{icon}'); \
          $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act organize \"%1\"'); ",
         icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
@@ -246,6 +250,11 @@ async fn resolve_drive_path(app: &AppHandle, path: &str) -> Result<(String, driv
 fn run_action(app: AppHandle, act: String, path: String) {
     if act == "organize" {
         app.state::<App>().askorg.lock().unwrap().push(path.trim().trim_matches('"').to_string());
+        show_window(&app);
+        return;
+    }
+    if act == "forumshare" {
+        app.state::<App>().askshare.lock().unwrap().push(path.trim().trim_matches('"').to_string());
         show_window(&app);
         return;
     }
@@ -376,6 +385,9 @@ async fn gemini_ask_local(app: AppHandle, email: String, path: String, prompt: S
     if !p.is_file() { return Err("Dosya bulunamadı".into()); }
     gemini_send_file(app, email, p, prompt).await
 }
+
+#[tauri::command]
+fn take_askshare(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.askshare.lock().unwrap()) }
 
 #[tauri::command]
 fn take_askorg(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.askorg.lock().unwrap()) }
@@ -914,7 +926,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

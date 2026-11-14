@@ -88,7 +88,7 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
     let schemas = get(&c, base, token, "/api/framio-media/category-schemas").await.map(|x| x.1).unwrap_or(json!(null));
     let marks = get(&c, base, token, "/api/framio-media/watermarks").await.map(|x| x.1).unwrap_or(json!(null));
     Ok(json!({
-        "title": a["title"], "canStartDiscussion": a["canStartDiscussion"], "bbcodeTag": a["framio-upload-exif.active_bbcode_tag"],
+        "title": a["title"], "canStartDiscussion": a["canStartDiscussion"], "bbcodeTag": a["framio-upload-exif.active_bbcode_tag"], "kunyeTheme": a["framio-upload-exif.kunye_theme"],
         "tags": tag_list, "schemas": schemas, "watermarks": marks,
     }))
 }
@@ -107,4 +107,42 @@ pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) ->
         return Err(why);
     }
     Ok(v["data"].clone())
+}
+
+fn long_client() -> Result<reqwest::Client, String> {
+    reqwest::Client::builder().connect_timeout(Duration::from_secs(20)).timeout(Duration::from_secs(300)).user_agent("FramioDrive/forum").build().map_err(|e| e.to_string())
+}
+
+fn err_text(st: u16, v: &Value) -> String {
+    if let Some(e) = v["error"].as_str() { return e.to_string(); }
+    if let Some(d) = v["errors"][0]["detail"].as_str() { return format!("{d}"); }
+    api_err(st, v)
+}
+
+/// Kimlikli JSON çağrısı (GET/POST). Başarısızsa forumun hata metnini döndürür.
+pub async fn call(base: &str, token: &str, method: &str, path: &str, body: Option<Value>) -> Result<Value, String> {
+    let c = long_client()?;
+    let url = format!("{base}{path}");
+    let mut rb = if method == "POST" { c.post(url) } else { c.get(url) };
+    rb = rb.header("Authorization", format!("Token {token}"));
+    if let Some(b) = body { rb = rb.json(&b); }
+    let r = rb.send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
+    let (st, v) = json_of(r).await?;
+    if st >= 400 { return Err(err_text(st, &v)); }
+    Ok(v)
+}
+
+/// Forumun yükleme ucu: görseli (orijinal baytlarıyla) yükler, imzayı ekletir; yanıtta BBCode döner.
+pub async fn upload(base: &str, token: &str, bytes: Vec<u8>, filename: &str, watermark: &str) -> Result<Value, String> {
+    let lower = filename.to_lowercase();
+    let mime = if lower.ends_with(".png") { "image/png" } else if lower.ends_with(".webp") { "image/webp" } else { "image/jpeg" };
+    let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str(mime).map_err(|e| e.to_string())?;
+    let form = reqwest::multipart::Form::new().part("image", part).text("watermark_type", if watermark.is_empty() { "none".to_string() } else { watermark.to_string() });
+    let r = long_client()?.post(format!("{base}/api/framio-media/upload")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("Yükleme gönderilemedi: {e}"))?;
+    let st = r.status().as_u16();
+    if st == 413 { return Err("TOO_LARGE".into()); }
+    let (st, v) = json_of(r).await?;
+    if st >= 400 { return Err(err_text(st, &v)); }
+    if v["bbcode"].as_str().is_none() { return Err("Forum yükleme yanıtında BBCode yok".into()); }
+    Ok(v)
 }
