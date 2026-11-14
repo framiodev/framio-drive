@@ -92,3 +92,19 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
         "tags": tag_list, "schemas": schemas, "watermarks": marks,
     }))
 }
+
+/// Forumun kendi yapay zekâ çözümlemesi (forumdaki anahtar/ayarlar/yazım kuralları sunucuda kullanılır; anahtar istemciye gelmez).
+pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) -> Result<Value, String> {
+    let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str("image/jpeg").map_err(|e| e.to_string())?;
+    let form = reqwest::multipart::Form::new().part("image", part);
+    let c = reqwest::Client::builder().timeout(Duration::from_secs(120)).user_agent("FramioDrive/forum").build().map_err(|e| e.to_string())?;
+    let r = c.post(format!("{base}/api/framio-media/analyze-ai")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
+    let (st, v) = json_of(r).await?;
+    if st == 401 || st == 403 { return Err("Forum oturumu geçersiz; Ayarlar'dan yeniden giriş yap".into()); }
+    if st == 429 { return Err("Forum hız sınırı (429); biraz sonra tekrar dene".into()); }
+    if v["success"].as_bool() != Some(true) {
+        let why = v["error"].as_str().map(|s| s.to_string()).or_else(|| v["reason"].as_str().map(|r| match r { "disabled" => "Forumda yapay zekâ kapalı".to_string(), "not_configured" => "Forumda yapay zekâ anahtarı tanımlı değil".to_string(), o => o.to_string() })).unwrap_or(format!("HTTP {st}"));
+        return Err(why);
+    }
+    Ok(v["data"].clone())
+}

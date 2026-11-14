@@ -16,7 +16,7 @@ fn profiles() -> Vec<Value> {
     std::fs::read_to_string(path()).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|v| v.as_array().cloned()).filter(|a| !a.is_empty())
         .unwrap_or_else(|| defaults().as_array().cloned().unwrap_or_default())
 }
-fn find(id: &str) -> Result<(String, Value), String> {
+pub fn find(id: &str) -> Result<(String, Value), String> {
     let p = profiles().into_iter().find(|p| p["id"].as_str() == Some(id)).ok_or("Forum bulunamadı")?;
     Ok((forum::clean_base(p["base"].as_str().unwrap_or(""))?, p))
 }

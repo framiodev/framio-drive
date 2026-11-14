@@ -189,7 +189,7 @@ select option{background:#222;color:#fff}
       <div class="glass panel"><h2>Akıllı dizin düzenleme <span>Yapay zekâ görselleri okur, ad ve klasör yapısı önerir; sen onaylarsın</span></h2>
         <div class="mut" id="orgNoKey" style="margin-bottom:8px"></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id="orgProf"></select><input id="orgPath" placeholder="Boş bırak = Dosyalar sekmesindeki Drive klasörü; ya da bilgisayardaki klasör yolu" style="margin:0 0 6px"></div>
-        <div class="mut" id="orgSrcInfo" style="margin-bottom:6px"></div>
+        <div style="margin-bottom:6px"><select id="orgEng"></select></div><div class="mut" id="orgSrcInfo" style="margin-bottom:6px"></div>
         <div class="acts" style="margin-top:4px"><button class="btn pri" id="orgGo">Analiz et</button><button class="btn hide" id="orgStop">Durdur</button><button class="btn" id="orgUndo">Son düzenlemeyi geri al</button></div>
         <div class="bar" style="margin-top:12px"><i id="orgBar" style="width:0"></i></div><div class="mut" id="orgMsg" style="margin-top:6px;min-height:18px"></div></div>
       <div class="glass panel hide" id="orgPrev"><h2>Önizleme <span>Kutulardaki değerleri düzeltebilirsin; sonuç sağda görünür</span></h2>
@@ -518,9 +518,12 @@ $('pfDup').onclick=()=>{pfRead();const c=JSON.parse(JSON.stringify(profs[pfIdx])
 $('pfDel').onclick=async()=>{if(profs.length<2){toast('En az bir profil kalmalı',true);return}if(!await confirmBox('Profili sil',`“${profs[pfIdx].name}” silinecek.`,'Sil'))return;profs.splice(pfIdx,1);pfIdx=0;await invoke('org_profiles_save',{profiles:profs});pfList();pfFill()};
 $('pfSave').onclick=async()=>{pfRead();try{await invoke('org_profiles_save',{profiles:profs});pfList();$('pfMsg').textContent='Kaydedildi';setTimeout(()=>$('pfMsg').textContent='',2500)}catch(e){toast(String(e),true)}};
 
+async function fillEng(){const cur=$('orgEng').value;let fl=[];try{fl=await invoke('forum_list')}catch(e){}
+ const ok=fl.filter(f=>f.user);$('orgEng').innerHTML=ok.map(f=>`<option value="${esc(f.id)}">Forum yapay zekâsı: ${esc(f.name)} (anahtar gerekmez)</option>`).join('')+'<option value="">Kendi Gemini anahtarım</option>';
+ if(cur!==undefined&&[...$('orgEng').options].some(o=>o.value==cur))$('orgEng').value=cur}
 function orgSrc(){const lp=$('orgPath').value.trim();if(lp)return {kind:'local',path:lp,label:lp};
  return {kind:'drive',email:sel,folder:curId(),label:fPath.map(p=>p.name).join(' › ')}}
-async function orgInit(){await loadProfs();await loadAi();$('orgSrcInfo').textContent='Kaynak: '+orgSrc().label;try{const n=await invoke('org_has_journal');$('orgUndo').style.display=n?'':'none'}catch(e){}}
+async function orgInit(){await loadProfs();await loadAi();await fillEng();$('orgSrcInfo').textContent='Kaynak: '+orgSrc().label;try{const n=await invoke('org_has_journal');$('orgUndo').style.display=n?'':'none'}catch(e){}}
 $('orgPath').oninput=()=>{$('orgSrcInfo').textContent='Kaynak: '+orgSrc().label};
 $('forg').onclick=()=>{$('orgPath').value='';setTab('org')};
 const sanit=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
@@ -537,15 +540,15 @@ function renderPrev(full){const p=profs[+$('orgProf').value||0];computePlans();
  [...$('orgRows').children].forEach((row,i)=>{const r=orgRes[i];const d=row.querySelector('.od');if(!r||!r.ok){d.textContent='Atlanacak';return}row.classList.toggle('unk',r.plan.unk);d.textContent=(r.plan.unk?'⚠ ':'')+r.plan.folder.join(' / ')+' / '+r.plan.name+(r.fields.not?'  — '+r.fields.not:'')})}
 $('orgRows').oninput=e=>{const k=e.target.dataset.k;if(!k)return;const i=+e.target.closest('.orow').dataset.i;orgRes[i].fields[k]=e.target.value;renderPrev(false)};
 $('orgProf').onchange=()=>{if(orgRes.length)renderPrev(true)};
-$('orgGo').onclick=async()=>{if(orgRun)return;const c=await loadAi();if(!c||!c.has_key){toast('Önce Ayarlar > Yapay zekâ bölümüne Gemini anahtarı ekle',true);return}
+$('orgGo').onclick=async()=>{if(orgRun)return;const c=await loadAi();const eng=$('orgEng').value;if(!eng&&(!c||!c.has_key)){toast('Forum yapay zekâsını seç ya da Ayarlar > Yapay zekâ bölümüne Gemini anahtarı ekle',true);return}
  if(!sel&&!$('orgPath').value.trim()){toast('Bir hesap seç',true);return}
  orgSource=orgSrc();$('orgMsg').textContent='Görseller taranıyor…';
  try{orgItems=await invoke('org_scan',{source:orgSource})}catch(e){$('orgMsg').textContent='';toast(String(e),true);return}
  if(!orgItems.length){$('orgMsg').textContent='Bu klasörde görsel (jpg/png/webp) bulunamadı.';return}
- if(!await confirmBox('Analizi başlat',`${orgItems.length} görsel Gemini’ye gönderilecek (küçültülerek). Ücretsiz katmanda içerik Google tarafından ürün geliştirmede kullanılabilir. Süre yaklaşık ${Math.ceil(orgItems.length*8/60)} dk.`,'Başlat'))return;
+ if(!await confirmBox('Analizi başlat',`${orgItems.length} görsel Gemini’ye gönderilecek (küçültülerek). '+(eng?'Görseller seçtiğin forumun yapay zekâsına gönderilir (forumun kendi ayarları ve yazım kuralları kullanılır).':'Ücretsiz katmanda içerik Google tarafından ürün geliştirmede kullanılabilir.')+' Süre yaklaşık ${Math.ceil(orgItems.length*(eng?3:8)/60)} dk.`,'Başlat'))return;
  orgRes=[];orgRun=true;$('orgGo').disabled=true;$('orgStop').classList.remove('hide');$('orgPrev').classList.remove('hide');$('orgRows').innerHTML='';$('orgBar').style.width='0';
  const prof=profs[+$('orgProf').value||0];
- try{await invoke('org_analyze',{source:orgSource,items:orgItems,profile:prof})}catch(e){toast(String(e),true)}
+ try{await invoke('org_analyze',{source:orgSource,items:orgItems,profile:prof,engine:eng||null})}catch(e){toast(String(e),true)}
  orgRun=false;$('orgGo').disabled=false;$('orgStop').classList.add('hide')};
 $('orgStop').onclick=()=>{invoke('org_cancel');$('orgMsg').textContent='Durduruluyor…'};
 evl('org-progress',e=>{const d=e.payload;if(d.done){$('orgMsg').textContent=`Analiz bitti: ${orgRes.filter(r=>r.ok).length} okundu, ${orgRes.filter(r=>!r.ok).length} hata. Önizlemeyi kontrol edip Uygula’ya bas.`;renderPrev(true);return}
@@ -567,13 +570,16 @@ let forums=[];
 async function loadForums(){try{forums=await invoke('forum_list')}catch(e){return}
  $('forumList').innerHTML=forums.map((f,i)=>`<div class="pfrow" style="grid-template-columns:150px 1fr auto;margin-bottom:10px" data-i="${i}"><b>${esc(f.name)}</b><input data-k="base" value="${esc(f.base)}" placeholder="https://forum.ornek.com"><span class="mut">${f.user?'✓ '+esc(f.user):'giriş yok'}</span>
  ${f.user?`<span></span><span class="mut">Oturum açık</span><span><button class="btn sm" data-chk="${i}">Bilgileri sına</button> <button class="btn sm danger" data-out="${i}">Çıkış</button></span>`
- :`<span></span><span style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input data-k="u" placeholder="Kullanıcı adı veya e-posta" autocomplete="off"><input data-k="p" type="password" placeholder="Parola" autocomplete="off"></span><button class="btn sm pri" data-in="${i}">Giriş yap</button>`}</div>`).join('')}
-$('forumList').onclick=async e=>{const d=e.target.dataset,row=e.target.closest('.pfrow');if(!row)return;const f=forums[+row.dataset.i];
+ :`<span></span><span style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input data-k="u" placeholder="Kullanıcı adı veya e-posta" autocomplete="off"><input data-k="p" type="password" placeholder="Parola" autocomplete="off"></span><button class="btn sm pri" data-in="${i}">Giriş yap</button>`}
+ <span></span><span></span><span><button class="btn sm" data-del="${i}">Forumu listeden kaldır</button></span></div>`).join('')+'<div style="margin-top:6px"><button class="btn sm" id="frmAdd">+ Forum ekle</button></div>'}
+$('forumList').onclick=async e=>{if(e.target.id=='frmAdd'){const n=await ask('Forum adı');if(!n)return;const b=await ask('Forum adresi (https://…)','https://');if(!b)return;try{await invoke('forum_save',{list:[...forums.map(({user,...r})=>r),{id:'f'+Date.now(),name:n.trim(),base:b.trim()}]})}catch(er){toast(String(er),true)}loadForums();return}
+ const d=e.target.dataset,row=e.target.closest('.pfrow');if(!row)return;const f=forums[+row.dataset.i];
  try{
   if(d.in!==undefined){const u=row.querySelector('[data-k=u]').value,p=row.querySelector('[data-k=p]').value;
    await invoke('forum_save',{list:forums.map((x,j)=>j==+row.dataset.i?{...x,base:row.querySelector('[data-k=base]').value.trim()}:x).map(({user,...r})=>r)});
    $('frmMsg').textContent='Giriş yapılıyor…';const n=await invoke('forum_login',{id:f.id,ident:u,pass:p});toast(n+' olarak giriş yapıldı');$('frmMsg').textContent=''}
   else if(d.out!==undefined){await invoke('forum_logout',{id:f.id});toast('Çıkış yapıldı')}
+  else if(d.del!==undefined){if(!await confirmBox('Forumu kaldır',`“${f.name}” listeden kaldırılacak ve oturumu silinecek.`,'Kaldır'))return;await invoke('forum_logout',{id:f.id});await invoke('forum_save',{list:forums.filter((x,j)=>j!=+row.dataset.i).map(({user,...r})=>r)})}
   else if(d.chk!==undefined){$('frmMsg').textContent='Sınanıyor…';const m=await invoke('forum_meta',{id:f.id});$('frmMsg').textContent=`${m.title||f.name}: ${m.tags.length} etiket, görsel etiketi: ${m.bbcodeTag||'(bilinmiyor)'}`}
  }catch(er){$('frmMsg').textContent='';toast(String(er),true)}
  loadForums()};

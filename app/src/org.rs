@@ -26,6 +26,14 @@ fn default_profiles() -> Value {
     }])
 }
 
+/// Profil alan adı → forumun yapay zekâ alan adı (forum_key yoksa)
+fn forum_alias(k: &str) -> String {
+    match k.to_lowercase().as_str() {
+        "plaka" => "plate", "firma" => "company", "marka" => "brand", "model" => "model", "sehir" | "şehir" | "il" => "city",
+        "yer" | "konum" => "place", "hat" => "route", "filo" | "filokodu" | "kapi" => "fleetCode", o => return o.to_string(),
+    }.to_string()
+}
+
 fn profiles_path() -> PathBuf { data_dir().join("profiles.json") }
 fn journal_path() -> PathBuf { data_dir().join("org_journal.json") }
 
@@ -98,13 +106,23 @@ pub fn org_cancel() { CANCEL.store(true, Ordering::SeqCst); }
 
 /// Görselleri sırayla Gemini'ye gönderir; her sonuç için "org-progress" olayı yayar.
 #[tauri::command]
-pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profile: Value) -> Result<(), String> {
-    let key = gemini::load_key().ok_or("Gemini anahtarı yok — Ayarlar > Yapay zekâ bölümünden ekle")?;
+pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profile: Value, engine: Option<String>) -> Result<(), String> {
+    // Motor: forum kimliği verilirse forumun kendi yapay zekâsı; yoksa kullanıcının Gemini anahtarı
+    let fsess = match engine.as_deref() {
+        Some(id) if !id.is_empty() => {
+            let (base, _) = crate::forum::find(id)?;
+            let s = drivenet::forum::load_session(id).ok_or("Bu foruma giriş yapılmamış")?;
+            Some((base, s["token"].as_str().unwrap_or("").to_string()))
+        }
+        _ => None,
+    };
+    let key = if fsess.is_some() { String::new() } else { gemini::load_key().ok_or("Gemini anahtarı yok — Ayarlar > Yapay zekâ bölümünden ekle veya forum motorunu seç")? };
     let cfg = ai_cfg_get();
     let model = cfg["model"].as_str().unwrap_or("gemini-2.5-flash").to_string();
-    let delay = cfg["delay"].as_f64().unwrap_or(7.0);
+    let delay = if fsess.is_some() { 1.5 } else { cfg["delay"].as_f64().unwrap_or(7.0) };
     let fields: Vec<(String, String)> = profile["fields"].as_array().map(|a| a.iter().map(|f| (f["key"].as_str().unwrap_or("").to_string(), f["desc"].as_str().unwrap_or("").to_string())).filter(|f| !f.0.is_empty()).collect()).unwrap_or_default();
     if fields.is_empty() { return Err("Profilde alan yok".into()); }
+    let fmap: Vec<(String, String)> = profile["fields"].as_array().map(|a| a.iter().map(|f| (f["key"].as_str().unwrap_or("").to_string(), f["forum_key"].as_str().filter(|s| !s.is_empty()).map(|s| s.to_string()).unwrap_or_else(|| forum_alias(f["key"].as_str().unwrap_or(""))))).collect()).unwrap_or_default();
     let prompt = profile["prompt"].as_str().unwrap_or("").to_string();
     let drive = if source["kind"] == "drive" { Some(drv(source["email"].as_str().unwrap_or("")).await?) } else { None };
     let tmp = std::env::temp_dir().join("FramioOrg");
@@ -130,7 +148,15 @@ pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profi
             if drive.is_some() { let _ = std::fs::remove_file(&src); }
             let _ = std::fs::remove_file(&small);
             if bytes.len() > 15 * 1024 * 1024 { return Err("görsel çok büyük".into()); }
-            gemini::analyze(&key, &model, &prompt, &fields, &m, &base64::engine::general_purpose::STANDARD.encode(&bytes)).await
+            if let Some((base, tok)) = &fsess {
+                let d = drivenet::forum::analyze(base, tok, bytes, "foto.jpg").await?;
+                let mut o = serde_json::Map::new();
+                for (k, fk) in &fmap { o.insert(k.clone(), json!(d[fk.as_str()].as_str().unwrap_or(""))); }
+                o.insert("not".into(), json!([d["city"].as_str(), d["place"].as_str()].iter().flatten().filter(|s| !s.is_empty()).cloned().collect::<Vec<_>>().join(" · ")));
+                Ok(Value::Object(o))
+            } else {
+                gemini::analyze(&key, &model, &prompt, &fields, &m, &base64::engine::general_purpose::STANDARD.encode(&bytes)).await
+            }
         }.await;
         let ev = match r {
             Ok(v) => json!({ "i": i, "total": total, "key": k, "name": name, "ok": true, "fields": v }),
