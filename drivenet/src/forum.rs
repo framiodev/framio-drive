@@ -4,6 +4,8 @@ use serde_json::{json, Value};
 use std::time::Duration;
 
 const SERVICE: &str = "framio-drive";
+/// Forum yöneticisi güvenlik duvarında bu adı izinli yapabilsin diye sabit ve tanımlayıcı
+pub const UA: &str = "FramioDrive-Client/1.0 (+https://github.com/framiodev/framio-drive)";
 
 fn acct(id: &str) -> String { format!("forum:{id}") }
 pub fn save_session(id: &str, v: &Value) -> Result<(), String> {
@@ -25,7 +27,7 @@ pub fn clean_base(b: &str) -> Result<String, String> {
 }
 
 fn client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder().timeout(Duration::from_secs(40)).user_agent("FramioDrive/forum").build().map_err(|e| e.to_string())
+    reqwest::Client::builder().timeout(Duration::from_secs(40)).user_agent(UA).default_headers({ let mut h = reqwest::header::HeaderMap::new(); h.insert(reqwest::header::ACCEPT, reqwest::header::HeaderValue::from_static("application/json")); h }).build().map_err(|e| e.to_string())
 }
 
 async fn json_of(r: reqwest::Response) -> Result<(u16, Value), String> {
@@ -33,8 +35,8 @@ async fn json_of(r: reqwest::Response) -> Result<(u16, Value), String> {
     let t = r.text().await.map_err(|e| e.to_string())?;
     match serde_json::from_str::<Value>(&t) {
         Ok(v) => Ok((st, v)),
-        Err(_) => Err(if t.contains("Cloudflare") || t.contains("cf-") || t.to_lowercase().contains("just a moment") {
-            format!("Forum, uygulamadan gelen isteği güvenlik duvarıyla engelledi (HTTP {st}).")
+        Err(_) => Err(if st == 403 || st == 429 || st == 503 || t.contains("Cloudflare") || t.to_lowercase().contains("just a moment") || t.contains("cf-chl") {
+            format!("Forumun güvenlik duvarı isteği engelledi (HTTP {st}). Forum sahibi olarak güvenlik kuralında User-Agent'ı “FramioDrive” içeren /api isteklerine izin ver.")
         } else { format!("Forum JSON yerine başka bir yanıt verdi (HTTP {st}).") }),
     }
 }
@@ -68,9 +70,16 @@ async fn get(c: &reqwest::Client, base: &str, token: &str, path: &str) -> Result
     json_of(r).await
 }
 
-/// Oturumun hâlâ geçerli olduğunu doğrular (jeton süresi dolmuş/iptal edilmiş olabilir).
-pub async fn check(base: &str, token: &str) -> bool {
-    match client() { Ok(c) => matches!(get(&c, base, token, "/api").await, Ok((200, v)) if v["data"]["attributes"]["canStartDiscussion"].as_bool().is_some() || v["data"].is_object()), Err(_) => false }
+/// Oturum durumu: Some(true) geçerli, Some(false) jeton reddedildi (401), None belirsiz (güvenlik duvarı/ağ) — belirsizse oturum silinmemeli.
+pub async fn check(base: &str, token: &str) -> Option<bool> {
+    let c = client().ok()?;
+    let r = c.get(format!("{base}/api")).header("Authorization", format!("Token {token}")).send().await.ok()?;
+    let st = r.status().as_u16();
+    let t = r.text().await.ok()?;
+    let v: Value = serde_json::from_str(&t).ok()?;
+    if st == 401 { return Some(false); }
+    if st == 200 && v["data"].is_object() { return Some(true); }
+    None
 }
 
 /// Paylaşım formu için forum bilgisi: etiketler, görsel etiketi adı, künye şemaları, filigranlar.
@@ -97,7 +106,7 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
 pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) -> Result<Value, String> {
     let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str("image/jpeg").map_err(|e| e.to_string())?;
     let form = reqwest::multipart::Form::new().part("image", part);
-    let c = reqwest::Client::builder().timeout(Duration::from_secs(120)).user_agent("FramioDrive/forum").build().map_err(|e| e.to_string())?;
+    let c = reqwest::Client::builder().timeout(Duration::from_secs(120)).user_agent(UA).default_headers({ let mut h = reqwest::header::HeaderMap::new(); h.insert(reqwest::header::ACCEPT, reqwest::header::HeaderValue::from_static("application/json")); h }).build().map_err(|e| e.to_string())?;
     let r = c.post(format!("{base}/api/framio-media/analyze-ai")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
     let (st, v) = json_of(r).await?;
     if st == 401 || st == 403 { return Err("Forum oturumu geçersiz; Ayarlar'dan yeniden giriş yap".into()); }
@@ -110,7 +119,7 @@ pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) ->
 }
 
 fn long_client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder().connect_timeout(Duration::from_secs(20)).timeout(Duration::from_secs(300)).user_agent("FramioDrive/forum").build().map_err(|e| e.to_string())
+    reqwest::Client::builder().connect_timeout(Duration::from_secs(20)).timeout(Duration::from_secs(300)).user_agent(UA).default_headers({ let mut h = reqwest::header::HeaderMap::new(); h.insert(reqwest::header::ACCEPT, reqwest::header::HeaderValue::from_static("application/json")); h }).build().map_err(|e| e.to_string())
 }
 
 fn err_text(st: u16, v: &Value) -> String {

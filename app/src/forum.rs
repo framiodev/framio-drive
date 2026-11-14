@@ -68,7 +68,8 @@ pub async fn forum_meta(id: String) -> Result<Value, String> {
             Ok(m)
         },
         Err(e) => {
-            if !forum::check(&base, &tok).await { forum::clear_session(&id); return Err("Oturum süresi dolmuş; yeniden giriş yap".into()); }
+            // Yalnızca forum jetonu açıkça reddederse (401) oturum silinir; güvenlik duvarı/ağ hatasında oturum korunur
+            if forum::check(&base, &tok).await == Some(false) { forum::clear_session(&id); return Err("Oturum süresi dolmuş; yeniden giriş yap".into()); }
             Err(e)
         }
     }
