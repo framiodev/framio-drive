@@ -573,7 +573,7 @@ async function loadForums(){try{forums=await invoke('forum_list')}catch(e){retur
  :`<span></span><span style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input data-k="u" placeholder="Kullanıcı adı veya e-posta" autocomplete="off"><input data-k="p" type="password" placeholder="Parola" autocomplete="off"></span><button class="btn sm pri" data-in="${i}">Giriş yap</button>`}
  <span></span><span></span><span><button class="btn sm" data-del="${i}">Forumu listeden kaldır</button></span></div>`).join('')+'<div style="margin-top:6px"><button class="btn sm" id="frmAdd">+ Forum ekle</button></div>'}
 $('forumList').onclick=async e=>{if(e.target.id=='frmAdd'){const n=await ask('Forum adı');if(!n)return;const b=await ask('Forum adresi (https://…)','https://');if(!b)return;try{await invoke('forum_save',{list:[...forums.map(({user,...r})=>r),{id:'f'+Date.now(),name:n.trim(),base:b.trim()}]})}catch(er){toast(String(er),true)}loadForums();return}
- const d=e.target.dataset,row=e.target.closest('.pfrow');if(!row)return;const f=forums[+row.dataset.i];
+ const d=e.target.dataset,row=e.target.closest('.pfrow');if(!row||!(d.in!==undefined||d.out!==undefined||d.chk!==undefined||d.del!==undefined))return;const f=forums[+row.dataset.i];
  try{
   if(d.in!==undefined){const u=row.querySelector('[data-k=u]').value,p=row.querySelector('[data-k=p]').value;
    await invoke('forum_save',{list:forums.map((x,j)=>j==+row.dataset.i?{...x,base:row.querySelector('[data-k=base]').value.trim()}:x).map(({user,...r})=>r)});
