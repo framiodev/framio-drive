@@ -261,6 +261,43 @@ fn autostart_set(on: bool) -> Result<(), String> {
     Ok(())
 }
 
+/// Görseli Drive'dan indirir, Gemini penceresine istemle birlikte yapıştırır (yapıştırma olmazsa panoda hazır bekler).
+#[tauri::command]
+async fn gemini_ask_image(app: AppHandle, email: String, id: String, name: String, mime: String, prompt: String) -> Result<(), String> {
+    use base64::Engine as _;
+    let d = drv(&email).await?;
+    let dir = std::env::temp_dir().join("FramioOpen");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let dest = dir.join(format!("g_{}_{}", &id[..id.len().min(6)], clean_name(&name)));
+    d.download(&id, &dest).await.map_err(de)?;
+    let bytes = std::fs::read(&dest).map_err(|e| e.to_string())?;
+    if bytes.len() > 12 * 1024 * 1024 { return Err("Görsel 12 MB'tan büyük; daha küçük bir kopyasını dene".into()); }
+    // yedek: pano (metin + görsel ayrı olduğundan önce görsel, istem sonra Gemini'ye eklenir)
+    ps(&format!("Add-Type -AssemblyName System.Windows.Forms,System.Drawing; $i=[System.Drawing.Image]::FromFile('{}'); [System.Windows.Forms.Clipboard]::SetImage($i)", q(&dest.display().to_string())));
+    open_gemini_window(&app, &email)?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    let js = format!(r#"(async()=>{{
+ const b64={b},mime={m},name={n},prompt={p};
+ const find=()=>document.querySelector('rich-textarea .ql-editor')||document.querySelector('div.ql-editor[contenteditable="true"]')||document.querySelector('div[contenteditable="true"][role="textbox"]');
+ for(let i=0;i<80&&!find();i++)await new Promise(r=>setTimeout(r,500));
+ const ed=find();if(!ed)return;ed.focus();
+ const bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+ const dt=new DataTransfer();dt.items.add(new File([u],name,{{type:mime}}));
+ ed.dispatchEvent(new ClipboardEvent('paste',{{clipboardData:dt,bubbles:true,cancelable:true}}));
+ await new Promise(r=>setTimeout(r,2500));ed.focus();
+ document.execCommand('insertText',false,prompt);
+}})();"#, b = serde_json::to_string(&b64).unwrap(), m = serde_json::to_string(&mime).unwrap(), n = serde_json::to_string(&name).unwrap(), p = serde_json::to_string(&prompt).unwrap());
+    // Sayfa (giriş dahil) Gemini'ye ulaşınca betiği çalıştır
+    std::thread::spawn(move || {
+        for _ in 0..360 {
+            std::thread::sleep(std::time::Duration::from_millis(500));
+            let Some(w) = app.get_webview_window("gemini") else { return };
+            if let Ok(u) = w.url() { if u.host_str() == Some("gemini.google.com") { std::thread::sleep(std::time::Duration::from_millis(1500)); let _ = w.eval(&js); return; } }
+        }
+    });
+    Ok(())
+}
+
 #[tauri::command]
 async fn open_gemini(app: AppHandle, email: String) -> Result<(), String> { open_gemini_window(&app, &email) }
 
@@ -789,7 +826,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

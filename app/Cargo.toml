@@ -15,6 +15,7 @@ tauri-plugin-updater = "2"
 drivesync = { path = "../drivesync" }
 drivenet = { path = "../drivenet" }
 drivefs = { path = "../drivefs" }
+base64 = "0.22"
 
 [features]
 default = ["custom-protocol"]

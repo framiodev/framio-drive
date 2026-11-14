@@ -387,7 +387,7 @@ async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'roo
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':(fcat(f)=='img'?'<b data-a="gimg">Gemini’ye sor</b>':'')+'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
@@ -400,6 +400,7 @@ $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows 
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
 $('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 $('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;const a=e.target.dataset.a;
+ if(a=='gimg'){askImage(r);return}
  if(a=='gem'){invoke('gemini_ask',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).then(()=>toast('İstem panoya kopyalandı — Gemini penceresinde Ctrl+V ile yapıştır')).catch(x=>toast(String(x),true));return}
  if(a=='web'){invoke('fs_web',{email:sel,id:r.dataset.id,mime:r.dataset.m}).catch(x=>toast(String(x),true));return}
  if(a=='open'){toast('Açılıyor…');invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true));return}
@@ -420,6 +421,19 @@ try{window.__TAURI__.webview.getCurrentWebview().onDragDropEvent(ev=>{const t=ev
  if(tab!='files')return;if(t=='enter'||t=='over'){$('fdrop').classList.add('drag');$('dropmsg').classList.remove('hide')}
  else{$('fdrop').classList.remove('drag');$('dropmsg').classList.add('hide');if(t=='drop')upFiles(ev.payload.paths||[])}})}catch(e){console.error(e)}
 
+const PRESETS={bus:'Bu fotoğraftaki otobüsü incele ve şunları ver:\n1) Marka ve model\n2) İşletme / firma (kaporta giydirmesi ve logolardan)\n3) Plaka (okunabiliyorsa; okunamıyorsa belirt)\n4) Fotoğrafın çekildiği konum (arka plan, tabela, yapı ve yol ipuçlarından tahmin)\nHer madde için güvenini (yüksek / orta / düşük) ve gerekçeni kısaca yaz; emin olmadığın yerde tahmin etme, belirt.',
+ desc:'Bu fotoğrafı ayrıntılı açıkla: ne görünüyor, ortam, dikkat çeken ayrıntılar.',
+ free:''};
+function askImage(r){const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div class="glass wide"><div style="font-weight:650;font-size:16px;margin-bottom:8px">Gemini’ye sor: ${esc(r.dataset.n)}</div>
+ <select id="gp"><option value="bus">Otobüs tanı (marka, model, firma, plaka, konum)</option><option value="desc">Fotoğrafı açıkla</option><option value="free">Kendi sorum</option></select>
+ <textarea id="gt" rows="8" style="width:100%;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;margin:6px 0 10px;resize:vertical"></textarea>
+ <div class="mut" style="margin-bottom:10px">Görsel ve soru Gemini penceresine yazılır; sen Enter’a basarak gönderirsin. İlk açılışta giriş gerekebilir.</div>
+ <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sm" id="gno">Vazgeç</button><button class="btn sm pri" id="gok">Gemini’ye gönder</button></div></div>`;
+ document.body.appendChild(m);const gt=m.querySelector('#gt'),gp=m.querySelector('#gp');gt.value=PRESETS.bus;
+ gp.onchange=()=>{gt.value=PRESETS[gp.value];gt.focus()};m.querySelector('#gno').onclick=()=>m.remove();
+ m.querySelector('#gok').onclick=()=>{const p=gt.value.trim();if(!p){toast('Soru boş olamaz',true);return}m.remove();toast('Görsel hazırlanıyor, Gemini açılıyor…');
+  invoke('gemini_ask_image',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m||'image/jpeg',prompt:p}).catch(x=>toast(String(x),true))}}
 /* sürükleyerek klasöre taşı (işaretçi tabanlı; pencere dosya bırakmayla çakışmaz) */
 (function(){let dr=null,gh=null,tgt=null;
  const clr=()=>{document.querySelectorAll('.dropt').forEach(x=>x.classList.remove('dropt'))};
