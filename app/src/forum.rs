@@ -2,6 +2,7 @@
 use crate::{clean_name, data_dir, de, drv, shrink_to};
 use std::path::PathBuf;
 use tauri::{AppHandle, Emitter};
+use base64::Engine as _;
 use drivenet::forum;
 use serde_json::{json, Value};
 
@@ -199,4 +200,12 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
     let _ = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/learn", Some(json!({ "plate": f["plate"], "brand": f["brand"], "model": f["model"], "company": f["company"], "discussion_id": topic }))).await;
     let url = format!("{base}/d/{topic}{}", number.map(|n| format!("/{n}")).unwrap_or_default());
     Ok(json!({ "url": url, "count": total }))
+}
+
+/// Önizleme küçük resmi (data URL, ~320 px)
+#[tauri::command]
+pub async fn forum_thumb(src: Value, name: String) -> Result<String, String> {
+    let b = source_bytes(&src, &name).await?;
+    let small = shrunk(b, 320, 75, "th").await;
+    Ok(format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(small)))
 }
