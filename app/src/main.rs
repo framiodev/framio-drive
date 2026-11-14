@@ -258,6 +258,18 @@ fn run_action(app: AppHandle, act: String, path: String) {
 }
 
 const RUN_KEY: &str = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+const CLASSIC_KEY: &str = "HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}";
+#[tauri::command]
+fn classic_menu_get() -> bool { run_hidden("reg", &["query", &format!("{CLASSIC_KEY}\\InprocServer32")]) }
+/// Windows 11'de eski (tam) sağ tık menüsünü varsayılan yapar ya da geri alır; Gezgin yeniden başlatılır.
+#[tauri::command]
+fn classic_menu_set(on: bool) -> Result<(), String> {
+    if on { if !run_hidden("reg", &["add", &format!("{CLASSIC_KEY}\\InprocServer32"), "/ve", "/d", "", "/f"]) { return Err("kayıt yazılamadı".into()); } }
+    else { run_hidden("reg", &["delete", CLASSIC_KEY, "/f"]); }
+    run_hidden("taskkill", &["/f", "/im", "explorer.exe"]);
+    Ok(())
+}
+
 #[tauri::command]
 fn autostart_get() -> bool { run_hidden("reg", &["query", RUN_KEY, "/v", "FramioDrive"]) }
 #[tauri::command]
@@ -882,7 +894,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
