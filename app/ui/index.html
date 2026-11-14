@@ -206,6 +206,9 @@ select option{background:#222;color:#fff}
       <div class="glass panel"><h2>Künye <span>Forumdaki gibi: firma | plaka, marka model, çekim yeri / yıl</span></h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="shrCompany" placeholder="Firma"><input id="shrPlate" placeholder="Plaka"><input id="shrBrand" placeholder="Marka"><input id="shrModel" placeholder="Model"><input id="shrLoc" placeholder="Çekim yeri"><input id="shrYear" placeholder="Yıl"></div>
         <div class="acts"><button class="btn" id="shrAi">Yapay zekâ ile doldur</button><span class="mut" id="shrAiMsg"></span></div></div>
+      <div class="glass panel"><h2>Zamanlama ve ağ <span>Hemen yayınla ya da planla; istersen ağdaki diğer forumlara da aktar</span></h2>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option></select><input id="shrAt" type="datetime-local" class="hide"></div>
+        <div class="mut" style="margin:8px 0 4px">Ağa aktar (başlık seçilince gelir)</div><div id="shrNodes" class="mut">Henüz başlık seçilmedi.</div></div>
       <div class="glass panel"><h2>Başlık ve imza</h2>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="shrSug"></select><button class="btn sm" id="shrRoute">Başlık öner</button></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara (öneri uygun değilse)"><button class="btn sm" id="shrFind">Ara</button></div>
@@ -600,25 +603,37 @@ async function shrInit(){let fl=[];try{fl=(await invoke('forum_list')).filter(f=
  const cur=$('shrForum').value;$('shrForum').innerHTML=fl.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.user)})</option>`).join('');if(fl.some(f=>f.id==cur))$('shrForum').value=cur;
  $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();if(fl.length)shrLoadMeta()}
 async function shrLoadMeta(){const id=$('shrForum').value;if(!id)return;try{const m=await invoke('forum_meta',{id});shrMeta[id]=m;const w=(m.watermarks&&m.watermarks.watermarks)||[];
- $('shrWm').innerHTML='<option value="none">İmzasız</option>'+w.map(x=>`<option value="${esc(x.filename||x.id)}">${esc(x.label||x.filename)} — ${esc(x.filename||x.id)}</option>`).join('');shrPrevUp()}catch(e){toast(String(e),true)}}
+ $('shrWm').innerHTML='<option value="none">İmzasız</option>'+w.map(x=>`<option value="${esc(x.filename||x.id)}">${esc(x.label||x.filename)} — ${esc(x.filename||x.id)}</option>`).join('');if(m.defaultWatermark&&[...$('shrWm').options].some(o=>o.value==m.defaultWatermark))$('shrWm').value=m.defaultWatermark;shrPrevUp()}catch(e){toast(String(e),true)}}
 $('shrForum').onchange=()=>{shrTopic=null;$('shrSug').innerHTML='';shrLoadMeta()};
 ['shrCompany','shrPlate','shrBrand','shrModel','shrLoc','shrYear'].forEach(i=>$(i).oninput=shrPrevUp);
 async function shrAiFill(){if(!shrIt.length){toast('Önce görsel ekle',true);return}$('shrAiMsg').textContent='Analiz ediliyor…';$('shrAi').disabled=true;
  try{const r=await invoke('forum_ai_fill',{id:$('shrForum').value,src:shrIt[0].src,name:shrIt[0].name});$('shrCompany').value=r.company;$('shrPlate').value=r.plate;$('shrBrand').value=r.brand;$('shrModel').value=r.model;$('shrLoc').value=r.location;if(r.year)$('shrYear').value=r.year;$('shrAiMsg').textContent='Doldurdu; kontrol et.';shrPrevUp();await shrRoute()}
  catch(e){$('shrAiMsg').textContent='';toast(String(e),true)}$('shrAi').disabled=false}
 $('shrAi').onclick=shrAiFill;
-function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join('');if(shrSugList.length){shrTopic=shrSugList[0];$('shrSug').value=0}else{shrTopic=null;$('shrSug').innerHTML='<option value="">Öneri yok — aşağıdan ara</option>'}shrPrevUp()}
+function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join('');if(shrSugList.length){shrTopic=shrSugList[0];$('shrSug').value=0}else{shrTopic=null;$('shrSug').innerHTML='<option value="">Öneri yok — aşağıdan ara</option>'}shrPrevUp();shrLoadNodes()}
 let shrSugList=[];
 async function shrRoute(){try{shrSug(await invoke('forum_route',{id:$('shrForum').value,fields:shrF(),hint:shrIt[0]?shrIt[0].name:''}))}catch(e){toast(String(e),true)}}
 $('shrRoute').onclick=shrRoute;
-$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrPrevUp()};
+$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrPrevUp();shrLoadNodes()};
 $('shrFind').onclick=async()=>{const q=$('shrQ').value.trim();if(!q)return;try{shrSug(await invoke('forum_find_topic',{id:$('shrForum').value,q}))}catch(e){toast(String(e),true)}};
-$('shrQ').onkeydown=e=>{if(e.key=='Enter')$('shrFind').click()};
+$('shrQ').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(shrQt);$('shrFind').click()}};
+let shrQt=0,shrQn=0;$('shrQ').oninput=()=>{clearTimeout(shrQt);const q=$('shrQ').value.trim();if(q.length<2)return;shrQt=setTimeout(async()=>{const n=++shrQn;try{const r=await invoke('forum_find_topic',{id:$('shrForum').value,q});if(n==shrQn)shrSug(r)}catch(e){}},300)};
+$('shrWhen').onchange=()=>$('shrAt').classList.toggle('hide',$('shrWhen').value!='later');
+let shrNodeList=[];
+async function shrLoadNodes(){shrNodeList=[];const t=shrTopic;if(!t){$('shrNodes').textContent='Henüz başlık seçilmedi.';return}
+ try{const r=await invoke('forum_nodes',{id:$('shrForum').value,discussionId:String(t.discussion_id)});if(shrTopic!==t)return;shrNodeList=(r.nodes||[]);
+  $('shrNodes').innerHTML=!shrNodeList.length?'Bu forumda tanımlı ağ düğümü yok.':!r.can_crosspost?'Ağa aktarma yetkin yok.':shrNodeList.map((n,i)=>`<label style="display:grid;grid-template-columns:auto 1fr 1.3fr;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" data-nd="${i}" style="width:auto;margin:0"><span>${esc(n.name)}</span><input data-nu="${i}" value="${esc(n.mapped?n.mapped.url:'')}" placeholder="Hedef başlık adresi (varsa)" style="margin:0"></label>`).join('')}
+ catch(e){$('shrNodes').textContent='Ağ bilgisi alınamadı: '+e}}
 $('shrGo').onclick=async()=>{if(shrBusy)return;const id=$('shrForum').value;if(!id){toast('Forum seç',true);return}if(!shrIt.length){toast('Görsel ekle',true);return}if(!shrTopic){toast('Bir başlık seç',true);return}
- const f=shrF(),m=shrMeta[id]||{};if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak gönderilecek (${$('shrWm').value=='none'?'imzasız':'imzalı'}). Gönderi hemen yayınlanır.`,'Paylaş'))return;
+ const f=shrF(),m=shrMeta[id]||{};const later=$('shrWhen').value=='later',at=$('shrAt').value;if(later&&!at){toast('Yayın zamanını seç',true);return}
+ const nodes=[...$('shrNodes').querySelectorAll('[data-nd]')].filter(c=>c.checked).map(c=>({id:shrNodeList[+c.dataset.nd].id,url:($('shrNodes').querySelector(`[data-nu="${c.dataset.nd}"]`)||{}).value||''}));
+ if(later&&nodes.length){toast('Ağa aktarma yalnızca hemen yayınlanan gönderilerde kullanılabilir',true);return}
+ if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak ${later?'şu zamanda yayınlanmak üzere zamanlanacak: '+at.replace('T',' '):'gönderilecek ve hemen yayınlanacak'} (${$('shrWm').value=='none'?'imzasız':'imzalı'})${nodes.length?'; ağda '+nodes.length+' foruma da aktarılacak':''}.`,later?'Zamanla':'Paylaş'))return;
  shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='0';
- try{const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items:shrIt,fields:f,watermark:$('shrWm').value,theme:m.kunyeTheme||''}});
-  shrUrl=r.url;$('shrMsg').textContent='Paylaşıldı ✓';$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı');shrIt=[];shrRender()}
+ try{const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items:shrIt,fields:f,watermark:$('shrWm').value,theme:m.kunyeTheme||'',publish_at:later?at.replace('T',' '):'',nodes}});
+  if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
+  else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:null;const bad=cr?cr.filter(x=>x&&x.success===false).length:0;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(r.cross&&r.cross.error?' — ağa aktarma hatası: '+r.cross.error:bad?` — ağa aktarma: ${bad} hata`:' — ağa aktarıldı'):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
+  shrIt=[];shrRender()}
  catch(e){$('shrMsg').textContent='';toast(String(e),true)}shrBusy=false;$('shrGo').disabled=false};
 $('shrOpen').onclick=()=>{if(shrUrl)invoke('open_url',{url:shrUrl}).catch(er=>toast(String(er),true))};
 evl('forum-share',e=>{const d=e.payload;$('shrMsg').textContent=d.msg;$('shrBar').style.width=Math.min(100,(d.i/d.total)*100)+'%'});

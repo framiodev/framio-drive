@@ -59,7 +59,14 @@ pub async fn forum_meta(id: String) -> Result<Value, String> {
     let s = forum::load_session(&id).ok_or("Önce bu foruma giriş yap")?;
     let tok = s["token"].as_str().unwrap_or("").to_string();
     match forum::meta(&base, &tok).await {
-        Ok(m) => Ok(m),
+        Ok(mut m) => {
+            // Üyenin forumdaki varsayılan imzası (asistan tercihi)
+            let uid = s["userId"].as_i64().unwrap_or(0);
+            if let Ok(u) = drivenet::forum::call(&base, &tok, "GET", &format!("/api/users/{uid}"), None).await {
+                m["defaultWatermark"] = u["data"]["attributes"]["preferences"]["framio_assistant_watermark"].clone();
+            }
+            Ok(m)
+        },
         Err(e) => {
             if !forum::check(&base, &tok).await { forum::clear_session(&id); return Err("Oturum süresi dolmuş; yeniden giriş yap".into()); }
             Err(e)
@@ -193,14 +200,41 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
     }
     let k = kunye(f, req["theme"].as_str().unwrap_or(""));
     let content = format!("{}{}\n", codes.join("\n"), if k.is_empty() { String::new() } else { format!("\n{k}") });
+    let publish_at = str_of(&req["publish_at"]);
+    let learn = json!({ "plate": f["plate"], "brand": f["brand"], "model": f["model"], "company": f["company"], "discussion_id": topic });
+    if !publish_at.is_empty() {
+        let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Zamanlanıyor…" }));
+        let r = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/schedule", Some(json!({ "items": [{
+            "discussion_id": topic.parse::<i64>().unwrap_or(0), "content": content, "label": if alt.is_empty() { name_of(&items) } else { alt.clone() }, "publish_at": publish_at }] }))).await?;
+        if r["ok"].as_bool() != Some(true) { return Err("Forum zamanlamayı kabul etmedi (tarih geçmişte olabilir)".into()); }
+        let _ = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/learn", Some(learn)).await;
+        return Ok(json!({ "scheduled": true, "at": publish_at, "count": total }));
+    }
     let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Mesaj gönderiliyor…" }));
     let created = drivenet::forum::call(&base, &tok, "POST", "/api/posts", Some(json!({ "data": { "type": "posts", "attributes": { "content": content },
         "relationships": { "discussion": { "data": { "type": "discussions", "id": topic } } } } }))).await?;
     let number = created["data"]["attributes"]["number"].as_i64();
-    let _ = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/learn", Some(json!({ "plate": f["plate"], "brand": f["brand"], "model": f["model"], "company": f["company"], "discussion_id": topic }))).await;
+    let post_id = created["data"]["id"].as_str().map(|s| s.to_string()).or(created["data"]["id"].as_i64().map(|n| n.to_string()));
+    let _ = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/learn", Some(learn)).await;
     let url = format!("{base}/d/{topic}{}", number.map(|n| format!("/{n}")).unwrap_or_default());
-    Ok(json!({ "url": url, "count": total }))
+    // Ağa aktar: seçilen düğümlere (diğer forumlara) gönderiyi yayınla
+    let nodes = req["nodes"].as_array().cloned().unwrap_or_default();
+    let mut cross = Value::Null;
+    if !nodes.is_empty() {
+        if let Some(pid) = post_id {
+            let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Ağdaki diğer forumlara aktarılıyor…" }));
+            let ids: Vec<Value> = nodes.iter().map(|n| n["id"].clone()).collect();
+            let mut urls = serde_json::Map::new();
+            for n in &nodes { if let (Some(i), Some(u)) = (n["id"].as_str(), n["url"].as_str()) { if !u.trim().is_empty() { urls.insert(i.to_string(), json!(u.trim())); } } }
+            cross = match drivenet::forum::call(&base, &tok, "POST", "/api/framio/crosspost/outbound", Some(json!({
+                "post_id": pid.parse::<i64>().unwrap_or(0), "target_nodes": ids, "target_discussion_urls": urls, "watermark_mode": "keep_source" }))).await {
+                Ok(v) => v["results"].clone(), Err(e) => json!({ "error": e }) };
+        }
+    }
+    Ok(json!({ "url": url, "count": total, "cross": cross }))
 }
+
+fn name_of(items: &[Value]) -> String { items.first().and_then(|i| i["name"].as_str()).unwrap_or("Görsel").to_string() }
 
 /// Önizleme küçük resmi (data URL, ~320 px)
 #[tauri::command]
@@ -208,4 +242,11 @@ pub async fn forum_thumb(src: Value, name: String) -> Result<String, String> {
     let b = source_bytes(&src, &name).await?;
     let small = shrunk(b, 320, 75, "th").await;
     Ok(format!("data:image/jpeg;base64,{}", base64::engine::general_purpose::STANDARD.encode(small)))
+}
+
+/// Ağa aktarma düğümleri (diğer forumlar) ve bu başlık için eşleşen hedef başlıklar
+#[tauri::command]
+pub async fn forum_nodes(id: String, discussion_id: String) -> Result<Value, String> {
+    let (base, tok) = sess(&id)?;
+    drivenet::forum::call(&base, &tok, "GET", &format!("/api/framio/crosspost/nodes?discussion_id={}", enc(&discussion_id)), None).await
 }
