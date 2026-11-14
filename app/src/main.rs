@@ -245,12 +245,25 @@ fn run_action(app: AppHandle, act: String, path: String) {
     });
 }
 
+const RUN_KEY: &str = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 #[tauri::command]
-fn open_gemini(app: AppHandle) -> Result<(), String> { open_gemini_window(&app) }
+fn autostart_get() -> bool { run_hidden("reg", &["query", RUN_KEY, "/v", "FramioDrive"]) }
+#[tauri::command]
+fn autostart_set(on: bool) -> Result<(), String> {
+    if on {
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let cmd = format!("\"{}\" --hidden", exe.display());
+        if !run_hidden("reg", &["add", RUN_KEY, "/v", "FramioDrive", "/t", "REG_SZ", "/d", &cmd, "/f"]) { return Err("kayıt yazılamadı".into()); }
+    } else { run_hidden("reg", &["delete", RUN_KEY, "/v", "FramioDrive", "/f"]); }
+    Ok(())
+}
+
+#[tauri::command]
+async fn open_gemini(app: AppHandle) -> Result<(), String> { open_gemini_window(&app) }
 
 /// Dosya için Gemini istemini panoya koyar ve Gemini penceresini açar.
 #[tauri::command]
-fn gemini_ask(app: AppHandle, email: String, id: String, name: String, mime: String) -> Result<(), String> {
+async fn gemini_ask(app: AppHandle, email: String, id: String, name: String, mime: String) -> Result<(), String> {
     let _ = email;
     set_clip(&gemini_prompt(&name, &share_url(&id, &mime)));
     open_gemini_window(&app)
@@ -726,6 +739,7 @@ fn main() {
                     if st == St::Sync { frame = (frame + 1) % 16; }
                 }
             });
+            if std::env::args().any(|a| a == "--hidden") { if let Some(w) = app.get_webview_window("main") { let _ = w.hide(); } }
             std::thread::spawn(ensure_context_menu);
             let args: Vec<String> = std::env::args().collect();
             let first = send_args(&args);
@@ -773,7 +787,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

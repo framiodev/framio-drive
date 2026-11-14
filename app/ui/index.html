@@ -196,6 +196,8 @@ select option{background:#222;color:#fff}
         <div class="mut" id="vnote" style="margin-bottom:10px"></div>
         <div style="display:grid;grid-template-columns:110px 1fr;gap:8px"><select id="vletter"></select><input id="vlabel" placeholder="Sürücü adı" style="margin:0 0 6px"></div>
         <div class="acts" style="margin-top:2px"><button class="btn pri" id="von">Bağla</button><button class="btn" id="voff">Ayır</button><button class="btn" id="vinst" style="display:none">WinFsp'yi yükle</button><span class="mut" id="vmsg"></span></div></div>
+      <div class="glass panel"><h2>Genel</h2>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label></div>
       <div class="glass panel"><h2>Hesap</h2>
         <div class="acts" style="margin-top:0"><button class="btn" id="rename">Adı değiştir</button><button class="btn danger" id="signout">Çıkış yap</button></div></div>
     </div>
@@ -345,6 +347,8 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
 
 let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
 async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+invoke('autostart_get').then(v=>$('autos').checked=v).catch(()=>{});
+$('autos').onchange=()=>invoke('autostart_set',{on:$('autos').checked}).then(()=>toast($('autos').checked?'Windows ile başlayacak':'Otomatik başlatma kapalı')).catch(e=>{toast(String(e),true);$('autos').checked=!$('autos').checked});
 $('gem').onclick=()=>invoke('open_gemini').catch(e=>toast(String(e),true));
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
