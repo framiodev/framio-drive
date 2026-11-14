@@ -110,9 +110,7 @@ pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profi
     // Motor: forum kimliği verilirse forumun kendi yapay zekâsı; yoksa kullanıcının Gemini anahtarı
     let fsess = match engine.as_deref() {
         Some(id) if !id.is_empty() => {
-            let (base, _) = crate::forum::find(id)?;
-            let s = drivenet::forum::load_session(id).ok_or("Bu foruma giriş yapılmamış")?;
-            Some((base, s["token"].as_str().unwrap_or("").to_string()))
+            Some(crate::forum::sess(id).await?)
         }
         _ => None,
     };
@@ -145,11 +143,12 @@ pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profi
             let shrunk = tauri::async_runtime::spawn_blocking(move || shrink_to(&sp, &sm, 1600, 85)).await.map_err(|e| e.to_string())?;
             let (path, m) = if shrunk { (small.clone(), "image/jpeg".to_string()) } else { (src.clone(), mime.clone()) };
             let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+            let head: Vec<u8> = { use std::io::Read; let mut b = vec![0u8; 262144]; let n = std::fs::File::open(&src).and_then(|mut f| f.read(&mut b)).unwrap_or(0); b.truncate(n); b };
             if drive.is_some() { let _ = std::fs::remove_file(&src); }
             let _ = std::fs::remove_file(&small);
             if bytes.len() > 15 * 1024 * 1024 { return Err("görsel çok büyük".into()); }
             if let Some((base, tok)) = &fsess {
-                let d = drivenet::forum::analyze(base, tok, bytes, "foto.jpg").await?;
+                let d = drivenet::forum::analyze(base, tok, bytes, head, &name, "", "", false).await?["data"].clone();
                 let mut o = serde_json::Map::new();
                 for (k, fk) in &fmap { o.insert(k.clone(), json!(d[fk.as_str()].as_str().unwrap_or(""))); }
                 o.insert("not".into(), json!([d["city"].as_str(), d["place"].as_str()].iter().flatten().filter(|s| !s.is_empty()).cloned().collect::<Vec<_>>().join(" · ")));

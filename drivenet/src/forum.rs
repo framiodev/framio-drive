@@ -19,6 +19,23 @@ pub fn clear_session(id: &str) {
     if let Ok(e) = keyring::Entry::new(SERVICE, &acct(id)) { let _ = e.delete_credential(); }
 }
 
+/// Giriş bilgisi (kullanıcı adı + parola): oturum düşerse sessizce yeniden giriş için Windows Kimlik Bilgisi Yöneticisi'nde tutulur.
+fn cred_acct(id: &str) -> String { format!("forum-cred:{id}") }
+pub fn save_cred(id: &str, ident: &str, pass: &str) -> Result<(), String> {
+    keyring::Entry::new(SERVICE, &cred_acct(id)).map_err(|e| e.to_string())?.set_password(&json!({ "ident": ident, "pass": pass }).to_string()).map_err(|e| e.to_string())
+}
+pub fn load_cred(id: &str) -> Option<Value> {
+    let t = keyring::Entry::new(SERVICE, &cred_acct(id)).ok()?.get_password().ok()?;
+    serde_json::from_str(&t).ok()
+}
+/// Çıkışta parola silinir, kullanıcı adı bir sonraki giriş için kalır.
+pub fn forget_pass(id: &str) {
+    if let Some(c) = load_cred(id) { let _ = save_cred(id, c["ident"].as_str().unwrap_or(""), ""); }
+}
+pub fn clear_cred(id: &str) {
+    if let Ok(e) = keyring::Entry::new(SERVICE, &cred_acct(id)) { let _ = e.delete_credential(); }
+}
+
 /// Yalnızca https adresleri kabul edilir; sondaki / atılır.
 pub fn clean_base(b: &str) -> Result<String, String> {
     let b = b.trim().trim_end_matches('/');
@@ -98,15 +115,22 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
     let marks = get(&c, base, token, "/api/framio-media/watermarks").await.map(|x| x.1).unwrap_or(json!(null));
     Ok(json!({
         "title": a["title"], "canStartDiscussion": a["canStartDiscussion"], "bbcodeTag": a["framio-upload-exif.active_bbcode_tag"], "kunyeTheme": a["framio-upload-exif.kunye_theme"],
+        "cityTagSlug": a["framio-upload-exif.city_tag_slug"], "brandOrder": a["framio-upload-exif.brand_order"],
         "tags": tag_list, "schemas": schemas, "watermarks": marks,
     }))
 }
 
 /// Forumun kendi yapay zekâ çözümlemesi (forumdaki anahtar/ayarlar/yazım kuralları sunucuda kullanılır; anahtar istemciye gelmez).
-pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) -> Result<Value, String> {
-    let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str("image/jpeg").map_err(|e| e.to_string())?;
-    let form = reqwest::multipart::Form::new().part("image", part);
-    let c = reqwest::Client::builder().timeout(Duration::from_secs(120)).user_agent(UA).default_headers({ let mut h = reqwest::header::HeaderMap::new(); h.insert(reqwest::header::ACCEPT, reqwest::header::HeaderValue::from_static("application/json")); h }).build().map_err(|e| e.to_string())?;
+/// `head`: özgün dosyanın ilk baytları (küçültülen görselde EXIF kalmaz; çekim yılı ve GPS buradan okunur).
+/// `tag_slug`/`discussion_id`: kategori şeması (şehir içi: hat, filo kodu…); `deep`: doğruluk kipi.
+pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, head: Vec<u8>, filename: &str, tag_slug: &str, discussion_id: &str, deep: bool) -> Result<Value, String> {
+    let part = reqwest::multipart::Part::bytes(bytes).file_name("ai.jpg".to_string()).mime_str("image/jpeg").map_err(|e| e.to_string())?;
+    let mut form = reqwest::multipart::Form::new().part("image", part).text("file_name", filename.to_string());
+    if !head.is_empty() { form = form.part("exif_head", reqwest::multipart::Part::bytes(head).file_name("head.jpg".to_string()).mime_str("image/jpeg").map_err(|e| e.to_string())?); }
+    if !tag_slug.is_empty() { form = form.text("tag_slug", tag_slug.to_string()); }
+    if !discussion_id.is_empty() { form = form.text("discussion_id", discussion_id.to_string()); }
+    if deep { form = form.text("deep", "1"); }
+    let c = reqwest::Client::builder().connect_timeout(Duration::from_secs(20)).timeout(Duration::from_secs(120)).user_agent(UA).default_headers({ let mut h = reqwest::header::HeaderMap::new(); h.insert(reqwest::header::ACCEPT, reqwest::header::HeaderValue::from_static("application/json")); h }).build().map_err(|e| e.to_string())?;
     let r = c.post(format!("{base}/api/framio-media/analyze-ai")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
     let (st, v) = json_of(r).await?;
     if st == 401 || st == 403 { return Err("Forum oturumu geçersiz; Ayarlar'dan yeniden giriş yap".into()); }
@@ -115,7 +139,7 @@ pub async fn analyze(base: &str, token: &str, bytes: Vec<u8>, filename: &str) ->
         let why = v["error"].as_str().map(|s| s.to_string()).or_else(|| v["reason"].as_str().map(|r| match r { "disabled" => "Forumda yapay zekâ kapalı".to_string(), "not_configured" => "Forumda yapay zekâ anahtarı tanımlı değil".to_string(), o => o.to_string() })).unwrap_or(format!("HTTP {st}"));
         return Err(why);
     }
-    Ok(v["data"].clone())
+    Ok(json!({ "data": v["data"].clone(), "history": v["history"].clone(), "locationSource": v["location_source"].clone() }))
 }
 
 fn long_client() -> Result<reqwest::Client, String> {
