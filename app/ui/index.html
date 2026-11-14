@@ -349,7 +349,7 @@ let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v
 async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
 invoke('autostart_get').then(v=>$('autos').checked=v).catch(()=>{});
 $('autos').onchange=()=>invoke('autostart_set',{on:$('autos').checked}).then(()=>toast($('autos').checked?'Windows ile başlayacak':'Otomatik başlatma kapalı')).catch(e=>{toast(String(e),true);$('autos').checked=!$('autos').checked});
-$('gem').onclick=()=>invoke('open_gemini').catch(e=>toast(String(e),true));
+$('gem').onclick=()=>invoke('open_gemini',{email:sel||''}).catch(e=>toast(String(e),true));
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
 chkUpd();setInterval(chkUpd,600000);

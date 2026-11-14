@@ -198,9 +198,12 @@ fn share_url(id: &str, mime: &str) -> String {
     }
 }
 
-fn open_gemini_window(app: &AppHandle) -> Result<(), String> {
+fn open_gemini_window(app: &AppHandle, email: &str) -> Result<(), String> {
     if let Some(w) = app.get_webview_window("gemini") { let _ = w.show(); let _ = w.unminimize(); let _ = w.set_focus(); return Ok(()); }
-    let url: tauri::Url = "https://gemini.google.com/app".parse().map_err(|_| "adres hatalı".to_string())?;
+    // Hesap seçici bu e-postayı hazır getirir; oturum açıksa doğrudan Gemini'ye geçer
+    let em = email.replace('%', "%25").replace('@', "%40").replace('+', "%2B");
+    let u = format!("https://accounts.google.com/AccountChooser?Email={em}&continue=https%3A%2F%2Fgemini.google.com%2Fapp%3Fauthuser%3D{em}");
+    let url: tauri::Url = u.parse().map_err(|_| "adres hatalı".to_string())?;
     tauri::WebviewWindowBuilder::new(app, "gemini", tauri::WebviewUrl::External(url))
         .title("Gemini").inner_size(1100.0, 820.0).build().map(|_| ()).map_err(|e| e.to_string())
 }
@@ -237,7 +240,7 @@ fn run_action(app: AppHandle, act: String, path: String) {
             match act.as_str() {
                 "link" => { let u = share_url(&f.id, &f.mime_type); set_clip(&u); Ok("Bağlantı panoya kopyalandı".to_string()) }
                 "web" => { std::process::Command::new("cmd").args(["/C", "start", "", &web_url(&email, &f.id, &f.mime_type)]).spawn().map_err(|e| e.to_string())?; Ok(String::new()) }
-                "gemini" => { set_clip(&gemini_prompt(&f.name, &share_url(&f.id, &f.mime_type))); open_gemini_window(&app)?; Ok("İstem panoya kopyalandı — Gemini'de Ctrl+V ile yapıştır".to_string()) }
+                "gemini" => { set_clip(&gemini_prompt(&f.name, &share_url(&f.id, &f.mime_type))); open_gemini_window(&app, &email)?; Ok("İstem panoya kopyalandı — Gemini'de Ctrl+V ile yapıştır".to_string()) }
                 _ => Err("bilinmeyen komut".to_string()),
             }
         }.await;
@@ -259,14 +262,13 @@ fn autostart_set(on: bool) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn open_gemini(app: AppHandle) -> Result<(), String> { open_gemini_window(&app) }
+async fn open_gemini(app: AppHandle, email: String) -> Result<(), String> { open_gemini_window(&app, &email) }
 
 /// Dosya için Gemini istemini panoya koyar ve Gemini penceresini açar.
 #[tauri::command]
 async fn gemini_ask(app: AppHandle, email: String, id: String, name: String, mime: String) -> Result<(), String> {
-    let _ = email;
     set_clip(&gemini_prompt(&name, &share_url(&id, &mime)));
-    open_gemini_window(&app)
+    open_gemini_window(&app, &email)
 }
 
 fn safe_rel(rel: &str) -> Result<PathBuf, String> {
