@@ -115,7 +115,8 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
     let marks = get(&c, base, token, "/api/framio-media/watermarks").await.map(|x| x.1).unwrap_or(json!(null));
     Ok(json!({
         "title": a["title"], "canStartDiscussion": a["canStartDiscussion"], "bbcodeTag": a["framio-upload-exif.active_bbcode_tag"], "kunyeTheme": a["framio-upload-exif.kunye_theme"],
-        "cityTagSlug": a["framio-upload-exif.city_tag_slug"], "brandOrder": a["framio-upload-exif.brand_order"],
+        "cityTagSlug": a["framio-upload-exif.city_tag_slug"],
+        "wmAllowKeep": a["framioCrosspostWmAllowKeepSource"], "wmAllowTarget": a["framioCrosspostWmAllowTargetSite"], "wmAllowNone": a["framioCrosspostWmAllowNoWatermark"], "wmDefault": a["framioCrosspostWmDefaultMode"], "brandOrder": a["framio-upload-exif.brand_order"],
         "tags": tag_list, "schemas": schemas, "watermarks": marks,
     }))
 }

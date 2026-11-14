@@ -627,7 +627,7 @@ function shrRender(){
   const ab=a=='busy'?'Yapay zekâ okuyor…':a=='ok'?'Künye okundu ✓':a=='err'?'Yapay zekâ hatası':'',ub=u=='busy'?'Yükleniyor…':u=='ok'?'Yüklendi ✓':u=='err'?'Yükleme hatası':'';
   return `<div data-sel="${i}" style="width:150px;border:2px solid ${i==shrSelI?'var(--acc)':'var(--stroke)'};border-radius:12px;padding:6px;background:var(--track);cursor:pointer"><div data-sel="${i}" style="height:86px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div data-sel="${i}" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px">${i+1}. ${esc(x.name)}</div><div data-sel="${i}" class="mut" style="font-size:11px;min-height:30px">${ab}<br>${ub}</div><div style="display:flex;gap:4px"><button class="btn sm" data-up="${i}">←</button><button class="btn sm danger" data-rm="${i}">×</button></div></div>`}).join('')+'</div>'
   :'Henüz görsel yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…” ya da Dosyalar sekmesinden ekle.';
- shrThumbs();shrPvRender();shrPrevUp()}
+ shrThumbs();shrPvRender();shrPrevUp();if(shrNodeList.length&&!$('shrNodes').contains(document.activeElement))shrNodesRender()}
 function shrPvRender(){const x=shrIt[shrSelI],box=$('shrPv');
  if(!x){box.innerHTML='';$('shrWmList').innerHTML='';return}
  if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;shrPvRender()}).catch(()=>{x.pvBusy=0})}
@@ -727,13 +727,58 @@ $('shrFind').onclick=async()=>{const q=$('shrQ').value.trim();if(!q)return;try{s
 $('shrQ').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(shrQt);$('shrFind').click()}};
 let shrQt=0,shrQn=0;$('shrQ').oninput=()=>{clearTimeout(shrQt);const q=$('shrQ').value.trim();if(q.length<2)return;shrQt=setTimeout(async()=>{const n=++shrQn;try{const r=await invoke('forum_find_topic',{id:shrFo(),q});if(n==shrQn)shrSug(r)}catch(e){}},300)};
 $('shrWhen').onchange=()=>$('shrAt').classList.toggle('hide',$('shrWhen').value!='later');
-async function shrLoadNodes(){shrNodeList=[];const t=shrTopic;if(!t){$('shrNodes').textContent='Henüz başlık seçilmedi.';return}
+/* Ağa aktar: forumdaki pencere gibi — her hedef forum için başlık (yanıt/yeni başlık), etiket ve ayrı imza seçimi */
+let shrNodeSt={};
+const shrAuto=()=>{const f=(shrIt[0]||{}).f||{};return (shrCtx.city?[f.brand,f.model]:[f.company,f.model]).map(z=>String(z||'').trim()).filter(Boolean).join(shrCtx.city?' ':' & ')};
+function shrWmModes(){const m=shrM(),o=[];if(m.wmAllowKeep!==false)o.push(['keep_source','Kaynak imzası (olduğu gibi)']);if(m.wmAllowTarget!==false)o.push(['target_site','Hedef forumun imzası (seç)']);if(m.wmAllowNone)o.push(['no_watermark','İmzasız']);return o.length?o:[['keep_source','Kaynak imzası (olduğu gibi)']]}
+function shrOrient(x){if(x.or)return x.or;if(x.pv&&!x.orBusy){x.orBusy=1;const im=new Image();im.onload=()=>{x.or=im.naturalWidth>=im.naturalHeight?'landscape':'portrait';shrNodesRender()};im.src=x.pv}return 'landscape'}
+function shrWmPick(s,o){const list=(s.wmList||[]).filter(w=>w.type==o||w.type=='other');let c=list.find(w=>w.id==s.wmSel[o]);if(!c&&list.length){c=list.find(w=>w.is_personal)||list[0];s.wmSel[o]=c.id}return c?c.id:''}
+function shrResHtml(i){const s=shrNodeSt[shrNodeList[i].id];return (s.res||[]).map((d,j)=>`<div data-pick="${i}" data-pj="${j}" style="padding:6px 8px;border-radius:8px;cursor:pointer;background:var(--track);margin:3px 0;font-size:13px">${esc(d.title)} <span class="mut">(${d.comment_count||0} yanıt)</span></div>`).join('')+(s.pick?`<div class="mut" style="margin-top:4px">Seçili: <b>${esc(s.pick)}</b></div>`:'')}
+function shrWmBlock(n,s,i){if(!s.wmList){shrNodeWm(n);return '<div class="mut">Hedef forumun imzaları yükleniyor…</div>'}
+ if(!s.wmList.length)return '<div class="mut">Hedef forumda imza bulunamadı.</div>';
+ const x0=shrIt[shrSelI]||shrIt[0];
+ return [...new Set(shrIt.map(shrOrient))].map(o=>{const list=s.wmList.filter(w=>w.type==o||w.type=='other'),cur=shrWmPick(s,o);
+  return `<div class="mut" style="font-size:12px;margin:6px 0 2px">${o=='portrait'?'Dikey':'Yatay'} fotoğraflar için imza</div><div style="display:flex;flex-wrap:wrap;gap:8px">${list.map(w=>`<div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="width:108px;cursor:pointer;border:2px solid ${w.id==cur?'var(--acc)':'var(--stroke)'};border-radius:10px;padding:4px;background:var(--track)"><div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="position:relative;height:62px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.25) center/cover no-repeat${x0&&x0.th?`;background-image:url(${x0.th})`:''}"><img data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" src="${esc(w.url)}" style="position:absolute;inset:0;width:100%;height:100%" onerror="this.style.display='none'"></div><div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="font-size:11px;margin-top:3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.label||w.name||w.filename)}</div></div>`).join('')}</div>`}).join('')}
+function shrNodesRender(){const box=$('shrNodes');if(!shrNodeList.length)return;
+ box.innerHTML=shrNodeList.map((n,i)=>{const s=shrNodeSt[n.id];let b='';
+  if(s.on){
+   b+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><label class="mut" style="font-size:12px">Hedefte<select data-nm="${i}" style="width:100%;margin:0"><option value="reply"${s.mode=='reply'?' selected':''}>Mevcut başlığa yanıt</option><option value="new_discussion"${s.mode!='reply'?' selected':''}>Yeni başlık aç</option></select></label>`;
+   if(s.mode=='reply')b+=`<label class="mut" style="font-size:12px">Başlık ara<input data-nq="${i}" value="${esc(s.q)}" placeholder="Hedef forumda başlık ara" style="width:100%;margin:0"></label></div><div data-nr="${i}">${shrResHtml(i)}</div><label class="mut" style="display:block;font-size:12px;margin-top:6px">Başlık adresi<input data-nu="${i}" value="${esc(s.url)}" placeholder="Hedef başlığın adresi" style="width:100%;margin:0"></label>`;
+   else{if(!s.cats)shrNodeCats(n);b+=`<label class="mut" style="font-size:12px">Başlık<input data-nt="${i}" value="${esc(s.title!==null?s.title:shrAuto())}" style="width:100%;margin:0"></label></div><label class="mut" style="display:block;font-size:12px;margin-top:6px">Etiket${s.cats&&s.cats.length?`<select data-ng="${i}" style="width:100%;margin:0"><option value="">— varsayılan —</option>${s.cats.map(c=>`<option value="${esc(c.slug||c.id)}"${(c.slug||c.id)==s.tag?' selected':''}>${esc(c.name)}</option>`).join('')}</select>`:`<input data-ng="${i}" value="${esc(s.tag)}" placeholder="Etiket (slug)" style="width:100%;margin:0">`}</label>`}
+   b+=`<label class="mut" style="display:block;font-size:12px;margin-top:8px">İmza<select data-nw="${i}" style="width:100%;margin:0">${shrWmModes().map(([v,l])=>`<option value="${v}"${s.wmMode==v?' selected':''}>${l}</option>`).join('')}</select></label>`;
+   if(s.wmMode=='target_site')b+=shrWmBlock(n,s,i)}
+  return `<div style="border:1px solid var(--stroke);border-radius:12px;padding:10px;margin:8px 0"><label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" data-nd="${i}"${s.on?' checked':''} style="width:auto;margin:0"><b>${esc(n.name)}</b>${n.mapped&&n.mapped.url?'<span class="mut">— bu başlık için eşleşme var</span>':''}</label>${b}</div>`}).join('')}
+async function shrNodeWm(n){const s=shrNodeSt[n.id];if(s.wmList||s.wmBusy)return;s.wmBusy=1;let u='';try{u=((await invoke('forum_list')).find(f=>f.id==shrFo())||{}).user||''}catch(e){}
+ try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=watermarks&node_id='+encodeURIComponent(n.id)+(u?'&username='+encodeURIComponent(u):'')});s.wmList=r.watermarks||[]}catch(e){s.wmList=[]}s.wmBusy=0;shrNodesRender()}
+async function shrNodeCats(n){const s=shrNodeSt[n.id];if(s.cats||s.catBusy)return;s.catBusy=1;try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=categories&node_id='+encodeURIComponent(n.id)});s.cats=r.categories||[]}catch(e){s.cats=[]}s.catBusy=0;shrNodesRender()}
+async function shrNodeSearch(i){const n=shrNodeList[i],s=shrNodeSt[n.id],q=s.q.trim();try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=discussions&node_id='+encodeURIComponent(n.id)+(q?'&q='+encodeURIComponent(q):'')});s.res=r.discussions||[];const el=$('shrNodes').querySelector(`[data-nr="${i}"]`);if(el)el.innerHTML=shrResHtml(i)}catch(e){}}
+let shrNQt=0;
+$('shrNodes').onchange=e=>{const d=e.target.dataset,t=e.target;const n=i=>shrNodeList[+i],st=i=>shrNodeSt[n(i).id];
+ if(d.nd!==undefined){const s=st(d.nd);s.on=t.checked;if(s.on&&s.wmMode=='target_site')shrNodeWm(n(d.nd));shrNodesRender()}
+ else if(d.nm!==undefined){st(d.nm).mode=t.value;shrNodesRender()}
+ else if(d.nw!==undefined){const s=st(d.nw);s.wmMode=t.value;shrNodesRender()}
+ else if(d.ng!==undefined)st(d.ng).tag=t.value;
+ else if(d.nu!==undefined){const s=st(d.nu);s.url=t.value.trim();s.pick=''}};
+$('shrNodes').oninput=e=>{const d=e.target.dataset,t=e.target;
+ if(d.nq!==undefined){shrNodeSt[shrNodeList[+d.nq].id].q=t.value;clearTimeout(shrNQt);const i=+d.nq;shrNQt=setTimeout(()=>shrNodeSearch(i),350)}
+ else if(d.nt!==undefined)shrNodeSt[shrNodeList[+d.nt].id].title=t.value;
+ else if(d.nu!==undefined){const s=shrNodeSt[shrNodeList[+d.nu].id];s.url=t.value.trim();s.pick=''}};
+$('shrNodes').onclick=e=>{const d=e.target.dataset;
+ if(d.pick!==undefined){const i=+d.pick,s=shrNodeSt[shrNodeList[i].id],x=(s.res||[])[+d.pj];if(x){s.url=x.url;s.pick=x.title;shrNodesRender()}}
+ else if(d.wci!==undefined){const s=shrNodeSt[shrNodeList[+d.wci].id];s.wmSel[d.wco]=d.wcv;shrNodesRender()}};
+async function shrLoadNodes(){shrNodeList=[];shrNodeSt={};const t=shrTopic;if(!t){$('shrNodes').textContent='Henüz başlık seçilmedi.';return}
  try{const r=await invoke('forum_nodes',{id:shrFo(),discussionId:String(t.discussion_id)});if(shrTopic!==t)return;shrNodeList=(r.nodes||[]);
-  $('shrNodes').innerHTML=!shrNodeList.length?'Bu forumda tanımlı ağ düğümü yok.':!r.can_crosspost?'Ağa aktarma yetkin yok.':shrNodeList.map((n,i)=>`<label style="display:grid;grid-template-columns:auto 1fr 1.3fr;gap:8px;align-items:center;margin:4px 0"><input type="checkbox" data-nd="${i}" style="width:auto;margin:0"><span>${esc(n.name)}</span><input data-nu="${i}" value="${esc(n.mapped?n.mapped.url:'')}" placeholder="Hedef başlık adresi (varsa)" style="margin:0"></label>`).join('')}
+  if(!shrNodeList.length){$('shrNodes').textContent='Bu forumda tanımlı ağ düğümü yok.';return}
+  if(!r.can_crosspost){shrNodeList=[];$('shrNodes').textContent='Ağa aktarma yetkin yok.';return}
+  const mapped=shrNodeList.some(n=>n.mapped&&n.mapped.url),modes=shrWmModes().map(z=>z[0]),dm=modes.includes(shrM().wmDefault)?shrM().wmDefault:modes[0];
+  shrNodeList.forEach(n=>{const mp=n.mapped&&n.mapped.url;shrNodeSt[n.id]={on:mapped?!!mp:false,mode:mp?'reply':'new_discussion',url:mp?n.mapped.url:'',pick:mp?(n.mapped.title||''):'',title:null,tag:n.default_tag_slug||'',q:'',res:[],wmMode:dm,wmList:null,wmSel:{},cats:null}});
+  shrNodeList.forEach(n=>{if(shrNodeSt[n.id].on&&shrNodeSt[n.id].wmMode=='target_site')shrNodeWm(n)});
+  shrNodesRender()}
  catch(e){$('shrNodes').textContent='Ağ bilgisi alınamadı: '+e}}
 $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo();if(!id){toast('Forum seç',true);return}if(!shrIt.length){toast('Görsel ekle',true);return}if(!shrTopic){toast('Bir başlık seç',true);return}
  const later=$('shrWhen').value=='later',at=$('shrAt').value;if(later&&!at){toast('Yayın zamanını seç',true);return}
- const nodes=[...$('shrNodes').querySelectorAll('[data-nd]')].filter(c=>c.checked).map(c=>({id:shrNodeList[+c.dataset.nd].id,url:($('shrNodes').querySelector(`[data-nu="${c.dataset.nd}"]`)||{}).value||''}));
+ const nodes=shrNodeList.filter(n=>shrNodeSt[n.id].on).map(n=>{const s=shrNodeSt[n.id];return {id:n.id,name:n.name,mode:s.mode,url:s.mode=='reply'?s.url.trim():'',title:s.title!==null?s.title:shrAuto(),tag:s.tag,wmMode:s.wmMode,wmByItem:shrIt.map(x=>s.wmMode=='target_site'?shrWmPick(s,shrOrient(x)):'')}});
+ for(const n of nodes){if(n.mode=='reply'&&!n.url){toast(n.name+': hedef başlığın adresini seç ya da “Yeni başlık aç” de',true);return}if(n.mode!='reply'&&!n.title.trim()){toast(n.name+': yeni başlık için bir ad yaz',true);return}const s=shrNodeSt[n.id];if(s.wmMode=='target_site'&&!s.wmList){toast(n.name+': hedef forumun imzaları henüz yüklenmedi',true);return}}
  if(later&&nodes.length){toast('Ağa aktarma yalnızca hemen yayınlanan gönderilerde kullanılabilir',true);return}
  if(shrIt.some(x=>x.ai.state=='busy')&&!await confirmBox('Yapay zekâ bitmedi','Bazı görsellerin künyesi hâlâ okunuyor; şu anki bilgilerle devam edilsin mi?','Devam et'))return;
  if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak ${later?'şu zamanda yayınlanmak üzere zamanlanacak: '+at.replace('T',' '):'gönderilecek ve hemen yayınlanacak'} (${shrWmSel=='none'?'imzasız':'imzalı'})${nodes.length?'; ağda '+nodes.length+' foruma da aktarılacak':''}.`,later?'Zamanla':'Paylaş'))return;
@@ -742,7 +787,7 @@ $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo();if(!id){toast('F
   const items=shrIt.map(x=>({name:x.name,src:x.src,bbcode:x.up&&x.up.state=='ok'&&x.up.wm==shrWmSel?x.up.bbcode:'',alt:shrAlt(x.f),kunye:shrKunye(x.f),fields:x.f}));
   const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes}});
   if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
-  else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:null;const bad=cr?cr.filter(x=>x&&x.success===false).length:0;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(r.cross&&r.cross.error?' — ağa aktarma hatası: '+r.cross.error:bad?` — ağa aktarma: ${bad} hata`:' — ağa aktarıldı'):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
+  else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:[];const bad=cr.filter(x=>x.error||(Array.isArray(x.results)&&x.results.some(y=>y&&y.success===false)));const nm=id=>(nodes.find(z=>z.id==id)||{}).name||id;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(bad.length?' — ağa aktarma sorunu: '+bad.map(x=>nm(x.node)+(x.error?' ('+x.error+')':'')).join(', '):' — ağa aktarıldı: '+cr.map(x=>nm(x.node)).join(', ')):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
   shrIt=[];shrSelI=0;shrRender();shrFormRender()}
  catch(e){$('shrMsg').textContent='';toast(String(e),true)}shrBusy=false;$('shrGo').disabled=false};
 $('shrOpen').onclick=()=>{if(shrUrl)invoke('open_url',{url:shrUrl}).catch(er=>toast(String(er),true))};

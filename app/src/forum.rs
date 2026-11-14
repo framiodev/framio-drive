@@ -195,7 +195,7 @@ pub async fn forum_topic_tags(id: String, discussion_id: String) -> Result<Value
 /// Forumun /api/framio-media/ altındaki okuma uçları (şehir ve hat listesi)
 #[tauri::command]
 pub async fn forum_get(id: String, path: String) -> Result<Value, String> {
-    if !path.starts_with("/api/framio-media/") || path.contains("..") { return Err("İzin verilmeyen adres".into()); }
+    if !(path.starts_with("/api/framio-media/") || path.starts_with("/api/framio/crosspost/")) || path.contains("..") { return Err("İzin verilmeyen adres".into()); }
     let (base, tok) = sess(&id).await?;
     forum::call(&base, &tok, "GET", &path, None).await
 }
@@ -230,6 +230,26 @@ pub async fn forum_find_topic(id: String, q: String) -> Result<Value, String> {
     let (base, tok) = sess(&id).await?;
     let v = drivenet::forum::call(&base, &tok, "GET", &format!("/api/discussions?filter%5Bq%5D={}&page%5Blimit%5D=10", enc(q.trim())), None).await?;
     Ok(Value::Array(v["data"].as_array().cloned().unwrap_or_default().iter().map(|d| json!({ "discussion_id": d["id"], "title": d["attributes"]["title"], "url": d["attributes"]["shareUrl"] })).collect()))
+}
+
+/// BBCode etiketindeki öznitelik (url="…" ya da url=…)
+fn attr_of(code: &str, name: &str) -> String {
+    let key = format!("{name}=");
+    let mut from = 0;
+    while let Some(i) = code[from..].find(&key) {
+        let at = from + i;
+        let ok = at == 0 || !code.as_bytes()[at - 1].is_ascii_alphanumeric();
+        if ok {
+            let rest = &code[at + key.len()..];
+            let mut ch = rest.chars();
+            return match ch.next() {
+                Some(q) if q == '"' || q == '\'' => rest[1..].split(q).next().unwrap_or("").to_string(),
+                _ => rest.split(|c: char| c.is_whitespace() || c == ']').next().unwrap_or("").to_string(),
+            };
+        }
+        from = at + key.len();
+    }
+    String::new()
 }
 
 fn set_alt(code: &str, alt: &str) -> String {
@@ -292,18 +312,36 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
     let post_id = created["data"]["id"].as_str().map(|s| s.to_string()).or(created["data"]["id"].as_i64().map(|n| n.to_string()));
     for l in learn_all(&topic) { let _ = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/learn", Some(l)).await; }
     let url = format!("{base}/d/{topic}{}", number.map(|n| format!("/{n}")).unwrap_or_default());
-    // Ağa aktar: seçilen düğümlere (diğer forumlara) gönderiyi yayınla
+    // Ağa aktar: her düğüm için ayrı istek (hedef başlık/yeni başlık, etiket, imza düğüme göre değişir)
     let nodes = req["nodes"].as_array().cloned().unwrap_or_default();
-    let mut cross = Value::Null;
+    let mut cross: Vec<Value> = vec![];
     if !nodes.is_empty() {
         if let Some(pid) = post_id {
             let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Ağdaki diğer forumlara aktarılıyor…" }));
-            let ids: Vec<Value> = nodes.iter().map(|n| n["id"].clone()).collect();
-            let mut urls = serde_json::Map::new();
-            for n in &nodes { if let (Some(i), Some(u)) = (n["id"].as_str(), n["url"].as_str()) { if !u.trim().is_empty() { urls.insert(i.to_string(), json!(u.trim())); } } }
-            cross = match drivenet::forum::call(&base, &tok, "POST", "/api/framio/crosspost/outbound", Some(json!({
-                "post_id": pid.parse::<i64>().unwrap_or(0), "target_nodes": ids, "target_discussion_urls": urls, "watermark_mode": "keep_source" }))).await {
-                Ok(v) => v["results"].clone(), Err(e) => json!({ "error": e }) };
+            let username = forum::load_session(&id).map(|s| str_of(&s["username"])).unwrap_or_default();
+            let urls_of: Vec<String> = blocks.iter().map(|b| attr_of(&b.0, "url")).collect();
+            for n in &nodes {
+                let nid = str_of(&n["id"]);
+                if nid.is_empty() { continue; }
+                let wm_mode = { let m = str_of(&n["wmMode"]); if m.is_empty() { "keep_source".to_string() } else { m } };
+                let mut body = json!({ "post_id": pid.parse::<i64>().unwrap_or(0), "target_nodes": [nid.clone()], "watermark_mode": wm_mode,
+                    "custom_title": str_of(&n["title"]) });
+                let one = |v: &str| { let mut m = serde_json::Map::new(); m.insert(nid.clone(), json!(v)); Value::Object(m) };
+                body["target_usernames"] = one(&username);
+                if str_of(&n["mode"]) != "new_discussion" && !str_of(&n["url"]).is_empty() { body["target_discussion_urls"] = one(&str_of(&n["url"])); }
+                if !str_of(&n["tag"]).is_empty() { body["target_tags"] = one(&str_of(&n["tag"])); }
+                if wm_mode == "target_site" {
+                    let ids: Vec<String> = n["wmByItem"].as_array().map(|a| a.iter().map(str_of).collect()).unwrap_or_default();
+                    let mut map = serde_json::Map::new();
+                    for (i, u) in urls_of.iter().enumerate() { if !u.is_empty() { if let Some(w) = ids.get(i).filter(|w| !w.is_empty()) { map.insert(u.clone(), json!(w)); } } }
+                    body["watermark_map"] = Value::Object(map);
+                    if let Some(w) = ids.iter().find(|w| !w.is_empty()) { body["watermark_id"] = json!(w); }
+                }
+                cross.push(match drivenet::forum::call(&base, &tok, "POST", "/api/framio/crosspost/outbound", Some(body)).await {
+                    Ok(v) => json!({ "node": nid, "results": v["results"].clone() }),
+                    Err(e) => json!({ "node": nid, "error": e }),
+                });
+            }
         }
     }
     Ok(json!({ "url": url, "count": total, "cross": cross }))
