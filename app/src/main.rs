@@ -16,7 +16,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
+struct App { askimg: Mutex<Vec<String>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -139,6 +139,10 @@ fn ensure_context_menu() {
              $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --send \"%1\"'); ",
             base = base, icon = q(&icon.display().to_string()), exe = q(&exe.display().to_string()));
     }
+    script += &format!(
+        "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\Classes\\SystemFileAssociations\\image\\shell\\FramioGeminiImg'); $k.SetValue('', \"Gemini'ye sor\"); $k.SetValue('Icon','{icon}'); \
+         $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act gimg \"%1\"'); ",
+        icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
     ps(&script);
 }
 
@@ -234,6 +238,11 @@ async fn resolve_drive_path(app: &AppHandle, path: &str) -> Result<(String, driv
 }
 
 fn run_action(app: AppHandle, act: String, path: String) {
+    if act == "gimg" {
+        app.state::<App>().askimg.lock().unwrap().push(path.trim().trim_matches('"').to_string());
+        show_window(&app);
+        return;
+    }
     tauri::async_runtime::spawn(async move {
         let r: Result<String, String> = async {
             let (email, f) = resolve_drive_path(&app, &path).await?;
@@ -261,19 +270,41 @@ fn autostart_set(on: bool) -> Result<(), String> {
     Ok(())
 }
 
-/// Görseli Drive'dan indirir, Gemini penceresine istemle birlikte yapıştırır (yapıştırma olmazsa panoda hazır bekler).
-#[tauri::command]
-async fn gemini_ask_image(app: AppHandle, email: String, id: String, name: String, mime: String, prompt: String) -> Result<(), String> {
+const SHRINK_PS: &str = r#"Add-Type -AssemblyName System.Drawing
+$i=[System.Drawing.Image]::FromFile('@SRC@')
+foreach($p in $i.PropertyItems){ if($p.Id -eq 274){ switch($p.Value[0]){ 3 {$i.RotateFlip('Rotate180FlipNone')} 6 {$i.RotateFlip('Rotate90FlipNone')} 8 {$i.RotateFlip('Rotate270FlipNone')} } } }
+$m=2560; $r=[Math]::Min(1.0,$m/[Math]::Max($i.Width,$i.Height)); $w=[int]($i.Width*$r); $h=[int]($i.Height*$r)
+$b=New-Object System.Drawing.Bitmap $w,$h
+$g=[System.Drawing.Graphics]::FromImage($b); $g.InterpolationMode='HighQualityBicubic'; $g.DrawImage($i,0,0,$w,$h)
+$enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
+$ep=New-Object System.Drawing.Imaging.EncoderParameters 1
+$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, 88L)
+$b.Save('@DST@',$enc,$ep); $g.Dispose(); $b.Dispose(); $i.Dispose()"#;
+
+/// Yerel bir görseli Gemini penceresine istemle birlikte yapıştırır. Büyük görseller (kamera çıktıları)
+/// önce 2560 px / JPEG %88'e küçültülür; küçültülemezse (RAW, HEIC…) 12 MB altındaysa olduğu gibi gönderilir.
+async fn gemini_send_file(app: AppHandle, email: String, src: PathBuf, prompt: String) -> Result<(), String> {
     use base64::Engine as _;
-    let d = drv(&email).await?;
+    let name = src.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_else(|| "gorsel.jpg".into());
     let dir = std::env::temp_dir().join("FramioOpen");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let dest = dir.join(format!("g_{}_{}", &id[..id.len().min(6)], clean_name(&name)));
-    d.download(&id, &dest).await.map_err(de)?;
-    let bytes = std::fs::read(&dest).map_err(|e| e.to_string())?;
-    if bytes.len() > 12 * 1024 * 1024 { return Err("Görsel 12 MB'tan büyük; daha küçük bir kopyasını dene".into()); }
-    // yedek: pano (metin + görsel ayrı olduğundan önce görsel, istem sonra Gemini'ye eklenir)
-    ps(&format!("Add-Type -AssemblyName System.Windows.Forms,System.Drawing; $i=[System.Drawing.Image]::FromFile('{}'); [System.Windows.Forms.Clipboard]::SetImage($i)", q(&dest.display().to_string())));
+    let small = dir.join(format!("s_{}.jpg", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0)));
+    let sp = src.clone(); let sm = small.clone();
+    let ok = tauri::async_runtime::spawn_blocking(move || {
+        ps(&SHRINK_PS.replace("@SRC@", &q(&sp.display().to_string())).replace("@DST@", &q(&sm.display().to_string())));
+        sm.exists()
+    }).await.map_err(|e| e.to_string())?;
+    let (path, mime, shown) = if ok { (small.clone(), "image/jpeg".to_string(), format!("{}.jpg", name.rsplit_once('.').map(|x| x.0).unwrap_or(&name))) } else {
+        let len = std::fs::metadata(&src).map_err(|e| e.to_string())?.len();
+        if len > 12 * 1024 * 1024 { return Err("Bu biçim küçültülemedi ve 12 MB'tan büyük; JPEG olarak dışa aktarıp dene".into()); }
+        let m = match src.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase().as_str() { "png" => "image/png", "webp" => "image/webp", "gif" => "image/gif", _ => "image/jpeg" };
+        (src.clone(), m.to_string(), name.clone())
+    };
+    let bytes = std::fs::read(&path).map_err(|e| e.to_string())?;
+    // yedek: görsel panoya da konur (kutuya otomatik girmezse Ctrl+V)
+    if path.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("jpg") || e.eq_ignore_ascii_case("png")).unwrap_or(false) {
+        ps(&format!("Add-Type -AssemblyName System.Windows.Forms,System.Drawing; $i=[System.Drawing.Image]::FromFile('{}'); [System.Windows.Forms.Clipboard]::SetImage($i)", q(&path.display().to_string())));
+    }
     open_gemini_window(&app, &email)?;
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     let js = format!(r#"(async()=>{{
@@ -286,8 +317,7 @@ async fn gemini_ask_image(app: AppHandle, email: String, id: String, name: Strin
  ed.dispatchEvent(new ClipboardEvent('paste',{{clipboardData:dt,bubbles:true,cancelable:true}}));
  await new Promise(r=>setTimeout(r,2500));ed.focus();
  document.execCommand('insertText',false,prompt);
-}})();"#, b = serde_json::to_string(&b64).unwrap(), m = serde_json::to_string(&mime).unwrap(), n = serde_json::to_string(&name).unwrap(), p = serde_json::to_string(&prompt).unwrap());
-    // Sayfa (giriş dahil) Gemini'ye ulaşınca betiği çalıştır
+}})();"#, b = serde_json::to_string(&b64).unwrap(), m = serde_json::to_string(&mime).unwrap(), n = serde_json::to_string(&shown).unwrap(), p = serde_json::to_string(&prompt).unwrap());
     std::thread::spawn(move || {
         for _ in 0..360 {
             std::thread::sleep(std::time::Duration::from_millis(500));
@@ -297,6 +327,32 @@ async fn gemini_ask_image(app: AppHandle, email: String, id: String, name: Strin
     });
     Ok(())
 }
+
+/// Drive'daki görseli indirip Gemini'ye gönderir.
+#[tauri::command]
+async fn gemini_ask_image(app: AppHandle, email: String, id: String, name: String, mime: String, prompt: String) -> Result<(), String> {
+    let _ = mime;
+    let d = drv(&email).await?;
+    let dir = std::env::temp_dir().join("FramioOpen");
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let dest = dir.join(format!("g_{}_{}", &id[..id.len().min(6)], clean_name(&name)));
+    d.download(&id, &dest).await.map_err(de)?;
+    gemini_send_file(app, email, dest, prompt).await
+}
+
+/// Bilgisayardaki yerel bir görseli Gemini'ye gönderir.
+#[tauri::command]
+async fn gemini_ask_local(app: AppHandle, email: String, path: String, prompt: String) -> Result<(), String> {
+    let p = PathBuf::from(path.trim().trim_matches('"'));
+    if !p.is_file() { return Err("Dosya bulunamadı".into()); }
+    gemini_send_file(app, email, p, prompt).await
+}
+
+#[tauri::command]
+fn take_askimg(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.askimg.lock().unwrap()) }
+
+#[tauri::command]
+fn first_account() -> String { auth::accounts().into_iter().next().unwrap_or_default().to_lowercase() }
 
 #[tauri::command]
 async fn open_gemini(app: AppHandle, email: String) -> Result<(), String> { open_gemini_window(&app, &email) }
@@ -826,7 +882,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }
