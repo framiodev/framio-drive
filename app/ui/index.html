@@ -123,6 +123,11 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 #frows.g .fr .n{text-align:center;font-size:13px}#frows.g .fr .m{text-align:center}#frows.g .fr .m+.m{display:none}
 #frows.g .fr .x{position:absolute;right:12px;top:12px;flex-wrap:wrap;max-width:75%}
 #frows.g .empty{grid-column:1/-1}
+.orow{display:grid;grid-template-columns:190px 1fr 1.2fr;gap:10px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--stroke)}
+.orow input{margin:0;padding:5px 8px;font-size:12.5px}.orow .of{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:6px}
+.orow .on{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:550}.orow .od{font-size:12.5px;color:var(--mut);word-break:break-all}
+.orow.bad{background:color-mix(in srgb,var(--danger) 14%,transparent);border-radius:10px}.orow.unk .od{color:var(--warn)}
+.pfrow{display:grid;grid-template-columns:120px 1fr 90px 34px;gap:8px;margin-bottom:6px;align-items:center}.pfrow input{margin:0}
 .hide{display:none!important}
 .hide{display:none!important}
 ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--track);border-radius:9px}
@@ -171,14 +176,25 @@ select option{background:#222;color:#fff}
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
       <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
-    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
+    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
       <div class="glass fusage"><div class="ubar"><i id="ufill"></i></div><span class="mut" id="utext"></span><span class="mut" style="margin-left:auto">Dosyaları pencereye sürükleyip bırakarak yükleyebilirsin</span></div>
+    </div>
+    <div class="tab scroll hide" id="t_org">
+      <div class="glass panel"><h2>Akıllı dizin düzenleme <span>Yapay zekâ görselleri okur, ad ve klasör yapısı önerir; sen onaylarsın</span></h2>
+        <div class="mut" id="orgNoKey" style="margin-bottom:8px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><select id="orgProf"></select><input id="orgPath" placeholder="Boş bırak = Dosyalar sekmesindeki Drive klasörü; ya da bilgisayardaki klasör yolu" style="margin:0 0 6px"></div>
+        <div class="mut" id="orgSrcInfo" style="margin-bottom:6px"></div>
+        <div class="acts" style="margin-top:4px"><button class="btn pri" id="orgGo">Analiz et</button><button class="btn hide" id="orgStop">Durdur</button><button class="btn" id="orgUndo">Son düzenlemeyi geri al</button></div>
+        <div class="bar" style="margin-top:12px"><i id="orgBar" style="width:0"></i></div><div class="mut" id="orgMsg" style="margin-top:6px;min-height:18px"></div></div>
+      <div class="glass panel hide" id="orgPrev"><h2>Önizleme <span>Kutulardaki değerleri düzeltebilirsin; sonuç sağda görünür</span></h2>
+        <div id="orgRows"></div>
+        <div class="acts"><button class="btn pri" id="orgApply">Uygula</button><span class="mut" id="orgApplyMsg"></span></div></div>
     </div>
     <div class="tab scroll hide" id="t_act">
       <div class="grid">
@@ -196,6 +212,22 @@ select option{background:#222;color:#fff}
         <div class="mut" id="vnote" style="margin-bottom:10px"></div>
         <div style="display:grid;grid-template-columns:110px 1fr;gap:8px"><select id="vletter"></select><input id="vlabel" placeholder="Sürücü adı" style="margin:0 0 6px"></div>
         <div class="acts" style="margin-top:2px"><button class="btn pri" id="von">Bağla</button><button class="btn" id="voff">Ayır</button><button class="btn" id="vinst" style="display:none">WinFsp'yi yükle</button><span class="mut" id="vmsg"></span></div></div>
+      <div class="glass panel"><h2>Yapay zekâ <span>Gemini API — toplu düzenleme için (sohbet penceresi bunsuz çalışır)</span></h2>
+        <div class="mut" id="aiNote" style="margin-bottom:8px"></div>
+        <input id="aiKey" type="password" placeholder="Gemini API anahtarı (boş bırakırsan mevcut anahtar korunur)" autocomplete="off">
+        <div style="display:grid;grid-template-columns:1fr 170px;gap:8px"><input id="aiModel" placeholder="Model (örn. gemini-2.5-flash)"><input id="aiDelay" type="number" min="0" max="120" step="1" placeholder="İstekler arası sn"></div>
+        <div class="acts" style="margin-top:0"><button class="btn pri" id="aiSave">Kaydet</button><button class="btn" id="aiOpen">Ücretsiz anahtar al</button><button class="btn danger" id="aiClear">Anahtarı sil</button></div>
+        <div class="mut" style="margin-top:10px">Anahtar Windows Kimlik Bilgisi Yöneticisi’nde saklanır. Ücretsiz katmanda gönderilen görseller Google’ın ürünlerini geliştirmek için kullanılabilir; gizlilik istiyorsan ücretli katman kullan.</div></div>
+      <div class="glass panel"><h2>Düzenleme profilleri <span>Hangi bilgiler okunsun, dosya ve klasörler nasıl adlansın</span></h2>
+        <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:start"><select id="pfSel"></select><button class="btn sm" id="pfNew">Yeni</button><button class="btn sm" id="pfDup">Çoğalt</button><button class="btn sm danger" id="pfDel">Sil</button></div>
+        <div class="mut" style="margin:8px 0 4px">Profil adı</div><input id="pfName">
+        <div class="mut" style="margin:0 0 4px">Yapay zekâya talimat (ne yapacağını ve nelerden emin olmadığında ne yapacağını anlat)</div>
+        <textarea id="pfPrompt" rows="5" style="width:100%;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;margin-bottom:10px;resize:vertical"></textarea>
+        <div class="mut" style="margin-bottom:4px">Okunacak alanlar (anahtar = desende {anahtar} olarak kullanılır)</div>
+        <div id="pfFields"></div><button class="btn sm" id="pfAddF" style="margin:4px 0 10px">+ Alan ekle</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Dosya adı deseni ({n} = sıra no)</div><input id="pfFile"></div><div><div class="mut" style="margin-bottom:4px">Klasör deseni (/ ile derinlik)</div><input id="pfFolder"></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Zorunlu alan (boşsa dokunma)</div><select id="pfReq"></select></div><div><div class="mut" style="margin-bottom:4px">Okunamayanlar klasörü</div><input id="pfUnk"></div><div><div class="mut" style="margin-bottom:4px">Boş alan yerine yazı</div><input id="pfUnkV"></div></div>
+        <div class="acts" style="margin-top:4px"><button class="btn pri" id="pfSave">Profili kaydet</button><span class="mut" id="pfMsg"></span></div></div>
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
@@ -255,6 +287,7 @@ async function refresh(){if(busy)return;busy=true;try{
  if(ok){renderMain(a);if(tab=='act'&&Date.now()-usedFor>30000)loadUsage();if(vFor!=a.email)loadV(a.email);if(fFor!=a.email&&tab=='files')loadFiles()}
  try{await pollPending()}catch(e){}
  try{await pollAsk()}catch(e){}
+ try{await pollOrg()}catch(e){}
  const L=await invoke('logs',{since:seq});if(L.length){const p=$('log');L.forEach(([n,t])=>{seq=n;const d=document.createElement('div');d.textContent=new Date().toLocaleTimeString('tr-TR')+'  '+t;p.appendChild(d)});while(p.children.length>300)p.firstChild.remove();p.scrollTop=p.scrollHeight}
 }catch(e){console.error(e)}finally{busy=false}}
 $('savec').onclick=async()=>{try{await invoke('save_client',{id:$('cid').value,secret:$('csec').value});$('csec').value='';refresh()}catch(e){toast(String(e),true)}};
@@ -382,7 +415,7 @@ function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
- $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage()}
+ $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit()}
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 const curId=()=>fPath[fPath.length-1].id;
 let fSearch='',vmode=localStorage.getItem('vmode')||'l';
@@ -460,5 +493,71 @@ function askImage(o){const m=document.createElement('div');m.className='modal';
  window.sel_rows=r=>{const c=[...document.querySelectorAll('#frows .ck:checked')].map(x=>x.closest('.fr'));return c.includes(r)?c:[r]};
  window.sel_ids=r=>sel_rows(r).map(x=>x.dataset.id)})();
 setInterval(()=>{if(tab=='files'&&sel&&!fSearch&&!document.querySelector('#frows .ck:checked')&&!document.hidden&&!$('view').classList.contains('hide'))loadFiles()},20000);
+
+/* ---------- Akıllı dizin düzenleme + yapay zekâ ayarları ---------- */
+let profs=[],pfIdx=0,orgItems=[],orgRes=[],orgSource=null,orgRun=false;
+const evl=window.__TAURI__.event.listen;
+async function loadAi(){try{const c=await invoke('ai_cfg_get');$('aiModel').value=c.model;$('aiDelay').value=c.delay;$('aiNote').textContent=c.has_key?'Anahtar kayıtlı.':'Henüz anahtar yok. “Ücretsiz anahtar al” ile Google AI Studio’dan alıp buraya yapıştır.';$('orgNoKey').textContent=c.has_key?'':'Önce Ayarlar > Yapay zekâ bölümüne Gemini API anahtarını ekle.';return c}catch(e){}}
+$('aiSave').onclick=async()=>{try{await invoke('ai_cfg_set',{key:$('aiKey').value,model:$('aiModel').value,delay:+$('aiDelay').value||0});$('aiKey').value='';toast('Kaydedildi');loadAi()}catch(e){toast(String(e),true)}};
+$('aiClear').onclick=async()=>{await invoke('ai_key_clear');toast('Anahtar silindi');loadAi()};
+$('aiOpen').onclick=()=>invoke('open_url',{url:'https://aistudio.google.com/apikey'}).catch(e=>toast(String(e),true));
+function pfFill(){const p=profs[pfIdx];if(!p)return;$('pfName').value=p.name;$('pfPrompt').value=p.prompt;$('pfFile').value=p.file_pattern;$('pfFolder').value=p.folder_pattern;$('pfUnk').value=p.unknown_folder||'';$('pfUnkV').value=p.unknown_value||'';
+ $('pfFields').innerHTML=p.fields.map((f,i)=>`<div class="pfrow" data-i="${i}"><input data-k="key" value="${esc(f.key)}" placeholder="anahtar"><input data-k="desc" value="${esc(f.desc)}" placeholder="ne okunacak (açıklama)"><label class="mut"><input type="checkbox" data-k="upper" ${f.upper?'checked':''} style="width:auto;margin:0 4px 0 0">BÜYÜK</label><button class="btn sm danger" data-del="${i}">×</button></div>`).join('');
+ $('pfReq').innerHTML='<option value="">(yok)</option>'+p.fields.map(f=>`<option value="${esc(f.key)}">${esc(f.key)}</option>`).join('');$('pfReq').value=p.required||''}
+function pfRead(){const p=profs[pfIdx];p.name=$('pfName').value.trim()||'Adsız';p.prompt=$('pfPrompt').value;p.file_pattern=$('pfFile').value.trim();p.folder_pattern=$('pfFolder').value.trim();p.unknown_folder=$('pfUnk').value.trim();p.unknown_value=$('pfUnkV').value.trim();p.required=$('pfReq').value;
+ p.fields=[...$('pfFields').querySelectorAll('.pfrow')].map(r=>({key:r.querySelector('[data-k=key]').value.trim().replace(/[^\wığüşöçİĞÜŞÖÇ]/g,'_'),desc:r.querySelector('[data-k=desc]').value.trim(),upper:r.querySelector('[data-k=upper]').checked})).filter(f=>f.key)}
+function pfList(){$('pfSel').innerHTML=profs.map((p,i)=>`<option value="${i}">${esc(p.name)}</option>`).join('');$('pfSel').value=pfIdx;$('orgProf').innerHTML=profs.map((p,i)=>`<option value="${i}">${esc(p.name)}</option>`).join('')}
+async function loadProfs(){profs=await invoke('org_profiles_get');if(pfIdx>=profs.length)pfIdx=0;pfList();pfFill()}
+$('pfSel').onchange=()=>{pfRead();pfIdx=+$('pfSel').value;pfFill()};
+$('pfAddF').onclick=()=>{pfRead();profs[pfIdx].fields.push({key:'alan'+(profs[pfIdx].fields.length+1),desc:'',upper:false});pfFill()};
+$('pfFields').onclick=e=>{const d=e.target.dataset.del;if(d!==undefined){pfRead();profs[pfIdx].fields.splice(+d,1);pfFill()}};
+$('pfNew').onclick=()=>{pfRead();profs.push({id:'p'+Date.now(),name:'Yeni profil',prompt:'Bu görseli incele ve istenen alanları doldur. Emin olmadığın alanı boş bırak.',fields:[{key:'konu',desc:'Görselin ana konusu',upper:false}],file_pattern:'{konu}-{n}',folder_pattern:'{konu}',required:'',unknown_folder:'_Belirsiz',unknown_value:'Bilinmeyen'});pfIdx=profs.length-1;pfList();pfFill()};
+$('pfDup').onclick=()=>{pfRead();const c=JSON.parse(JSON.stringify(profs[pfIdx]));c.id='p'+Date.now();c.name+=' (kopya)';profs.push(c);pfIdx=profs.length-1;pfList();pfFill()};
+$('pfDel').onclick=async()=>{if(profs.length<2){toast('En az bir profil kalmalı',true);return}if(!await confirmBox('Profili sil',`“${profs[pfIdx].name}” silinecek.`,'Sil'))return;profs.splice(pfIdx,1);pfIdx=0;await invoke('org_profiles_save',{profiles:profs});pfList();pfFill()};
+$('pfSave').onclick=async()=>{pfRead();try{await invoke('org_profiles_save',{profiles:profs});pfList();$('pfMsg').textContent='Kaydedildi';setTimeout(()=>$('pfMsg').textContent='',2500)}catch(e){toast(String(e),true)}};
+
+function orgSrc(){const lp=$('orgPath').value.trim();if(lp)return {kind:'local',path:lp,label:lp};
+ return {kind:'drive',email:sel,folder:curId(),label:fPath.map(p=>p.name).join(' › ')}}
+async function orgInit(){await loadProfs();await loadAi();$('orgSrcInfo').textContent='Kaynak: '+orgSrc().label;try{const n=await invoke('org_has_journal');$('orgUndo').style.display=n?'':'none'}catch(e){}}
+$('orgPath').oninput=()=>{$('orgSrcInfo').textContent='Kaynak: '+orgSrc().label};
+$('forg').onclick=()=>{$('orgPath').value='';setTab('org')};
+const sanit=t=>String(t||'').replace(/[\\/:*?"<>|]/g,'').replace(/\s+/g,' ').trim();
+function normF(p,r){const f={};p.fields.forEach(fd=>{let v=sanit(r.fields&&r.fields[fd.key]);if(fd.upper)v=v.toUpperCase();f[fd.key]=v});return f}
+function fillTpl(t,f,unk){return t.replace(/\{(\w+)\}/g,(m,k)=>k=='n'?m:(f[k]||unk||'Bilinmeyen'))}
+function computePlans(){const p=profs[+$('orgProf').value||0];const cnt={};
+ orgRes.forEach(r=>{r.plan=null;if(!r.ok)return;const f=normF(p,r);r.f=f;
+  if(p.required&&!f[p.required]){r.plan={unk:true,folder:[p.unknown_folder||'_Okunamayan'],name:r.name};return}
+  const base=fillTpl(p.file_pattern,f,p.unknown_value),fol=fillTpl(p.folder_pattern,f,p.unknown_value).split('/').map(sanit).filter(Boolean);
+  cnt[base]=(cnt[base]||0)+1;const ext=(r.name.match(/\.[^.]+$/)||[''])[0].toLowerCase();
+  r.plan={unk:false,folder:fol,name:base.replace('{n}',cnt[base])+(base.includes('{n}')?'':'-'+cnt[base])+ext}})}
+function renderPrev(full){const p=profs[+$('orgProf').value||0];computePlans();
+ if(full){$('orgRows').innerHTML=orgRes.map((r,i)=>`<div class="orow ${r.ok?'':'bad'}" data-i="${i}"><div class="on" title="${esc(r.name)}">${esc(r.name)}</div><div class="of">${r.ok?p.fields.map(f=>`<input data-k="${esc(f.key)}" value="${esc((r.fields[f.key]||''))}" placeholder="${esc(f.key)}">`).join(''):`<span class="mut">${esc(r.error||'hata')}</span>`}</div><div class="od"></div></div>`).join('')}
+ [...$('orgRows').children].forEach((row,i)=>{const r=orgRes[i];const d=row.querySelector('.od');if(!r||!r.ok){d.textContent='Atlanacak';return}row.classList.toggle('unk',r.plan.unk);d.textContent=(r.plan.unk?'⚠ ':'')+r.plan.folder.join(' / ')+' / '+r.plan.name+(r.fields.not?'  — '+r.fields.not:'')})}
+$('orgRows').oninput=e=>{const k=e.target.dataset.k;if(!k)return;const i=+e.target.closest('.orow').dataset.i;orgRes[i].fields[k]=e.target.value;renderPrev(false)};
+$('orgProf').onchange=()=>{if(orgRes.length)renderPrev(true)};
+$('orgGo').onclick=async()=>{if(orgRun)return;const c=await loadAi();if(!c||!c.has_key){toast('Önce Ayarlar > Yapay zekâ bölümüne Gemini anahtarı ekle',true);return}
+ if(!sel&&!$('orgPath').value.trim()){toast('Bir hesap seç',true);return}
+ orgSource=orgSrc();$('orgMsg').textContent='Görseller taranıyor…';
+ try{orgItems=await invoke('org_scan',{source:orgSource})}catch(e){$('orgMsg').textContent='';toast(String(e),true);return}
+ if(!orgItems.length){$('orgMsg').textContent='Bu klasörde görsel (jpg/png/webp) bulunamadı.';return}
+ if(!await confirmBox('Analizi başlat',`${orgItems.length} görsel Gemini’ye gönderilecek (küçültülerek). Ücretsiz katmanda içerik Google tarafından ürün geliştirmede kullanılabilir. Süre yaklaşık ${Math.ceil(orgItems.length*8/60)} dk.`,'Başlat'))return;
+ orgRes=[];orgRun=true;$('orgGo').disabled=true;$('orgStop').classList.remove('hide');$('orgPrev').classList.remove('hide');$('orgRows').innerHTML='';$('orgBar').style.width='0';
+ const prof=profs[+$('orgProf').value||0];
+ try{await invoke('org_analyze',{source:orgSource,items:orgItems,profile:prof})}catch(e){toast(String(e),true)}
+ orgRun=false;$('orgGo').disabled=false;$('orgStop').classList.add('hide')};
+$('orgStop').onclick=()=>{invoke('org_cancel');$('orgMsg').textContent='Durduruluyor…'};
+evl('org-progress',e=>{const d=e.payload;if(d.done){$('orgMsg').textContent=`Analiz bitti: ${orgRes.filter(r=>r.ok).length} okundu, ${orgRes.filter(r=>!r.ok).length} hata. Önizlemeyi kontrol edip Uygula’ya bas.`;renderPrev(true);return}
+ orgRes.push(d);$('orgBar').style.width=((d.i+1)/d.total*100)+'%';$('orgMsg').textContent=`${d.i+1} / ${d.total}: ${d.name}`;if(orgRes.length%5==0||d.i+1==d.total)renderPrev(true)});
+$('orgApply').onclick=async()=>{computePlans();const plan=orgRes.filter(r=>r.ok&&r.plan).map(r=>({key:r.key,name:r.name,new_name:r.plan.name,folder:r.plan.folder}));
+ if(!plan.length){toast('Uygulanacak öğe yok',true);return}
+ if(!await confirmBox('Düzenlemeyi uygula',`${plan.length} dosyanın adı ve konumu değişecek. Sonradan “Son düzenlemeyi geri al” ile eski haline getirebilirsin.`,'Uygula'))return;
+ $('orgApply').disabled=true;$('orgApplyMsg').textContent='Uygulanıyor…';
+ try{const r=await invoke('org_apply',{source:orgSource,plan});$('orgApplyMsg').textContent=`${r.done} dosya düzenlendi`+(r.failed.length?` · ${r.failed.length} hata: ${r.failed.slice(0,3).join('; ')}`:'');toast(`${r.done} dosya düzenlendi`,!!r.failed.length);orgRes=[];$('orgRows').innerHTML='';$('orgUndo').style.display=''}catch(e){toast(String(e),true)}
+ $('orgApply').disabled=false;if(tab=='files')loadFiles()};
+evl('org-apply',e=>{$('orgApplyMsg').textContent=`Uygulanıyor… ${e.payload.i} / ${e.payload.total}`});
+$('orgUndo').onclick=async()=>{if(!await confirmBox('Geri al','Son düzenleme geri alınacak: dosyalar eski adlarına ve eski klasörlerine döner (oluşan boş klasörler kalır).','Geri al'))return;
+ try{const r=await invoke('org_undo');toast(`${r.ok} dosya geri alındı`+(r.failed?` · ${r.failed} hata`:''),!!r.failed);$('orgUndo').style.display=r.failed?'':'none';if(tab=='files')loadFiles()}catch(e){toast(String(e),true)}};
+async function pollOrg(){const l=await invoke('take_askorg');if(l.length){$('orgPath').value=l[0];setTab('org')}}
+loadProfs();loadAi();
 applyTheme();refresh();setInterval(refresh,1500);
 </script></body></html>

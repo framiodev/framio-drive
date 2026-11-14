@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod logo;
+mod org;
 use drivenet::auth;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -16,7 +17,7 @@ fn show_window(app: &AppHandle) {
 }
 
 #[derive(Default)]
-struct App { askimg: Mutex<Vec<String>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
+struct App { askorg: Mutex<Vec<String>>, askimg: Mutex<Vec<String>>, pending: Mutex<Vec<String>>, mounts: Mutex<HashMap<String, drivefs::Mount>>, verr: Mutex<HashMap<String, String>> }
 
 fn names_path() -> std::path::PathBuf {
     std::path::Path::new(&std::env::var("APPDATA").unwrap_or_default()).join("FramioDrive").join("names.json")
@@ -143,6 +144,10 @@ fn ensure_context_menu() {
         "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\Classes\\SystemFileAssociations\\image\\shell\\FramioGeminiImg'); $k.SetValue('', \"Gemini'ye sor\"); $k.SetValue('Icon','{icon}'); \
          $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act gimg \"%1\"'); ",
         icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
+    script += &format!(
+        "$k=[Microsoft.Win32.Registry]::CurrentUser.CreateSubKey('Software\\Classes\\Directory\\shell\\FramioOrganize'); $k.SetValue('', \"Framio ile akıllı düzenle…\"); $k.SetValue('Icon','{icon}'); \
+         $c=$k.CreateSubKey('command'); $c.SetValue('', '\"{exe}\" --act organize \"%1\"'); ",
+        icon = q(&ensure_icon().display().to_string()), exe = q(&exe.display().to_string()));
     ps(&script);
 }
 
@@ -238,6 +243,11 @@ async fn resolve_drive_path(app: &AppHandle, path: &str) -> Result<(String, driv
 }
 
 fn run_action(app: AppHandle, act: String, path: String) {
+    if act == "organize" {
+        app.state::<App>().askorg.lock().unwrap().push(path.trim().trim_matches('"').to_string());
+        show_window(&app);
+        return;
+    }
     if act == "gimg" {
         app.state::<App>().askimg.lock().unwrap().push(path.trim().trim_matches('"').to_string());
         show_window(&app);
@@ -285,13 +295,20 @@ fn autostart_set(on: bool) -> Result<(), String> {
 const SHRINK_PS: &str = r#"Add-Type -AssemblyName System.Drawing
 $i=[System.Drawing.Image]::FromFile('@SRC@')
 foreach($p in $i.PropertyItems){ if($p.Id -eq 274){ switch($p.Value[0]){ 3 {$i.RotateFlip('Rotate180FlipNone')} 6 {$i.RotateFlip('Rotate90FlipNone')} 8 {$i.RotateFlip('Rotate270FlipNone')} } } }
-$m=2560; $r=[Math]::Min(1.0,$m/[Math]::Max($i.Width,$i.Height)); $w=[int]($i.Width*$r); $h=[int]($i.Height*$r)
+$m=@MAX@; $r=[Math]::Min(1.0,$m/[Math]::Max($i.Width,$i.Height)); $w=[int]($i.Width*$r); $h=[int]($i.Height*$r)
 $b=New-Object System.Drawing.Bitmap $w,$h
 $g=[System.Drawing.Graphics]::FromImage($b); $g.InterpolationMode='HighQualityBicubic'; $g.DrawImage($i,0,0,$w,$h)
 $enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
 $ep=New-Object System.Drawing.Imaging.EncoderParameters 1
-$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, 88L)
+$ep.Param[0]=New-Object System.Drawing.Imaging.EncoderParameter([System.Drawing.Imaging.Encoder]::Quality, @Q@L)
 $b.Save('@DST@',$enc,$ep); $g.Dispose(); $b.Dispose(); $i.Dispose()"#;
+
+/// Görseli en uzun kenarı `max` px olacak şekilde JPEG'e küçültür (EXIF yönü uygulanır).
+pub fn shrink_to(src: &Path, dst: &Path, max: u32, quality: u32) -> bool {
+    let _ = std::fs::remove_file(dst);
+    ps(&SHRINK_PS.replace("@SRC@", &q(&src.display().to_string())).replace("@DST@", &q(&dst.display().to_string())).replace("@MAX@", &max.to_string()).replace("@Q@", &quality.to_string()));
+    dst.exists()
+}
 
 /// Yerel bir görseli Gemini penceresine istemle birlikte yapıştırır. Büyük görseller (kamera çıktıları)
 /// önce 2560 px / JPEG %88'e küçültülür; küçültülemezse (RAW, HEIC…) 12 MB altındaysa olduğu gibi gönderilir.
@@ -303,8 +320,7 @@ async fn gemini_send_file(app: AppHandle, email: String, src: PathBuf, prompt: S
     let small = dir.join(format!("s_{}.jpg", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0)));
     let sp = src.clone(); let sm = small.clone();
     let ok = tauri::async_runtime::spawn_blocking(move || {
-        ps(&SHRINK_PS.replace("@SRC@", &q(&sp.display().to_string())).replace("@DST@", &q(&sm.display().to_string())));
-        sm.exists()
+        shrink_to(&sp, &sm, 2560, 88)
     }).await.map_err(|e| e.to_string())?;
     let (path, mime, shown) = if ok { (small.clone(), "image/jpeg".to_string(), format!("{}.jpg", name.rsplit_once('.').map(|x| x.0).unwrap_or(&name))) } else {
         let len = std::fs::metadata(&src).map_err(|e| e.to_string())?.len();
@@ -359,6 +375,9 @@ async fn gemini_ask_local(app: AppHandle, email: String, path: String, prompt: S
     if !p.is_file() { return Err("Dosya bulunamadı".into()); }
     gemini_send_file(app, email, p, prompt).await
 }
+
+#[tauri::command]
+fn take_askorg(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.askorg.lock().unwrap()) }
 
 #[tauri::command]
 fn take_askimg(app: State<App>) -> Vec<String> { std::mem::take(&mut *app.askimg.lock().unwrap()) }
@@ -894,7 +913,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set])
+        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

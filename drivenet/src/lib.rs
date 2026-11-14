@@ -2,6 +2,7 @@
 //! Kendi bilgisayarında `cargo build` ile derleyip hataları bana ilet.
 use drivecore::upload::{next_chunk, parse_confirmed, DEFAULT_CHUNK};
 pub mod auth;
+pub mod gemini;
 use serde::Deserialize;
 
 const API: &str = "https://www.googleapis.com/drive/v3";

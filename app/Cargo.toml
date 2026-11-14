@@ -16,6 +16,7 @@ drivesync = { path = "../drivesync" }
 drivenet = { path = "../drivenet" }
 drivefs = { path = "../drivefs" }
 base64 = "0.22"
+tokio = { version = "1", features = ["time"] }
 
 [features]
 default = ["custom-protocol"]
