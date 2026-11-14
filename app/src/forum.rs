@@ -8,16 +8,21 @@ use serde_json::{json, Value};
 
 fn path() -> std::path::PathBuf { data_dir().join("forums.json") }
 
-fn defaults() -> Value {
-    json!([
-        { "id": "ulasimarsiv", "name": "Ulaşım Arşiv", "base": "https://forum.ulasimplatformu.com" },
-        { "id": "spotters", "name": "Spotters Türkiye", "base": "https://forum.spottersturkey.com" }
-    ])
+/// Eski sürümlerde gömülü gelen iki forum: yalnızca bu bilgisayarda zaten giriş yapılmışsa forums.json'a taşınır.
+/// Yeni kurulumlarda hiçbir forum adresi uygulamanın içinde bulunmaz.
+fn migrate_legacy() {
+    if path().exists() { return; }
+    let old = [("ulasimarsiv", "Ulaşım Arşiv", "https://forum.ulasimplatformu.com"), ("spotters", "Spotters Türkiye", "https://forum.spottersturkey.com")];
+    let keep: Vec<Value> = old.iter().filter(|(id, _, _)| forum::load_session(id).is_some() || forum::load_cred(id).is_some())
+        .map(|(id, n, b)| json!({ "id": id, "name": n, "base": b })).collect();
+    if keep.is_empty() { return; }
+    let _ = std::fs::create_dir_all(data_dir());
+    let _ = std::fs::write(path(), Value::Array(keep).to_string());
 }
 
 fn profiles() -> Vec<Value> {
     std::fs::read_to_string(path()).ok().and_then(|t| serde_json::from_str::<Value>(&t).ok()).and_then(|v| v.as_array().cloned()).filter(|a| !a.is_empty())
-        .unwrap_or_else(|| defaults().as_array().cloned().unwrap_or_default())
+        .unwrap_or_default()
 }
 pub fn find(id: &str) -> Result<(String, Value), String> {
     let p = profiles().into_iter().find(|p| p["id"].as_str() == Some(id)).ok_or("Forum bulunamadı")?;
@@ -26,6 +31,7 @@ pub fn find(id: &str) -> Result<(String, Value), String> {
 
 #[tauri::command]
 pub fn forum_list() -> Value {
+    migrate_legacy();
     Value::Array(profiles().into_iter().map(|mut p| {
         let s = p["id"].as_str().and_then(forum::load_session);
         p["user"] = s.as_ref().map(|s| s["username"].clone()).unwrap_or(Value::Null);
@@ -363,4 +369,19 @@ pub async fn forum_thumb(src: Value, name: String, max: Option<u32>) -> Result<S
 pub async fn forum_nodes(id: String, discussion_id: String) -> Result<Value, String> {
     let (base, tok) = sess(&id).await?;
     drivenet::forum::call(&base, &tok, "GET", &format!("/api/framio/crosspost/nodes?discussion_id={}", enc(&discussion_id)), None).await
+}
+
+/// Paylaş > E-posta: varsayılan posta uygulamasında hazır bir ileti açar (ek eklenemez; bağlantılar metne yazılır).
+#[tauri::command]
+pub fn share_mail(subject: String, body: String) -> Result<(), String> {
+    let enc = |t: &str| t.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.~".contains(&b) { (b as char).to_string() } else { format!("%{:02X}", b) }).collect::<String>();
+    let url = format!("mailto:?subject={}&body={}", enc(&subject), enc(&body));
+    if url.len() > 6000 { return Err("İleti çok uzun; daha az görsel seç".into()); }
+    std::process::Command::new("cmd").args(["/C", "start", "", &url]).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+/// Dosyayı Gezgin'de seçili olarak gösterir.
+#[tauri::command]
+pub fn share_reveal(path: String) -> Result<(), String> {
+    if !std::path::Path::new(&path).exists() { return Err("Dosya bulunamadı".into()); }
+    std::process::Command::new("explorer.exe").arg(format!("/select,{}", path)).spawn().map(|_| ()).map_err(|e| e.to_string())
 }

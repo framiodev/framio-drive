@@ -78,6 +78,7 @@ main{flex:1;min-width:0;display:flex;flex-direction:column;gap:14px}
 .log{height:150px;overflow:auto;font:12px/1.6 "Cascadia Mono",Consolas,monospace;color:var(--mut);white-space:pre-wrap;border-radius:12px;background:var(--track);padding:10px 12px}
 .log div{animation:in .3s ease both}
 .center{flex:1;display:grid;place-items:center}
+.shr-dest{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.shr-dest .btn.on{background:linear-gradient(135deg,var(--acc),var(--acc2));color:var(--onacc);border:0}
 .hello{width:min(480px,92%);padding:32px;text-align:center;animation:in .8s var(--ease) both}
 .hello .logo{width:60px;height:60px;border-radius:19px;margin:0 auto 16px}.hello .logo svg{width:38px;height:38px}
 .hello h1{margin:0 0 6px;font-size:24px}.hello p{color:var(--mut);margin:0 0 18px}
@@ -197,26 +198,27 @@ select option{background:#222;color:#fff}
         <div class="acts"><button class="btn pri" id="orgApply">Uygula</button><span class="mut" id="orgApplyMsg"></span></div></div>
     </div>
     <div class="tab scroll hide" id="t_shr">
-      <div class="glass panel"><h2>Forumda paylaş <span>Görsel eklenince yapay zekâ künyeyi okur ve görsel arka planda yüklenmeye başlar</span></h2>
-        <div class="mut" id="shrNo" style="margin-bottom:8px"></div>
-        <select id="shrForum"></select>
-        <div class="mut" style="margin:10px 0 6px">Görseller (sıra gönderideki sıradır; künyesini düzenlemek için bir görsele tıkla)</div>
+      <div class="glass panel"><h2>Paylaş <span>Önce ne paylaşacağını ekle, sonra nereye göndereceğini seç</span></h2>
+        <div id="shrDest" class="shr-dest"></div>
+        <div id="shrFSel" class="shr-fo hide"><div class="mut" id="shrNo" style="margin-bottom:8px"></div><select id="shrForum"></select></div>
+        <div class="mut" style="margin:10px 0 6px">Dosyalar</div>
         <div id="shrItems" class="mut" style="margin-bottom:8px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div>
-      <div class="glass panel"><h2>Başlık <span>Künyeye göre önerilir; yazarak da arayabilirsin. Başlığın türüne göre künye alanları değişir</span></h2>
+      <div class="glass panel shr-gen" id="shrGen"><div class="mut" id="shrGenTx" style="margin-bottom:10px"></div><div class="acts" style="margin:0"><button class="btn pri" id="shrGenGo">Gönder</button></div></div>
+      <div class="glass panel shr-fo hide"><h2>Başlık <span>Künyeye göre önerilir; yazarak da arayabilirsin. Başlığın türüne göre künye alanları değişir</span></h2>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="shrSug"></select><button class="btn sm" id="shrRoute">Başlık öner</button></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara (öneri uygun değilse)"><button class="btn sm" id="shrFind">Ara</button></div>
         <div id="shrSel" class="mut" style="margin:8px 0 2px"></div></div>
-      <div class="glass panel"><h2>İmza ve önizleme <span>İmza fotoğrafın üstünde forumdaki gibi görünür</span></h2>
+      <div class="glass panel shr-fo hide"><h2>İmza ve önizleme <span>İmza fotoğrafın üstünde forumdaki gibi görünür</span></h2>
         <div id="shrPv" style="text-align:center;margin-bottom:10px"></div>
         <div id="shrWmList" style="display:flex;flex-wrap:wrap;gap:8px;max-height:230px;overflow:auto"></div></div>
-      <div class="glass panel"><h2>Künye <span>Seçili görselin künyesi; alanlar forumdaki gibi başlığın türüne göre gelir</span></h2>
+      <div class="glass panel shr-fo hide"><h2>Künye <span>Seçili görselin künyesi; alanlar forumdaki gibi başlığın türüne göre gelir</span></h2>
         <div id="shrForm"></div>
         <div class="acts"><button class="btn" id="shrAi">Yapay zekâ ile yeniden oku</button><button class="btn" id="shrCopy">Künyeyi diğer karelere uygula</button><span class="mut" id="shrAiMsg"></span></div></div>
-      <div class="glass panel"><h2>Zamanlama ve ağ <span>Hemen yayınla ya da planla; istersen ağdaki diğer forumlara da aktar</span></h2>
+      <div class="glass panel shr-fo hide"><h2>Zamanlama ve ağ <span>Hemen yayınla ya da planla; istersen ağdaki diğer forumlara da aktar</span></h2>
         <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option></select><input id="shrAt" type="datetime-local" class="hide"></div>
         <div class="mut" style="margin:8px 0 4px">Ağa aktar (başlık seçilince gelir)</div><div id="shrNodes" class="mut">Henüz başlık seçilmedi.</div></div>
-      <div class="glass panel"><h2>Gönderi</h2>
+      <div class="glass panel shr-fo hide"><h2>Gönderi</h2>
         <div class="mut" style="margin:0 0 4px">Gönderi önizlemesi</div><pre id="shrPrev" style="white-space:pre-wrap;background:var(--track);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:12.5px Consolas,monospace;margin:0 0 10px"></pre>
         <div class="acts"><button class="btn pri" id="shrGo">Paylaş</button><a class="btn hide" id="shrOpen">Gönderiyi aç</a></div>
         <div class="bar" style="margin-top:12px"><i id="shrBar" style="width:0"></i></div><div class="mut" id="shrMsg" style="margin-top:6px;min-height:18px"></div></div>
@@ -693,7 +695,24 @@ function shrMk(name,src){return {name,src,th:'',f:{},dirty:{},ai:{state:'idle',k
 function shrPush(name,src){const k=src.key||src.path;if(shrIt.some(x=>(x.src.key||x.src.path)==k))return false;shrIt.push(shrMk(name,src));return true}
 function shrAddLocal(p){p=p.trim().replace(/^"|"$/g,'');if(!p)return;shrPush(p.split('\\').pop(),{kind:'local',path:p})}
 $('shrAdd').onclick=()=>{shrAddLocal($('shrPath').value);$('shrPath').value='';shrRender();shrFormRender();shrKick()};
-async function shrInit(){let fl=[];try{fl=(await invoke('forum_list')).filter(f=>f.user)}catch(e){}
+/* Paylaş: hedef seçimi (e-posta, panoya kopyala, klasörde göster, forum). Forum yalnızca ekliyse görünür. */
+let shrDest='mail',shrHasForum=false;
+const shrDests=()=>[['mail','E-posta'],['copy','Panoya kopyala'],['show','Klasörde göster']].concat(shrHasForum?[['forum','Forum']]:[]);
+function shrDestRender(){if(!shrDests().some(d=>d[0]==shrDest))shrDest='mail';
+ $('shrDest').innerHTML=shrDests().map(d=>`<button class="btn sm${d[0]==shrDest?' on':''}" data-d="${d[0]}">${d[1]}</button>`).join('')+(shrHasForum?'':'<button class="btn sm" data-d="addforum">+ Forum ekle</button>');
+ const f=shrDest=='forum';document.querySelectorAll('.shr-fo').forEach(x=>x.classList.toggle('hide',!f));$('shrGen').classList.toggle('hide',f);
+ $('shrGenTx').textContent={mail:'Seçili dosyaların bağlantıları ve adları, varsayılan posta uygulamanda hazır bir iletiye yazılır.',copy:'Seçili dosyaların bağlantıları (Drive) ya da yolları panoya kopyalanır.',show:'Bilgisayardaki ilk dosya Gezgin’de seçili olarak gösterilir.'}[shrDest]||''}
+function shrLinkOf(x){const s=x.src;if(s.kind=='drive')return 'https://drive.google.com/file/d/'+s.key+'/view'+(s.email?'?authuser='+encodeURIComponent(s.email):'');return s.path}
+$('shrDest').onclick=e=>{const d=e.target.dataset.d;if(!d)return;if(d=='addforum'){setTab('set');toast('Ayarlar > Forumlar bölümünden forum ekleyebilirsin');return}shrDest=d;shrDestRender();if(d=='forum')shrInit()};
+$('shrGenGo').onclick=async()=>{if(!shrIt.length){toast('Önce bir dosya ekle',true);return}
+ const links=shrIt.map(x=>shrLinkOf(x));
+ try{
+  if(shrDest=='mail'){await invoke('share_mail',{subject:shrIt.length==1?shrIt[0].name:shrIt.length+' dosya',body:shrIt.map((x,i)=>x.name+'\n'+links[i]).join('\n\n')});toast('Posta uygulaması açıldı')}
+  else if(shrDest=='copy'){await navigator.clipboard.writeText(links.join('\n'));toast('Panoya kopyalandı')}
+  else if(shrDest=='show'){const l=shrIt.find(x=>x.src.kind!='drive');if(!l){toast('Bu dosya Drive’da; Dosyalar sekmesinden aç',true);return}await invoke('share_reveal',{path:l.src.path})}
+ }catch(er){toast(String(er),true)}};
+async function shrInit(){let fl=[],all=[];try{all=await invoke('forum_list');fl=all.filter(f=>f.user)}catch(e){}
+ shrHasForum=all.length>0;shrDestRender();if(shrDest!='forum'){shrRender();return}
  const cur=shrFo();$('shrForum').innerHTML=fl.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.user)})</option>`).join('');if(fl.some(f=>f.id==cur))$('shrForum').value=cur;
  $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();shrFormRender();if(fl.length)await shrLoadMeta()}
 async function shrLoadMeta(){const id=shrFo();if(!id)return;
