@@ -228,6 +228,8 @@ select option{background:#222;color:#fff}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Dosya adı deseni ({n} = sıra no)</div><input id="pfFile"></div><div><div class="mut" style="margin-bottom:4px">Klasör deseni (/ ile derinlik)</div><input id="pfFolder"></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Zorunlu alan (boşsa dokunma)</div><select id="pfReq"></select></div><div><div class="mut" style="margin-bottom:4px">Okunamayanlar klasörü</div><input id="pfUnk"></div><div><div class="mut" style="margin-bottom:4px">Boş alan yerine yazı</div><input id="pfUnkV"></div></div>
         <div class="acts" style="margin-top:4px"><button class="btn pri" id="pfSave">Profili kaydet</button><span class="mut" id="pfMsg"></span></div></div>
+      <div class="glass panel"><h2>Forumlar <span>Kendi forum hesabınla giriş yap; parola saklanmaz, yalnızca oturum jetonu</span></h2>
+        <div id="forumList"></div><div class="mut" id="frmMsg" style="min-height:18px"></div></div>
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
@@ -559,5 +561,22 @@ $('orgUndo').onclick=async()=>{if(!await confirmBox('Geri al','Son düzenleme ge
  try{const r=await invoke('org_undo');toast(`${r.ok} dosya geri alındı`+(r.failed?` · ${r.failed} hata`:''),!!r.failed);$('orgUndo').style.display=r.failed?'':'none';if(tab=='files')loadFiles()}catch(e){toast(String(e),true)}};
 async function pollOrg(){const l=await invoke('take_askorg');if(l.length){$('orgPath').value=l[0];setTab('org')}}
 loadProfs();loadAi();
+
+/* ---------- Forumlar (Forumda paylaş: oturum) ---------- */
+let forums=[];
+async function loadForums(){try{forums=await invoke('forum_list')}catch(e){return}
+ $('forumList').innerHTML=forums.map((f,i)=>`<div class="pfrow" style="grid-template-columns:150px 1fr auto;margin-bottom:10px" data-i="${i}"><b>${esc(f.name)}</b><input data-k="base" value="${esc(f.base)}" placeholder="https://forum.ornek.com"><span class="mut">${f.user?'✓ '+esc(f.user):'giriş yok'}</span>
+ ${f.user?`<span></span><span class="mut">Oturum açık</span><span><button class="btn sm" data-chk="${i}">Bilgileri sına</button> <button class="btn sm danger" data-out="${i}">Çıkış</button></span>`
+ :`<span></span><span style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input data-k="u" placeholder="Kullanıcı adı veya e-posta" autocomplete="off"><input data-k="p" type="password" placeholder="Parola" autocomplete="off"></span><button class="btn sm pri" data-in="${i}">Giriş yap</button>`}</div>`).join('')}
+$('forumList').onclick=async e=>{const d=e.target.dataset,row=e.target.closest('.pfrow');if(!row)return;const f=forums[+row.dataset.i];
+ try{
+  if(d.in!==undefined){const u=row.querySelector('[data-k=u]').value,p=row.querySelector('[data-k=p]').value;
+   await invoke('forum_save',{list:forums.map((x,j)=>j==+row.dataset.i?{...x,base:row.querySelector('[data-k=base]').value.trim()}:x).map(({user,...r})=>r)});
+   $('frmMsg').textContent='Giriş yapılıyor…';const n=await invoke('forum_login',{id:f.id,ident:u,pass:p});toast(n+' olarak giriş yapıldı');$('frmMsg').textContent=''}
+  else if(d.out!==undefined){await invoke('forum_logout',{id:f.id});toast('Çıkış yapıldı')}
+  else if(d.chk!==undefined){$('frmMsg').textContent='Sınanıyor…';const m=await invoke('forum_meta',{id:f.id});$('frmMsg').textContent=`${m.title||f.name}: ${m.tags.length} etiket, görsel etiketi: ${m.bbcodeTag||'(bilinmiyor)'}`}
+ }catch(er){$('frmMsg').textContent='';toast(String(er),true)}
+ loadForums()};
+loadForums();
 applyTheme();refresh();setInterval(refresh,1500);
 </script></body></html>
