@@ -74,7 +74,7 @@ pub enum Error { Http(reqwest::Error), Status(u16, String), Protocol(&'static st
 impl From<reqwest::Error> for Error { fn from(e: reqwest::Error) -> Self { Error::Http(e) } }
 
 impl Drive {
-    pub fn new(access_token: String) -> Self { Drive { http: reqwest::Client::new(), token: access_token } }
+    pub fn new(access_token: String) -> Self { Drive { http: reqwest::Client::builder().connect_timeout(std::time::Duration::from_secs(15)).read_timeout(std::time::Duration::from_secs(40)).build().unwrap_or_else(|_| reqwest::Client::new()), token: access_token } }
 
     /// Bir klasörün çocukları (sayfalama dahil).
     pub async fn list_children(&self, folder_id: &str) -> Result<Vec<DriveFile>, Error> {
@@ -148,21 +148,28 @@ impl Drive {
 
     /// Dosyanın [start, end] (end dahil) bayt aralığını bellekte okur (sanal sürücü için).
     pub async fn read_range(&self, id: &str, start: u64, end: u64) -> Result<Vec<u8>, Error> {
-        let r = self.http.get(format!("{API}/files/{id}")).bearer_auth(&self.token)
-            .query(&[("alt", "media")])
-            .header("Range", format!("bytes={start}-{end}")).send().await?;
-        match r.status().as_u16() {
-            206 => Ok(r.bytes().await?.to_vec()),
-            200 => {
-                // Sunucu Range'i yok saydı: tamamını alıp dilimle.
-                let all = r.bytes().await?;
-                let s = (start as usize).min(all.len());
-                let e = ((end as usize).saturating_add(1)).min(all.len());
-                Ok(all[s..e].to_vec())
+        // Geçici hatalarda (429/5xx, bağlantı kopması) birkaç kez yeniden dener; sürücü takılı kalmasın
+        let mut last: Option<Error> = None;
+        for attempt in 0..4u64 {
+            if attempt > 0 { tokio::time::sleep(std::time::Duration::from_millis(700 * attempt)).await; }
+            let r = match self.http.get(format!("{API}/files/{id}")).bearer_auth(&self.token)
+                .query(&[("alt", "media")])
+                .header("Range", format!("bytes={start}-{end}")).send().await { Ok(r) => r, Err(e) => { last = Some(e.into()); continue } };
+            match r.status().as_u16() {
+                206 => match r.bytes().await { Ok(b) => return Ok(b.to_vec()), Err(e) => { last = Some(e.into()); continue } },
+                200 => {
+                    // Sunucu Range'i yok saydı: tamamını alıp dilimle.
+                    let all = r.bytes().await?;
+                    let s = (start as usize).min(all.len());
+                    let e = ((end as usize).saturating_add(1)).min(all.len());
+                    return Ok(all[s..e].to_vec());
+                }
+                416 => return Ok(Vec::new()),
+                st if st == 429 || st >= 500 || st == 403 => { last = Some(Error::Status(st, r.text().await.unwrap_or_default())); continue }
+                st => return Err(Error::Status(st, r.text().await?)),
             }
-            416 => Ok(Vec::new()),
-            s => Err(Error::Status(s, r.text().await?)),
         }
+        Err(last.unwrap_or(Error::Protocol("okuma başarısız")))
     }
 
     /// Dosya içeriğini diske indirir (Range desteği sonraya).
