@@ -96,7 +96,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .tabs a{padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);transition:background .25s,color .25s}
 .tabs a:hover{background:var(--glass)}.tabs a.on{background:var(--glass2);color:var(--text);border:1px solid var(--stroke)}
 .tab{flex:1;min-height:0}.tab.tfiles{display:flex;flex-direction:column;gap:12px}
-.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 14px;border-radius:16px}.fbar .crumbs{flex:1 1 120px;min-width:0}.ftools{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px;margin-left:auto}.ftools #fq{width:150px;margin:0;padding:6px 10px}.fplus{display:inline-flex;align-items:center;gap:6px}.fplus svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}.iconmore{width:34px;padding:0;font-size:18px;line-height:1}
 .flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
 .flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
 .fr{user-select:none;display:grid;grid-template-columns:20px 34px 1fr 90px 130px 40px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
@@ -309,9 +309,8 @@ select option{background:#222;color:#fff}
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="frecent" title="Drive’daki gibi: en son açtığın dosyalar">Son kullanılanlar</button><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
-        <button class="btn sm" id="freload">Yenile</button>
-        <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
+        <div class="ftools"><input id="fq" placeholder="Ara…"><button class="btn sm" id="frecent" title="Drive’daki gibi: en son açtığın dosyalar">Son kullanılanlar</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm pri fplus" id="fplus" title="Yükle ve oluştur"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni</button><button class="btn sm iconmore" id="fmore" title="Diğer işlemler">⋯</button></div>
+        <span class="hide"><button id="fall"></button><button id="forg"></button><button id="fdoc"></button><button id="fnew"></button><button id="freload"></button><button id="freveal"></button></span></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
       <div class="glass fusage"><div class="ubar"><i id="ufill"></i></div><span class="mut" id="utext"></span><span class="mut" style="margin-left:auto">Dosyaları pencereye sürükleyip bırakarak yükleyebilirsin</span></div>
     </div>
@@ -855,6 +854,8 @@ $('fdoc').onclick=async()=>{const k=await new Promise(r=>{const m=document.creat
  if(!k)return;const n=await ask('Belge adı','Adsız '+({doc:'doküman',sheet:'tablo',slides:'sunum'}[k]));if(!n)return;
  try{await invoke('fs_new_doc',{email:sel,parent:curId(),name:n,kind:k});toast('Oluşturuldu, tarayıcıda açılıyor…');loadFiles()}catch(x){toast(String(x),true)}};
 $('freload').onclick=()=>loadFiles();
+$('fplus').onclick=()=>{const r=$('fplus').getBoundingClientRect();showMenu([{t:'Yeni klasör',f:()=>$('fnew').click()},'-',{t:'Dosya yükle…',f:async()=>{try{upFiles(await invoke('pick_upload_files'))}catch(e){toast(String(e),true)}}},{t:'Klasör yükle…',f:async()=>{try{upFiles(await invoke('pick_upload_folder'))}catch(e){toast(String(e),true)}}},'-',{t:'Google belgesi / tablo / sunum…',f:()=>$('fdoc').click()}],r.left,r.bottom+4)};
+$('fmore').onclick=()=>{const r=$('fmore').getBoundingClientRect();showMenu([{t:'Tümünü seç',f:()=>$('fall').click()},{t:'Akıllı düzenle (yapay zekâ)',f:()=>$('forg').click()},'-',{t:'Yenile',f:()=>$('freload').click()},{t:'Gezgin’de aç',f:()=>$('freveal').click()}],Math.max(8,r.right-210),r.bottom+4)};
 $('freveal').onclick=()=>invoke('fs_reveal',{email:sel,rel:fPath.slice(1).map(p=>p.name).join('\\')}).catch(e=>toast(String(e),true));
 async function upFiles(paths){if(!paths.length||!sel)return;toast(paths.length+' öğe yükleniyor…');
  try{const r=await invoke('fs_upload',{email:sel,parent:curId(),paths});toast(`${r.sent} dosya yüklendi`+(r.failed.length?` · atlanan/başarısız: ${r.failed.join(', ')}`:''),!!r.failed.length);loadFiles()}catch(e){toast(String(e),true)}}

@@ -3,7 +3,7 @@
 use super::*;
 use base64::Engine as _;
 
-fn ps_out(script: &str) -> String {
+pub fn ps_out(script: &str) -> String {
     use std::os::windows::process::CommandExt;
     std::process::Command::new("powershell")
         .args(["-NoProfile", "-NonInteractive", "-STA", "-ExecutionPolicy", "Bypass", "-Command", script])
@@ -319,4 +319,20 @@ pub async fn wm_apply(email: String, items: Vec<Value>, wm: String, suffix: Stri
     }
     if let Some(dd) = &dev_dir { if done > 0 { let _ = std::process::Command::new("explorer.exe").arg(dd).spawn(); } }
     Ok(json!({ "done": done, "failed": failed, "device": dev_dir.map(|p| p.display().to_string()) }))
+}
+
+#[tauri::command]
+pub async fn pick_upload_files() -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let out = ps_out("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $f=New-Object System.Windows.Forms.Form -Property @{TopMost=$true}; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Multiselect=$true; $d.Title='Drive’a yüklenecek dosyaları seç'; if($d.ShowDialog($f) -eq 'OK'){ $d.FileNames -join '|' }");
+        Ok(if out.is_empty() { vec![] } else { out.split('|').map(|x| x.to_string()).collect() })
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+pub async fn pick_upload_folder() -> Result<Vec<String>, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let out = ps_out("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $f=New-Object System.Windows.Forms.Form -Property @{TopMost=$true}; $d=New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description='Drive’a yüklenecek klasörü seç'; if($d.ShowDialog($f) -eq 'OK'){ $d.SelectedPath }");
+        Ok(if out.is_empty() { vec![] } else { vec![out] })
+    }).await.map_err(|e| e.to_string())?
 }
