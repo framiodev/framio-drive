@@ -69,6 +69,12 @@ fn ensure_drive_icon() -> PathBuf {
     p
 }
 
+/// Dosya/adres acar; arkada konsol penceresi acilip kapanmaz.
+fn open_hidden(target: &str) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    std::process::Command::new("rundll32").args(["url.dll,FileProtocolHandler", target]).creation_flags(0x0800_0000).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
 fn run_hidden(cmd: &str, args: &[&str]) -> bool {
     use std::os::windows::process::CommandExt;
     std::process::Command::new(cmd).args(args).creation_flags(0x0800_0000).output().map(|o| o.status.success()).unwrap_or(false)
@@ -268,7 +274,7 @@ fn run_action(app: AppHandle, act: String, path: String) {
             let (email, f) = resolve_drive_path(&app, &path).await?;
             match act.as_str() {
                 "link" => { let u = share_url(&f.id, &f.mime_type); set_clip(&u); Ok("Bağlantı panoya kopyalandı".to_string()) }
-                "web" => { std::process::Command::new("cmd").args(["/C", "start", "", &web_url(&email, &f.id, &f.mime_type)]).spawn().map_err(|e| e.to_string())?; Ok(String::new()) }
+                "web" => { open_hidden(&web_url(&email, &f.id, &f.mime_type))?; Ok(String::new()) }
                 "gemini" => { set_clip(&gemini_prompt(&f.name, &share_url(&f.id, &f.mime_type))); open_gemini_window(&app, &email)?; Ok("İstem panoya kopyalandı — Gemini'de Ctrl+V ile yapıştır".to_string()) }
                 _ => Err("bilinmeyen komut".to_string()),
             }
@@ -482,7 +488,7 @@ async fn fs_open(email: String, id: String, name: String) -> Result<(), String> 
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     let dest = dir.join(format!("{}_{}", &id[..id.len().min(6)], clean_name(&name)));
     d.download(&id, &dest).await.map_err(de)?;
-    std::process::Command::new("cmd").args(["/C", "start", "", &dest.display().to_string()]).spawn().map(|_| ()).map_err(|e| e.to_string())
+    open_hidden(&dest.display().to_string())
 }
 
 /// Dosyayı İndirilenler klasörüne indirir; yolunu döndürür.
@@ -514,7 +520,7 @@ fn web_url(email: &str, id: &str, mime: &str) -> String {
 /// Google Doc/Sheet/Slides (ve diğer dosyaları) tarayıcıda, ilgili hesapla açar.
 #[tauri::command]
 fn fs_web(email: String, id: String, mime: String) -> Result<(), String> {
-    std::process::Command::new("cmd").args(["/C", "start", "", &web_url(&email, &id, &mime)]).spawn().map(|_| ()).map_err(|e| e.to_string())
+    open_hidden(&web_url(&email, &id, &mime))
 }
 
 /// Yeni boş Google Doc / Sheet / Slides oluşturur ve açar.
