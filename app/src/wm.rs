@@ -267,7 +267,7 @@ pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, cx: f64, cy: 
     let d = drv(&email).await?;
     let dir = std::env::temp_dir().join("FramioOpen");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let (scale, opacity, cx, cy, angle) = (scale.clamp(0.03, 0.95), opacity.clamp(0.05, 1.0), cx.clamp(0.0, 1.0), cy.clamp(0.0, 1.0), angle.clamp(-360.0, 360.0));
+    let (scale, opacity, cx, cy, angle) = (scale.clamp(0.01, 20.0), opacity.clamp(0.05, 1.0), cx.clamp(0.0, 1.0), cy.clamp(0.0, 1.0), angle.clamp(-360.0, 360.0));
     let suffix = clean_name(if suffix.trim().is_empty() { "-filigran" } else { suffix.trim() });
     let (mut done, mut failed) = (0u32, vec![]);
     for id in ids {
