@@ -160,6 +160,47 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .info .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;animation:float 3s ease-in-out infinite}
 .info .tx{flex:1;min-width:0}.info .tt{font-weight:650}.info .ln{color:var(--mut);font-size:13px;transition:opacity .35s,transform .35s var(--ease);min-height:19px}.info .ln.o{opacity:0;transform:translateY(5px)}
 .info .dots{display:flex;gap:4px;margin-top:6px}.info .dots i{width:14px;height:3px;border-radius:3px;background:var(--track);transition:background .3s,width .3s}.info .dots i.on{background:var(--acc);width:22px}
+.info .stg{flex:none}.info .ln{min-height:38px}
+@media (max-width:860px){.info .stg{display:none}}
+.sc{--scb:color-mix(in srgb,var(--mut) 28%,transparent);position:relative;width:150px;height:60px;border-radius:12px;background:var(--track);overflow:hidden}
+.sc i,.sc b,.sc u{position:absolute;display:block;text-decoration:none;font-style:normal}
+.sc .r{left:10px;right:10px;height:11px;border-radius:6px;background:var(--scb)}.sc .r1{top:8px}.sc .r2{top:24px}.sc .r3{top:40px}
+.sc .pk{animation:scPick 3.4s var(--ease) infinite}
+.sc .cur{left:116px;top:46px;width:12px;height:16px;background:var(--text);clip-path:polygon(0 0,0 100%,30% 76%,50% 100%,66% 91%,46% 66%,82% 66%);animation:scCur 3.4s var(--ease) infinite}
+.sc .mn{left:66px;top:30px;width:62px;height:26px;border-radius:8px;background:var(--glass2);border:1px solid var(--stroke);box-shadow:var(--shadow);transform-origin:top left;animation:scMn 3.4s var(--ease) infinite;background-image:repeating-linear-gradient(var(--scb) 0 4px,transparent 4px 8px);background-size:70% 100%;background-repeat:no-repeat;background-position:8px 5px}
+.sc .dz{left:88px;top:10px;width:52px;height:40px;border-radius:10px;border:2px dashed var(--acc);animation:scDz 3.4s ease infinite}
+.sc .fl{left:20px;top:-26px;width:16px;height:20px;border-radius:4px;background:var(--acc)}
+.sc .fall{animation:scFall 3.4s var(--ease) infinite}.sc .mv{top:20px;animation:scMv 3.4s var(--ease) infinite}.sc .snd{top:20px;animation:scSnd 3.4s var(--ease) infinite}
+.sc .fd{left:96px;top:18px;width:34px;height:24px;border-radius:5px;background:var(--warn);animation:scBounce 3.4s var(--ease) infinite}
+.sc .rn,.sc .sh{animation:scRn 3.4s var(--ease) infinite}
+.sc .sp{left:122px;top:8px;width:16px;height:16px;background:var(--acc);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:scSp 3.4s linear infinite}
+.sc .bx{left:10px;width:11px;height:11px;border-radius:50%;border:2px solid var(--mut);animation:scBx 3.4s var(--ease) infinite}
+.sc .sh{left:28px}
+.sc .d{left:112px;width:9px;height:9px;border-radius:50%;background:var(--acc);animation:scDot 3.4s var(--ease) infinite}
+.sc .pb{left:10px;right:10px;height:9px;border-radius:5px;background:var(--scb);overflow:hidden}.sc .pb i{left:0;top:0;bottom:0;width:0;border-radius:5px;background:linear-gradient(90deg,var(--acc),var(--acc2));animation:scFill 3.4s var(--ease) infinite}
+.sc .chip{left:92px;top:16px;width:42px;height:28px;border-radius:8px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700;animation:scPopC 3.4s var(--ease) infinite}
+.sc .cir{left:55px;top:9px;width:40px;height:40px;border-radius:50%;border:3px solid var(--acc);animation:scPulse 3.4s ease infinite}
+.sc .dn{left:66px;top:14px;font-size:22px;line-height:1;color:var(--acc);font-weight:700;animation:scDn 1.7s var(--ease) infinite}
+.sc .tgl{left:48px;top:16px;width:54px;height:28px;border-radius:14px;background:var(--scb);animation:scTg 3.4s var(--ease) infinite}
+.sc .kn{left:51px;top:19px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);animation:scKn 3.4s var(--ease) infinite}
+@keyframes scPick{0%,26%{background:var(--scb)}32%,78%{background:color-mix(in srgb,var(--acc) 42%,transparent)}90%,100%{background:var(--scb)}}
+@keyframes scCur{0%{transform:translate(0,0);opacity:0}8%{opacity:1}28%{transform:translate(-56px,-18px)}33%{transform:translate(-56px,-18px) scale(.78)}40%,82%{transform:translate(-56px,-18px) scale(1)}94%,100%{transform:translate(-56px,-18px);opacity:0}}
+@keyframes scMn{0%,38%{opacity:0;transform:scale(.5)}46%,80%{opacity:1;transform:scale(1)}92%,100%{opacity:0;transform:scale(.8)}}
+@keyframes scDz{0%,45%{background:transparent}58%,72%{background:color-mix(in srgb,var(--acc) 22%,transparent)}90%,100%{background:transparent}}
+@keyframes scFall{0%{transform:translate(0,0);opacity:0}12%{opacity:1}52%{transform:translate(82px,48px)}62%{transform:translate(82px,48px) scale(.4);opacity:0}100%{transform:translate(82px,48px) scale(.4);opacity:0}}
+@keyframes scMv{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(80px)}60%{transform:translateX(86px) scale(.3);opacity:0}100%{opacity:0}}
+@keyframes scBounce{0%,52%{transform:scale(1)}60%{transform:scale(1.18)}70%,100%{transform:scale(1)}}
+@keyframes scRn{0%,8%{background:var(--scb)}22%,82%{background:color-mix(in srgb,var(--acc) 55%,transparent)}94%,100%{background:var(--scb)}}
+@keyframes scSp{0%{transform:rotate(0) scale(.6)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(.6)}}
+@keyframes scBx{0%,10%{background:transparent;border-color:var(--mut)}24%,82%{background:var(--ok);border-color:var(--ok)}94%,100%{background:transparent;border-color:var(--mut)}}
+@keyframes scSnd{0%{transform:translateX(0);opacity:0}10%{opacity:1}45%{transform:translateX(74px);opacity:1}55%,100%{transform:translateX(86px);opacity:0}}
+@keyframes scDot{0%,48%{transform:scale(0)}60%{transform:scale(1.4)}72%,86%{transform:scale(1)}96%,100%{transform:scale(0)}}
+@keyframes scFill{0%{width:0}55%,85%{width:var(--w)}100%{width:0}}
+@keyframes scPopC{0%,35%{transform:scale(0);opacity:0}46%{transform:scale(1.15);opacity:1}54%,84%{transform:scale(1);opacity:1}96%,100%{transform:scale(.8);opacity:0}}
+@keyframes scPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12);box-shadow:0 0 0 8px color-mix(in srgb,var(--acc) 18%,transparent)}}
+@keyframes scDn{0%{transform:translateY(-10px);opacity:0}40%{opacity:1}100%{transform:translateY(12px);opacity:0}}
+@keyframes scTg{0%,36%{background:var(--scb)}48%,82%{background:var(--acc)}94%,100%{background:var(--scb)}}
+@keyframes scKn{0%,36%{transform:translateX(0)}48%,82%{transform:translateX(26px)}94%,100%{transform:translateX(0)}}
 .info .cl{cursor:pointer;color:var(--mut);padding:4px 8px;border-radius:8px;flex:none}.info .cl:hover{background:var(--track);color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -173,7 +214,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .hexrow{display:flex;gap:8px;margin-top:10px}.hexrow input{margin:0}
 .top{position:relative}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px;margin:8px 0}
-#fcrumbs{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1 1 260px}#fcrumbs a{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}#fcrumbs a:last-child{font-weight:650;background:var(--glass2)}#fcrumbs span{flex:none}
+#fcrumbs{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1 1 100%}#fcrumbs a{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 auto}#fcrumbs a:last-child{flex:0 1 auto;min-width:40px}#fcrumbs a:last-child{font-weight:650;background:var(--glass2)}#fcrumbs span{flex:none}
 .crumbs a{cursor:pointer;padding:3px 8px;border-radius:8px;background:var(--track)}.crumbs a:hover{background:var(--glass2)}
 .crumbs span{color:var(--mut)}
 .flist{height:210px;overflow:auto;border-radius:12px;background:var(--track);padding:6px;margin-bottom:10px}
@@ -209,7 +250,7 @@ select option{background:#222;color:#fff}
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
@@ -291,9 +332,9 @@ select option{background:#222;color:#fff}
     </div>
     <div class="tab scroll hide" id="t_app">
       <div class="glass panel"><h2>Sürüm ve güncelleme <span>Uygulama kendiliğinden de denetler</span></h2>
-        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><b id="ver" style="font-size:18px"></b><button class="btn" id="chkupd">Güncelleme ara</button><span class="mut" id="updNote"></span></div></div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><b id="ver" style="font-size:18px"></b><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri hide" id="updGo"></button><span class="mut" id="updNote"></span></div></div>
       <div class="glass panel"><h2>Genel</h2>
-        <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive’ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
       <div class="glass panel"><h2>Eklentiler <span>İsteğe bağlı özellikler; ihtiyacın olanı aç, olmayanı kapalı bırak</span></h2>
         <div id="extList"></div><div class="mut" style="margin-top:8px">Üçüncü taraf eklentileri ekleme desteği sonraki sürümlerde gelecek.</div></div>
@@ -454,7 +495,9 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
  try{await invoke('sign_out',{email:sel});toast('Çıkış yapıldı (kullanıcı adın hatırlanır, parola silindi)');sel=null;localStorage.removeItem('sel');refresh()}catch(e){toast(String(e),true)}};
 
 let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
-async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')');$('updNote').textContent=v?'Yeni sürüm: v'+v:'Güncelsin'}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');
+ if(v){b.textContent='Güncelle: v'+v;b.style.display='';$('updNote').textContent='Yeni sürüm hazır: v'+v;$('updGo').textContent='v'+v+' sürümüne güncelle';$('updGo').classList.remove('hide');if(manual)toast('Yeni sürüm var: v'+v)}
+ else{b.style.display='none';$('updGo').classList.add('hide');$('updNote').textContent='Güncelsin';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
 invoke('autostart_get').then(v=>$('autos').checked=v).catch(()=>{});
 $('autos').onchange=()=>invoke('autostart_set',{on:$('autos').checked}).then(()=>toast($('autos').checked?'Windows ile başlayacak':'Otomatik başlatma kapalı')).catch(e=>{toast(String(e),true);$('autos').checked=!$('autos').checked});
 invoke('classic_menu_get').then(v=>$('classic').checked=v).catch(()=>{});
@@ -463,7 +506,8 @@ $('classic').onchange=async()=>{const on=$('classic').checked;
  try{await invoke('classic_menu_set',{on});toast('Uygulandı')}catch(e){toast(String(e),true);$('classic').checked=!on}};
 $('gem').onclick=()=>invoke('open_gemini',{email:sel||''}).catch(e=>toast(String(e),true));
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
-$('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;chkUpd()}};
+$('updGo').onclick=()=>$('upd').click();
+$('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';$('updGo').disabled=true;$('updGo').textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;$('updGo').disabled=false;chkUpd()}};
 chkUpd();setInterval(chkUpd,600000);
 
 /* sekmeler + uygulama içi Drive gezgini */
@@ -491,20 +535,33 @@ function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.class
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 /* bilgi kartlari: her sekmenin ustunde, ozellikleri sirayla anlatan hareketli kart */
 const INFO={
- files:{ic:'<path d="M3 7h6l2 2h10v10H3z"/>',t:'Dosyalar',l:['Tek tıkla seç, çift tıkla aç. Ctrl ve Shift ile birden çok öğe seçebilirsin.','Sağ tık ya da satırın sonundaki ⋯ ile Aç, İndir, Gemini, Yeniden adlandır ve Sil.','Dosyaları bu pencereye sürükleyip bırakarak Drive’a yükleyebilirsin.','Bir öğeyi sürükleyip bir klasörün ya da yol çubuğundaki bir adımın üstüne bırakarak taşı.']},
- org:{ic:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',t:'Düzenle',l:['Yapay zekâ klasördeki görselleri okuyup dosya ve klasör adlarını senin desenine göre düzenler.','Profil seç; hangi bilgilerin okunacağını ve adların nasıl oluşacağını profilden ayarlarsın.','İşlem öncesi önizleme görürsün; onaylamadan hiçbir şey değişmez.']},
- shr:{ic:'<path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4"/>',t:'Paylaş',l:['Seçtiğin dosyaları e-posta, panoya kopyalama ya da Gezgin’de gösterme ile paylaş.','Dosyalar sekmesinde bir görsele sağ tıklayıp “Forumda paylaş” ile buraya ekleyebilirsin.','Bağlı forumların varsa gönderi hazırlayıp doğrudan yayımlayabilirsin.']},
- act:{ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',t:'Etkinlik',l:['Yüklemeleri, indirmeleri ve düzenleme işlemlerini canlı izle.','Depolama kullanımın ve kotan burada görünür.']},
- set:{ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',t:'Ayarlar',l:['Sürücü: Drive’ı Gezgin’de gerçek bir sürücü harfi olarak bağlar; yer kaplamaz.','Yapay zekâ: Gemini anahtarını ve toplu düzenleme ayarlarını yönet.','Düzenleme profilleri ve forum bağlantıları da burada.']},
- app:{ic:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12l2 2 4-4"/>',t:'Uygulama',l:['Sürümünü gör, güncelleme ara. Yeni sürüm olunca üstte “Güncelle” düğmesi çıkar.','Windows ile başlatma ve sağ tık menüsü ayarları burada.']}
+ files:{ic:'<path d="M3 7h6l2 2h10v10H3z"/>',t:'Dosyalar',l:[['Tek tıkla seç, çift tıkla aç. Ctrl ve Shift ile birden çok öğe seç.','sel'],['Sağ tık ya da satır sonundaki ⋯ ile Aç, İndir, Paylaş, Yeniden adlandır, Sil. Çoklu seçimde toplu işlem.','menu'],['Dosyaları pencereye sürükleyip bırakarak Drive’a yükle.','drop'],['Bir öğeyi klasörün ya da yol çubuğundaki bir adımın üstüne sürükleyerek taşı.','move'],['Ctrl+A tümünü seçer, Esc seçimi kaldırır, Delete çöpe atar, F2 yeniden adlandırır.','sel']]},
+ org:{ic:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',t:'Düzenle',l:[['Yapay zekâ klasördeki görselleri okuyup adlarını senin desenine göre düzenler.','ai'],['Profil seçerek hangi bilgilerin okunacağını ve adların nasıl oluşacağını belirlersin.','tick'],['İşlem öncesi önizleme görürsün; onaylamadan hiçbir şey değişmez.','tick']]},
+ shr:{ic:'<path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4"/>',t:'Paylaş',l:[['Dosyaları e-posta, panoya kopyalama ya da Gezgin’de gösterme ile paylaş.','send'],['Dosyalar sekmesinde bir dosyaya sağ tıklayıp “Paylaşa ekle” ile buraya getir.','menu'],['Forum eklentisi açıksa gönderi hazırlayıp doğrudan yayımlayabilirsin.','tick']]},
+ act:{ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',t:'Etkinlik',l:[['Yüklemeleri, indirmeleri ve düzenleme işlemlerini canlı izle.','live'],['Depolama kullanımın ve kotan burada görünür.','live']]},
+ set:{ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',t:'Ayarlar',l:[['Sürücü: Drive’ı Gezgin’de gerçek bir sürücü harfi olarak bağlar; yer kaplamaz.','drv'],['Yapay zekâ: Gemini anahtarını ve toplu düzenleme ayarlarını yönet.','ai'],['Düzenleme profilleri ve hesap işlemleri de burada.','tick']]},
+ app:{ic:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12l2 2 4-4"/>',t:'Uygulama',l:[['Sürümünü gör, güncelleme ara; yeni sürüm olunca burada ve üstte “Güncelle” çıkar.','upd'],['Windows ile başlatma, sağ tık menüsü ve eklentileri aç/kapat.','tog']]}
+};
+const SC={
+ sel:'<div class="sc"><i class="r r1"></i><i class="r r2 pk"></i><i class="r r3"></i><b class="cur"></b></div>',
+ menu:'<div class="sc"><i class="r r1"></i><i class="r r2 pk"></i><i class="r r3"></i><u class="mn"></u><b class="cur"></b></div>',
+ drop:'<div class="sc"><u class="dz"></u><i class="fl fall"></i></div>',
+ move:'<div class="sc"><u class="fd"></u><i class="fl mv"></i></div>',
+ ai:'<div class="sc"><i class="r r1 rn"></i><i class="r r2 rn" style="animation-delay:.5s"></i><i class="r r3 rn" style="animation-delay:1s"></i><i class="sp"></i></div>',
+ tick:'<div class="sc"><i class="r r1 sh"></i><i class="r r2 sh"></i><i class="r r3 sh"></i><i class="bx" style="top:8px"></i><i class="bx" style="top:24px;animation-delay:.6s"></i><i class="bx" style="top:40px;animation-delay:1.2s"></i></div>',
+ send:'<div class="sc"><i class="fl snd"></i><u class="d" style="top:10px"></u><u class="d" style="top:26px;animation-delay:.15s"></u><u class="d" style="top:42px;animation-delay:.3s"></u></div>',
+ live:'<div class="sc"><i class="pb" style="top:10px"><i style="--w:100%"></i></i><i class="pb" style="top:26px"><i style="--w:70%"></i></i><i class="pb" style="top:42px"><i style="--w:38%"></i></i></div>',
+ drv:'<div class="sc"><u class="fd" style="left:18px"></u><u class="chip">X:</u></div>',
+ upd:'<div class="sc"><u class="cir"></u><i class="dn">↓</i></div>',
+ tog:'<div class="sc"><u class="tgl"></u><i class="kn"></i></div>'
 };
 let infoOff=JSON.parse(localStorage.getItem('infoOff')||'{}'),infoTm={};
 function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.querySelector('.info');
  if(infoOff[t]){if(c)c.remove();return}
  if(c)return;const d=INFO[t];c=document.createElement('div');c.className='glass info';
- c.innerHTML=`<div class="ic"><svg viewBox="0 0 24 24">${d.ic}</svg></div><div class="tx"><div class="tt">${esc(d.t)}</div><div class="ln"></div><div class="dots">${d.l.map(()=>'<i></i>').join('')}</div></div><span class="cl" title="Bu kartı gizle">✕</span>`;
+ c.innerHTML=`<div class="ic"><svg viewBox="0 0 24 24">${d.ic}</svg></div><div class="tx"><div class="tt">${esc(d.t)}</div><div class="ln"></div><div class="dots">${d.l.map(()=>'<i></i>').join('')}</div></div><div class="stg"></div><span class="cl" title="Bu kartı gizle">✕</span>`;
  box.insertBefore(c,box.firstChild);let i=0;const ln=c.querySelector('.ln'),dots=c.querySelectorAll('.dots i');
- const show=()=>{ln.classList.add('o');setTimeout(()=>{ln.textContent=d.l[i];ln.classList.remove('o');dots.forEach((x,k)=>x.classList.toggle('on',k==i));i=(i+1)%d.l.length},d.l.length&&ln.textContent?280:0)};
+ const show=()=>{ln.classList.add('o');setTimeout(()=>{ln.textContent=d.l[i][0];c.querySelector('.stg').innerHTML=SC[d.l[i][1]]||'';ln.classList.remove('o');dots.forEach((x,k)=>x.classList.toggle('on',k==i));i=(i+1)%d.l.length},d.l.length&&ln.textContent?280:0)};
  show();clearInterval(infoTm[t]);infoTm[t]=setInterval(()=>{if(!c.isConnected){clearInterval(infoTm[t]);return}if(!document.hidden)show()},5500);
  c.querySelector('.cl').onclick=()=>{infoOff[t]=1;localStorage.setItem('infoOff',JSON.stringify(infoOff));clearInterval(infoTm[t]);c.style.transition='opacity .3s,transform .3s';c.style.opacity=0;c.style.transform='scale(.96)';setTimeout(()=>c.remove(),300)}}
 let EXT={};
@@ -534,13 +591,14 @@ async function loadFiles(silent){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{i
  if(silent&&keep.size)setSel([...document.querySelectorAll('#frows .fr')].filter(x=>keep.has(x.dataset.id)));else selChanged();lastRow=null;
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
 let lastRow=null;
-function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('frows').classList.toggle('hs',any)}
+function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('fclr').classList.toggle('hide',!any);$('frows').classList.toggle('hs',any)}
 $('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
 $('fq').onkeydown=e=>{if(e.key=='Enter'){fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
 $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows .ck:checked')].map(c=>c.closest('.fr'));if(!rows.length)return;
  if(!await confirmBox('Çöp kutusuna taşı',`${rows.length} öğe Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;
  let bad=0;for(const r of rows){try{await invoke('fs_trash',{email:sel,id:r.dataset.id})}catch(x){bad++}}
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
+$('fall').onclick=()=>setSel([...document.querySelectorAll('#frows .fr')]);$('fclr').onclick=()=>setSel([]);
 $('fcrumbs').onclick=e=>{if(e.target.dataset.more){const r=e.target.getBoundingClientRect();showMenu(fPath.slice(1,-2).map((p,k)=>({t:p.name,f:()=>{fPath=fPath.slice(0,k+2);loadFiles()}})),r.left,r.bottom+4);return}
  const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 function selRows(){return[...document.querySelectorAll('#frows .fr.sel')]}
@@ -552,12 +610,18 @@ function showMenu(items,x,y){closeMenu();const m=document.createElement('div');m
 function closeMenu(){const m=document.getElementById('ctxm');if(m)m.remove()}
 document.addEventListener('mousedown',e=>{if(!e.target.closest('#ctxm'))closeMenu()},true);window.addEventListener('blur',closeMenu);
 function rowMenu(r,x,y){const rows=selRows();
- if(rows.length>1&&rows.includes(r)){showMenu([{t:rows.length+' öğeyi çöpe at',cls:'danger',f:()=>$('fdelsel').click()}],x,y);return}
+ if(rows.length>1&&rows.includes(r)){const fl=rows.filter(q=>q.dataset.f=='0'),dl=fl.filter(q=>!String(q.dataset.m).startsWith('application/vnd.google-apps')),m=[];
+  m.push({t:rows.length+' öğe seçili',f:()=>{}});m.push('-');
+  if(dl.length)m.push({t:dl.length+' dosyayı indir',f:()=>bulkDl(dl)});
+  if(fl.length)m.push({t:fl.length+' dosyayı paylaşa ekle',f:()=>{let n=0;fl.forEach(q=>{if(shrPush(q.dataset.n,{kind:'drive',email:sel,key:q.dataset.id}))n++});setTab('shr');toast(n+' dosya Paylaş sekmesine eklendi')}});
+  m.push({t:'Tümünü seç',f:()=>$('fall').click()});m.push({t:'Seçimi kaldır',f:()=>setSel([])});m.push('-');
+  m.push({t:rows.length+' öğeyi çöpe at',cls:'danger',f:()=>$('fdelsel').click()});showMenu(m,x,y);return}
  const fo=r.dataset.f=='1',nat=String(r.dataset.m).startsWith('application/vnd.google-apps'),img=!fo&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img',it=[];
  it.push({t:fo?'Klasörü aç':'Aç',f:()=>openRow(r)});
  if(!fo&&!nat)it.push({t:'İndir',f:()=>doAct('dl',r)});
- if(!fo){it.push('-');if(img){it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});if(EXT.forum)it.push({t:'Forumda paylaş',f:()=>doAct('fshare',r)})}it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
+ if(!fo){it.push('-');if(img)it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});it.push({t:EXT.forum&&img?'Paylaş / forumda paylaş':'Paylaşa ekle',f:()=>doAct('fshare',r)});it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
  it.push('-');if(!fSearch)it.push({t:'Yeniden adlandır',f:()=>doAct('ren',r)});it.push({t:'Çöpe at',cls:'danger',f:()=>doAct('del',r)});showMenu(it,x,y)}
+async function bulkDl(rows){let ok=0;for(let i=0;i<rows.length;i++){opStatus(`İndiriliyor ${i+1}/${rows.length}: ${rows[i].dataset.n}`);rows[i].classList.add('busy');try{await invoke('fs_download',{email:sel,id:rows[i].dataset.id,name:rows[i].dataset.n});ok++}catch(x){toast(String(x),true)}rows[i].classList.remove('busy')}opStatus(`${ok}/${rows.length} dosya indirildi`,ok?'ok':'bad')}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){
