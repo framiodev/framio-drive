@@ -160,47 +160,61 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .info .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;animation:float 3s ease-in-out infinite}
 .info .tx{flex:1;min-width:0}.info .tt{font-weight:650}.info .ln{color:var(--mut);font-size:13px;transition:opacity .35s,transform .35s var(--ease);min-height:19px}.info .ln.o{opacity:0;transform:translateY(5px)}
 .info .dots{display:flex;gap:4px;margin-top:6px}.info .dots i{width:14px;height:3px;border-radius:3px;background:var(--track);transition:background .3s,width .3s}.info .dots i.on{background:var(--acc);width:22px}
-.info .stg{flex:none}.info .ln{min-height:38px}
+.info{flex:none}.info .stg{flex:none}.info .ln{min-height:38px}
 @media (max-width:860px){.info .stg{display:none}}
-.sc{--scb:color-mix(in srgb,var(--mut) 28%,transparent);position:relative;width:150px;height:60px;border-radius:12px;background:var(--track);overflow:hidden}
-.sc i,.sc b,.sc u{position:absolute;display:block;text-decoration:none;font-style:normal}
-.sc .r{left:10px;right:10px;height:11px;border-radius:6px;background:var(--scb)}.sc .r1{top:8px}.sc .r2{top:24px}.sc .r3{top:40px}
-.sc .pk{animation:scPick 3.4s var(--ease) infinite}
-.sc .cur{left:116px;top:46px;width:12px;height:16px;background:var(--text);clip-path:polygon(0 0,0 100%,30% 76%,50% 100%,66% 91%,46% 66%,82% 66%);animation:scCur 3.4s var(--ease) infinite}
-.sc .mn{left:66px;top:30px;width:62px;height:26px;border-radius:8px;background:var(--glass2);border:1px solid var(--stroke);box-shadow:var(--shadow);transform-origin:top left;animation:scMn 3.4s var(--ease) infinite;background-image:repeating-linear-gradient(var(--scb) 0 4px,transparent 4px 8px);background-size:70% 100%;background-repeat:no-repeat;background-position:8px 5px}
-.sc .dz{left:88px;top:10px;width:52px;height:40px;border-radius:10px;border:2px dashed var(--acc);animation:scDz 3.4s ease infinite}
-.sc .fl{left:20px;top:-26px;width:16px;height:20px;border-radius:4px;background:var(--acc)}
-.sc .fall{animation:scFall 3.4s var(--ease) infinite}.sc .mv{top:20px;animation:scMv 3.4s var(--ease) infinite}.sc .snd{top:20px;animation:scSnd 3.4s var(--ease) infinite}
-.sc .fd{left:96px;top:18px;width:34px;height:24px;border-radius:5px;background:var(--warn);animation:scBounce 3.4s var(--ease) infinite}
-.sc .rn,.sc .sh{animation:scRn 3.4s var(--ease) infinite}
-.sc .sp{left:122px;top:8px;width:16px;height:16px;background:var(--acc);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:scSp 3.4s linear infinite}
-.sc .bx{left:10px;width:11px;height:11px;border-radius:50%;border:2px solid var(--mut);animation:scBx 3.4s var(--ease) infinite}
-.sc .sh{left:28px}
-.sc .d{left:112px;width:9px;height:9px;border-radius:50%;background:var(--acc);animation:scDot 3.4s var(--ease) infinite}
-.sc .pb{left:10px;right:10px;height:9px;border-radius:5px;background:var(--scb);overflow:hidden}.sc .pb i{left:0;top:0;bottom:0;width:0;border-radius:5px;background:linear-gradient(90deg,var(--acc),var(--acc2));animation:scFill 3.4s var(--ease) infinite}
-.sc .chip{left:92px;top:16px;width:42px;height:28px;border-radius:8px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:700;animation:scPopC 3.4s var(--ease) infinite}
-.sc .cir{left:55px;top:9px;width:40px;height:40px;border-radius:50%;border:3px solid var(--acc);animation:scPulse 3.4s ease infinite}
-.sc .dn{left:66px;top:14px;font-size:22px;line-height:1;color:var(--acc);font-weight:700;animation:scDn 1.7s var(--ease) infinite}
-.sc .tgl{left:48px;top:16px;width:54px;height:28px;border-radius:14px;background:var(--scb);animation:scTg 3.4s var(--ease) infinite}
-.sc .kn{left:51px;top:19px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.3);animation:scKn 3.4s var(--ease) infinite}
-@keyframes scPick{0%,26%{background:var(--scb)}32%,78%{background:color-mix(in srgb,var(--acc) 42%,transparent)}90%,100%{background:var(--scb)}}
-@keyframes scCur{0%{transform:translate(0,0);opacity:0}8%{opacity:1}28%{transform:translate(-56px,-18px)}33%{transform:translate(-56px,-18px) scale(.78)}40%,82%{transform:translate(-56px,-18px) scale(1)}94%,100%{transform:translate(-56px,-18px);opacity:0}}
+.sc{--scb:color-mix(in srgb,var(--mut) 28%,transparent);--sca:color-mix(in srgb,var(--acc) 40%,transparent);position:relative;width:190px;height:72px;border-radius:12px;background:var(--track);overflow:hidden;font-size:10px;color:var(--text)}
+.sc i,.sc b,.sc u,.sc q,.sc s,.sc .rw{position:absolute;display:block;text-decoration:none;font-style:normal}
+.sc .rw{left:8px;right:8px;height:17px;border-radius:7px;display:flex;align-items:center;gap:6px;padding:0 7px;white-space:nowrap}.sc .p1{top:6px}.sc .p2{top:27px}.sc .p3{top:48px}
+.sc .rw s{position:static;width:9px;height:9px;border-radius:2px;background:var(--acc);opacity:.75;flex:none}
+.sc .pk{animation:scPick 3.4s var(--ease) infinite}.sc .pk2{animation:scPick 3.4s var(--ease) infinite;animation-delay:.9s}
+.sc .ckd{position:absolute;right:6px;top:3px;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--mut);animation:scBx 3.4s var(--ease) infinite}
+.sc .cur{left:150px;top:54px;width:12px;height:16px;background:var(--text);clip-path:polygon(0 0,0 100%,30% 76%,50% 100%,66% 91%,46% 66%,82% 66%);animation:scCur 3.4s var(--ease) infinite;z-index:3}
+.sc .mn{left:92px;top:36px;width:66px;padding:4px 6px;border-radius:8px;background:var(--glass2);border:1px solid var(--stroke);box-shadow:var(--shadow);transform-origin:top left;animation:scMn 3.4s var(--ease) infinite;z-index:2;line-height:13px}
+.sc .mn i{position:static;display:block}.sc .mn .rd{color:#ff6b6b}
+.sc .key{right:30px;top:27px;padding:2px 8px;border-radius:6px;border:1px solid var(--mut);background:var(--glass2);font-weight:700;animation:scKey 3.4s ease infinite}
+.sc .dz{left:104px;top:8px;width:78px;height:56px;border-radius:10px;border:2px dashed var(--acc);display:grid;place-items:center;font-weight:650;animation:scDz 3.4s ease infinite}
+.sc .dz span{display:block;animation:scLbl 3.4s ease infinite}
+.sc .fchip{left:10px;top:-26px;padding:3px 8px;border-radius:7px;background:var(--acc);color:#fff;font-weight:600;white-space:nowrap;z-index:2}
+.sc .fall{animation:scFall 3.4s var(--ease) infinite}.sc .mv{top:26px;animation:scMv 3.4s var(--ease) infinite}
+.sc .okm{left:131px;top:24px;font-size:20px;line-height:1;color:var(--ok);font-weight:800;animation:scOk 3.4s var(--ease) infinite}
+.sc .fdr{left:108px;top:14px;width:70px;height:44px;border-radius:6px;background:var(--warn);display:grid;place-items:center;color:#222;font-weight:700;animation:scBounce 3.4s var(--ease) infinite}
+.sc .keys{position:absolute;inset:0;display:flex;gap:6px;align-items:center;justify-content:center;padding:0 8px}
+.sc .kc{position:static;flex:1;height:46px;border-radius:8px;border:1px solid var(--mut);background:var(--glass2);display:grid;place-content:center;text-align:center;font-weight:700;animation:scKc 3.4s var(--ease) infinite}.sc .kc small{display:block;font-weight:400;color:var(--mut);font-size:9px}
+.sc .nm{overflow:hidden}.sc .nm span{position:absolute;left:22px;top:2px;animation:scA 3.4s var(--ease) infinite}.sc .nm span+span{opacity:0;color:var(--acc);font-weight:650;animation:scB 3.4s var(--ease) infinite}
+.sc .sp{left:166px;top:8px;width:16px;height:16px;background:var(--acc);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:scSp 3.4s linear infinite}
+.sc .ch{left:108px;right:8px;justify-content:center;border:1px solid var(--stroke);background:var(--glass2);animation:scCh 3.4s var(--ease) infinite;padding:0}
+.sc .snd{left:10px;top:26px;animation:scSnd 3.4s var(--ease) infinite}
+.sc .pbar{position:relative;flex:1;height:7px;border-radius:4px;background:var(--scb);overflow:hidden}.sc .pbar i{left:0;top:0;bottom:0;width:0;border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--acc2));animation:scFill 3.4s var(--ease) infinite}
+.sc .ring{position:absolute;left:14px;top:9px;width:54px;height:54px;transform:rotate(-90deg)}.sc .ring circle{fill:none;stroke-width:5;stroke-linecap:round}.sc .ring .tr{stroke:var(--scb)}.sc .ring .fg{stroke:var(--acc);stroke-dasharray:106;stroke-dashoffset:106;animation:scRing 3.4s var(--ease) infinite}
+.sc .qt{left:80px;top:18px;line-height:15px}.sc .qt b{position:static;display:block;font-size:13px}
+.sc .arw{left:88px;top:24px;font-size:20px;color:var(--acc);font-weight:800;animation:scDn2 3.4s ease infinite}
+.sc .chip{left:122px;top:14px;width:52px;height:42px;border-radius:9px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;animation:scPopC 3.4s var(--ease) infinite}
+.sc .vold{left:16px;top:16px;font-size:13px;text-decoration:line-through;color:var(--mut);animation:scVo 3.4s ease infinite}.sc .vnew{left:104px;top:13px;font-size:17px;font-weight:800;color:var(--acc);animation:scVn 3.4s var(--ease) infinite}
+.sc .upb{left:14px;right:14px;top:52px;height:7px;border-radius:4px;background:var(--scb);overflow:hidden}.sc .upb i{left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,var(--acc),var(--acc2));animation:scFill 3.4s var(--ease) infinite;--w:100%}
+.sc .tg{right:10px;top:4px;width:30px;height:9px;border-radius:6px;background:var(--scb);animation:scTg 3.4s var(--ease) infinite}.sc .tg i{left:-1px;top:-3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.35);animation:scKn 3.4s var(--ease) infinite;animation-delay:inherit}
+@keyframes scPick{0%,26%{background:transparent}32%,78%{background:var(--sca)}90%,100%{background:transparent}}
+@keyframes scCur{0%{transform:translate(0,0);opacity:0}8%{opacity:1}28%{transform:translate(-62px,-24px)}33%{transform:translate(-62px,-24px) scale(.78)}40%,82%{transform:translate(-62px,-24px) scale(1)}94%,100%{transform:translate(-62px,-24px);opacity:0}}
 @keyframes scMn{0%,38%{opacity:0;transform:scale(.5)}46%,80%{opacity:1;transform:scale(1)}92%,100%{opacity:0;transform:scale(.8)}}
-@keyframes scDz{0%,45%{background:transparent}58%,72%{background:color-mix(in srgb,var(--acc) 22%,transparent)}90%,100%{background:transparent}}
-@keyframes scFall{0%{transform:translate(0,0);opacity:0}12%{opacity:1}52%{transform:translate(82px,48px)}62%{transform:translate(82px,48px) scale(.4);opacity:0}100%{transform:translate(82px,48px) scale(.4);opacity:0}}
-@keyframes scMv{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(80px)}60%{transform:translateX(86px) scale(.3);opacity:0}100%{opacity:0}}
-@keyframes scBounce{0%,52%{transform:scale(1)}60%{transform:scale(1.18)}70%,100%{transform:scale(1)}}
-@keyframes scRn{0%,8%{background:var(--scb)}22%,82%{background:color-mix(in srgb,var(--acc) 55%,transparent)}94%,100%{background:var(--scb)}}
+@keyframes scKey{0%,10%,100%{background:var(--glass2);transform:none}20%,70%{background:var(--acc);color:#fff;transform:scale(1.08)}}
+@keyframes scDz{0%,45%{background:transparent}58%,76%{background:color-mix(in srgb,var(--acc) 20%,transparent)}92%,100%{background:transparent}}
+@keyframes scLbl{0%,55%{opacity:1}62%,80%{opacity:0}90%,100%{opacity:1}}
+@keyframes scFall{0%{transform:translate(0,0);opacity:0}12%{opacity:1}50%{transform:translate(98px,54px)}58%{transform:translate(98px,54px) scale(.3);opacity:0}100%{opacity:0}}
+@keyframes scMv{0%{transform:translateX(0);opacity:0}10%{opacity:1}48%{transform:translateX(104px)}58%{transform:translateX(110px) scale(.3);opacity:0}100%{opacity:0}}
+@keyframes scOk{0%,56%{transform:scale(0)}66%{transform:scale(1.3)}74%,84%{transform:scale(1)}94%,100%{transform:scale(0)}}
+@keyframes scBounce{0%,50%{transform:scale(1)}58%{transform:scale(1.12)}68%,100%{transform:scale(1)}}
+@keyframes scKc{0%,2%{background:var(--glass2);border-color:var(--mut);transform:none}6%,20%{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-3px)}26%,100%{background:var(--glass2);transform:none;border-color:var(--mut)}}
+@keyframes scA{0%,22%{opacity:1}34%,86%{opacity:0}96%,100%{opacity:1}}@keyframes scB{0%,24%{opacity:0;transform:translateY(6px)}38%,84%{opacity:1;transform:none}96%,100%{opacity:0}}
 @keyframes scSp{0%{transform:rotate(0) scale(.6)}50%{transform:rotate(180deg) scale(1.15)}100%{transform:rotate(360deg) scale(.6)}}
 @keyframes scBx{0%,10%{background:transparent;border-color:var(--mut)}24%,82%{background:var(--ok);border-color:var(--ok)}94%,100%{background:transparent;border-color:var(--mut)}}
-@keyframes scSnd{0%{transform:translateX(0);opacity:0}10%{opacity:1}45%{transform:translateX(74px);opacity:1}55%,100%{transform:translateX(86px);opacity:0}}
-@keyframes scDot{0%,48%{transform:scale(0)}60%{transform:scale(1.4)}72%,86%{transform:scale(1)}96%,100%{transform:scale(0)}}
+@keyframes scCh{0%,10%{background:var(--glass2);color:var(--text)}20%,34%{background:var(--acc);color:#fff}44%,100%{background:var(--glass2);color:var(--text)}}
+@keyframes scSnd{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(70px);opacity:1}60%,100%{transform:translateX(86px);opacity:0}}
 @keyframes scFill{0%{width:0}55%,85%{width:var(--w)}100%{width:0}}
-@keyframes scPopC{0%,35%{transform:scale(0);opacity:0}46%{transform:scale(1.15);opacity:1}54%,84%{transform:scale(1);opacity:1}96%,100%{transform:scale(.8);opacity:0}}
-@keyframes scPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12);box-shadow:0 0 0 8px color-mix(in srgb,var(--acc) 18%,transparent)}}
-@keyframes scDn{0%{transform:translateY(-10px);opacity:0}40%{opacity:1}100%{transform:translateY(12px);opacity:0}}
-@keyframes scTg{0%,36%{background:var(--scb)}48%,82%{background:var(--acc)}94%,100%{background:var(--scb)}}
-@keyframes scKn{0%,36%{transform:translateX(0)}48%,82%{transform:translateX(26px)}94%,100%{transform:translateX(0)}}
+@keyframes scRing{0%{stroke-dashoffset:106}55%,88%{stroke-dashoffset:74}100%{stroke-dashoffset:106}}
+@keyframes scDn2{0%,20%{transform:translateX(-6px);opacity:0}40%,80%{transform:none;opacity:1}100%{opacity:0}}
+@keyframes scPopC{0%,38%{transform:scale(0);opacity:0}48%{transform:scale(1.15);opacity:1}56%,84%{transform:scale(1);opacity:1}96%,100%{transform:scale(.8);opacity:0}}
+@keyframes scVo{0%,30%{opacity:1}50%,100%{opacity:.35}}@keyframes scVn{0%,38%{transform:scale(0);opacity:0}52%{transform:scale(1.2);opacity:1}62%,88%{transform:scale(1);opacity:1}100%{opacity:0}}
+@keyframes scTg{0%,30%{background:var(--scb)}44%,84%{background:var(--acc)}96%,100%{background:var(--scb)}}
+@keyframes scKn{0%,30%{transform:translateX(0)}44%,84%{transform:translateX(16px)}96%,100%{transform:translateX(0)}}
 .info .cl{cursor:pointer;color:var(--mut);padding:4px 8px;border-radius:8px;flex:none}.info .cl:hover{background:var(--track);color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -535,25 +549,29 @@ function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.class
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 /* bilgi kartlari: her sekmenin ustunde, ozellikleri sirayla anlatan hareketli kart */
 const INFO={
- files:{ic:'<path d="M3 7h6l2 2h10v10H3z"/>',t:'Dosyalar',l:[['Tek tıkla seç, çift tıkla aç. Ctrl ve Shift ile birden çok öğe seç.','sel'],['Sağ tık ya da satır sonundaki ⋯ ile Aç, İndir, Paylaş, Yeniden adlandır, Sil. Çoklu seçimde toplu işlem.','menu'],['Dosyaları pencereye sürükleyip bırakarak Drive’a yükle.','drop'],['Bir öğeyi klasörün ya da yol çubuğundaki bir adımın üstüne sürükleyerek taşı.','move'],['Ctrl+A tümünü seçer, Esc seçimi kaldırır, Delete çöpe atar, F2 yeniden adlandırır.','sel']]},
- org:{ic:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',t:'Düzenle',l:[['Yapay zekâ klasördeki görselleri okuyup adlarını senin desenine göre düzenler.','ai'],['Profil seçerek hangi bilgilerin okunacağını ve adların nasıl oluşacağını belirlersin.','tick'],['İşlem öncesi önizleme görürsün; onaylamadan hiçbir şey değişmez.','tick']]},
- shr:{ic:'<path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4"/>',t:'Paylaş',l:[['Dosyaları e-posta, panoya kopyalama ya da Gezgin’de gösterme ile paylaş.','send'],['Dosyalar sekmesinde bir dosyaya sağ tıklayıp “Paylaşa ekle” ile buraya getir.','menu'],['Forum eklentisi açıksa gönderi hazırlayıp doğrudan yayımlayabilirsin.','tick']]},
- act:{ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',t:'Etkinlik',l:[['Yüklemeleri, indirmeleri ve düzenleme işlemlerini canlı izle.','live'],['Depolama kullanımın ve kotan burada görünür.','live']]},
- set:{ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',t:'Ayarlar',l:[['Sürücü: Drive’ı Gezgin’de gerçek bir sürücü harfi olarak bağlar; yer kaplamaz.','drv'],['Yapay zekâ: Gemini anahtarını ve toplu düzenleme ayarlarını yönet.','ai'],['Düzenleme profilleri ve hesap işlemleri de burada.','tick']]},
- app:{ic:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12l2 2 4-4"/>',t:'Uygulama',l:[['Sürümünü gör, güncelleme ara; yeni sürüm olunca burada ve üstte “Güncelle” çıkar.','upd'],['Windows ile başlatma, sağ tık menüsü ve eklentileri aç/kapat.','tog']]}
+ files:{ic:'<path d="M3 7h6l2 2h10v10H3z"/>',t:'Dosyalar',l:[['Tek tıkla seç, çift tıkla aç.','sel'],['Ctrl ile tek tek, Shift ile aralık seç; toplu işlem için sağ tıkla.','multi'],['Sağ tık ya da satır sonundaki ⋯ ile Aç, İndir, Paylaş, Yeniden adlandır, Sil.','menu'],['Dosyaları pencereye sürükleyip bırak, Drive’a yüklensin.','drop'],['Bir öğeyi klasörün ya da yol çubuğundaki bir adımın üstüne sürükleyip taşı.','move'],['Ctrl+A tümünü seçer, Esc seçimi kaldırır, Delete çöpe atar, F2 yeniden adlandırır.','keys']]},
+ org:{ic:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',t:'Düzenle',l:[['Yapay zekâ görseli okuyup dosya adını senin desenine göre yeniden yazar.','rename'],['Profille hangi bilgilerin okunacağını ve adların nasıl oluşacağını belirlersin.','prev'],['Önce önizleme görürsün; onaylamadan hiçbir şey değişmez.','prev']]},
+ shr:{ic:'<path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4"/>',t:'Paylaş',l:[['Dosyayı e-posta ile gönder, bağlantıyı panoya kopyala ya da Gezgin’de göster.','share'],['Dosyalar sekmesinde dosyaya sağ tıklayıp “Paylaşa ekle” de.','menu'],['Forum eklentisi açıksa gönderi hazırlayıp doğrudan yayımlayabilirsin.','share']]},
+ act:{ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',t:'Etkinlik',l:[['Yüklemeleri, indirmeleri ve düzenleme işlemlerini canlı izle.','live'],['Depolama kullanımın ve kotan burada görünür.','quota']]},
+ set:{ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',t:'Ayarlar',l:[['Sürücü: Drive’ı Gezgin’de gerçek bir sürücü harfi olarak bağlar; yer kaplamaz.','drv'],['Gemini anahtarın Windows Kimlik Bilgisi Yöneticisi’nde güvenle saklanır.','key'],['Düzenleme profillerini buradan özelleştirirsin.','rename']]},
+ app:{ic:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12l2 2 4-4"/>',t:'Uygulama',l:[['Sürümünü gör, güncelleme ara; yeni sürüm olunca buradan ve üstten güncellersin.','upd'],['Windows ile başlatma ve eklentileri tek tıkla aç/kapat.','tog']]}
 };
 const SC={
- sel:'<div class="sc"><i class="r r1"></i><i class="r r2 pk"></i><i class="r r3"></i><b class="cur"></b></div>',
- menu:'<div class="sc"><i class="r r1"></i><i class="r r2 pk"></i><i class="r r3"></i><u class="mn"></u><b class="cur"></b></div>',
- drop:'<div class="sc"><u class="dz"></u><i class="fl fall"></i></div>',
- move:'<div class="sc"><u class="fd"></u><i class="fl mv"></i></div>',
- ai:'<div class="sc"><i class="r r1 rn"></i><i class="r r2 rn" style="animation-delay:.5s"></i><i class="r r3 rn" style="animation-delay:1s"></i><i class="sp"></i></div>',
- tick:'<div class="sc"><i class="r r1 sh"></i><i class="r r2 sh"></i><i class="r r3 sh"></i><i class="bx" style="top:8px"></i><i class="bx" style="top:24px;animation-delay:.6s"></i><i class="bx" style="top:40px;animation-delay:1.2s"></i></div>',
- send:'<div class="sc"><i class="fl snd"></i><u class="d" style="top:10px"></u><u class="d" style="top:26px;animation-delay:.15s"></u><u class="d" style="top:42px;animation-delay:.3s"></u></div>',
- live:'<div class="sc"><i class="pb" style="top:10px"><i style="--w:100%"></i></i><i class="pb" style="top:26px"><i style="--w:70%"></i></i><i class="pb" style="top:42px"><i style="--w:38%"></i></i></div>',
- drv:'<div class="sc"><u class="fd" style="left:18px"></u><u class="chip">X:</u></div>',
- upd:'<div class="sc"><u class="cir"></u><i class="dn">↓</i></div>',
- tog:'<div class="sc"><u class="tgl"></u><i class="kn"></i></div>'
+ sel:'<div class="sc"><div class="rw p1"><s></s>foto-1.jpg</div><div class="rw p2 pk"><s></s>foto-2.jpg<q class="ckd"></q></div><div class="rw p3"><s></s>foto-3.jpg</div><b class="cur"></b></div>',
+ multi:'<div class="sc"><div class="rw p1 pk"><s></s>foto-1.jpg<q class="ckd"></q></div><div class="rw p2"><s></s>foto-2.jpg</div><div class="rw p3 pk2"><s></s>foto-3.jpg<q class="ckd" style="animation-delay:.9s"></q></div><u class="key">Ctrl</u></div>',
+ menu:'<div class="sc"><div class="rw p1"><s></s>foto-1.jpg</div><div class="rw p2 pk"><s></s>foto-2.jpg</div><div class="rw p3"><s></s>foto-3.jpg</div><u class="mn"><i>Aç</i><i>İndir</i><i class="rd">Sil</i></u><b class="cur"></b></div>',
+ drop:'<div class="sc"><u class="dz"><span>Drive</span></u><u class="fchip fall">foto.jpg</u><i class="okm">✓</i></div>',
+ key:'<div class="sc"><u class="dz"><span>🔒 Güvenli</span></u><u class="fchip fall">API anahtarı</u><i class="okm">✓</i></div>',
+ move:'<div class="sc"><u class="fdr"><span>2024</span></u><u class="fchip mv">foto.jpg</u></div>',
+ keys:'<div class="sc"><div class="keys"><u class="kc">Ctrl+A<small>tümü</small></u><u class="kc" style="animation-delay:.85s">Esc<small>kaldır</small></u><u class="kc" style="animation-delay:1.7s">Del<small>çöpe at</small></u><u class="kc" style="animation-delay:2.55s">F2<small>ad değiştir</small></u></div></div>',
+ rename:'<div class="sc"><div class="rw p1 nm"><s></s><span>IMG_4021.jpg</span><span>38 YILTUR 014-1.jpg</span></div><div class="rw p2 nm"><s></s><span style="animation-delay:.4s">IMG_4022.jpg</span><span style="animation-delay:.4s">38 YILTUR 014-2.jpg</span></div><div class="rw p3 nm"><s></s><span style="animation-delay:.8s">IMG_4023.jpg</span><span style="animation-delay:.8s">38 YILTUR 014-3.jpg</span></div><i class="sp"></i></div>',
+ prev:'<div class="sc"><div class="rw p1"><s></s>IMG_01 → 014-1<q class="ckd"></q></div><div class="rw p2"><s></s>IMG_02 → 014-2<q class="ckd" style="animation-delay:.5s"></q></div><div class="rw p3"><s></s>IMG_03 → 014-3<q class="ckd" style="animation-delay:1s"></q></div></div>',
+ share:'<div class="sc"><u class="fchip snd" style="top:26px;left:10px">foto.jpg</u><div class="rw ch p1">✉ E-posta</div><div class="rw ch p2" style="animation-delay:.6s">⧉ Panoya kopyala</div><div class="rw ch p3" style="animation-delay:1.2s">📁 Gezgin</div></div>',
+ live:'<div class="sc"><div class="rw p1">↑ video.mp4<u class="pbar"><i style="--w:100%"></i></u></div><div class="rw p2">↓ liste.zip<u class="pbar"><i style="--w:68%"></i></u></div><div class="rw p3">✎ düzenleme<u class="pbar"><i style="--w:36%"></i></u></div></div>',
+ quota:'<div class="sc"><svg class="ring" viewBox="0 0 40 40"><circle class="tr" cx="20" cy="20" r="17" style="stroke-dasharray:none"/><circle class="fg" cx="20" cy="20" r="17"/></svg><u class="qt"><b>1.5 / 5 TB</b>kullanılan alan</u></div>',
+ drv:'<div class="sc"><u class="fdr" style="left:12px;width:66px"><span>Drive</span></u><i class="arw">→</i><u class="chip">X:</u></div>',
+ upd:'<div class="sc"><u class="vold">v0.16.0</u><u class="vnew">v0.16.1</u><u class="upb"><i></i></u></div>',
+ tog:'<div class="sc"><div class="rw p1">Forum eklentisi<u class="tg"><i></i></u></div><div class="rw p2" style="animation-delay:.7s">Windows ile başlat<u class="tg" style="animation-delay:.7s"><i style="animation-delay:.7s"></i></u></div></div>'
 };
 let infoOff=JSON.parse(localStorage.getItem('infoOff')||'{}'),infoTm={};
 function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.querySelector('.info');
