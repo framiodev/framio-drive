@@ -164,29 +164,29 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 @media (max-width:860px){.info .stg{display:none}}
 .sc{--scb:color-mix(in srgb,var(--mut) 28%,transparent);--sca:color-mix(in srgb,var(--acc) 40%,transparent);position:relative;width:190px;height:72px;border-radius:12px;background:var(--track);overflow:hidden;font-size:10px;color:var(--text)}
 .sc i,.sc b,.sc u,.sc q,.sc s,.sc .rw{position:absolute;display:block;text-decoration:none;font-style:normal}
-.sc .rw{left:8px;right:8px;height:17px;border-radius:7px;display:flex;align-items:center;gap:6px;padding:0 7px;white-space:nowrap}.sc .p1{top:6px}.sc .p2{top:27px}.sc .p3{top:48px}
+.sc .rw{overflow:hidden;left:8px;right:8px;height:17px;border-radius:7px;display:flex;align-items:center;gap:6px;padding:0 7px;white-space:nowrap}.sc .p1{top:6px}.sc .p2{top:27px}.sc .p3{top:48px}
 .sc .rw s{position:static;width:9px;height:9px;border-radius:2px;background:var(--acc);opacity:.75;flex:none}
 .sc .pk{animation:scPick 3.4s var(--ease) infinite}.sc .pk2{animation:scPick 3.4s var(--ease) infinite;animation-delay:.9s}
 .sc .ckd{position:absolute;right:6px;top:3px;width:11px;height:11px;border-radius:50%;border:1.5px solid var(--mut);animation:scBx 3.4s var(--ease) infinite}
 .sc .cur{left:150px;top:54px;width:12px;height:16px;background:var(--text);clip-path:polygon(0 0,0 100%,30% 76%,50% 100%,66% 91%,46% 66%,82% 66%);animation:scCur 3.4s var(--ease) infinite;z-index:3}
-.sc .mn{left:92px;top:36px;width:66px;padding:4px 6px;border-radius:8px;background:var(--glass2);border:1px solid var(--stroke);box-shadow:var(--shadow);transform-origin:top left;animation:scMn 3.4s var(--ease) infinite;z-index:2;line-height:13px}
+.sc .mn{overflow:hidden;white-space:nowrap;left:92px;top:36px;width:66px;padding:4px 6px;border-radius:8px;background:var(--glass2);border:1px solid var(--stroke);box-shadow:var(--shadow);transform-origin:top left;animation:scMn 3.4s var(--ease) infinite;z-index:2;line-height:13px}
 .sc .mn i{position:static;display:block}.sc .mn .rd{color:#ff6b6b}
 .sc .key{right:30px;top:27px;padding:2px 8px;border-radius:6px;border:1px solid var(--mut);background:var(--glass2);font-weight:700;animation:scKey 3.4s ease infinite}
-.sc .dz{left:104px;top:8px;width:78px;height:56px;border-radius:10px;border:2px dashed var(--acc);display:grid;place-items:center;font-weight:650;animation:scDz 3.4s ease infinite}
+.sc .dz{overflow:hidden;white-space:nowrap;left:104px;top:8px;width:78px;height:56px;border-radius:10px;border:2px dashed var(--acc);display:grid;place-items:center;font-weight:650;animation:scDz 3.4s ease infinite}
 .sc .dz span{display:block;animation:scLbl 3.4s ease infinite}
 .sc .fchip{left:10px;top:-26px;padding:3px 8px;border-radius:7px;background:var(--acc);color:#fff;font-weight:600;white-space:nowrap;z-index:2}
 .sc .fall{animation:scFall 3.4s var(--ease) infinite}.sc .mv{top:26px;animation:scMv 3.4s var(--ease) infinite}
 .sc .okm{left:131px;top:24px;font-size:20px;line-height:1;color:var(--ok);font-weight:800;animation:scOk 3.4s var(--ease) infinite}
-.sc .fdr{left:108px;top:14px;width:70px;height:44px;border-radius:6px;background:var(--warn);display:grid;place-items:center;color:#222;font-weight:700;animation:scBounce 3.4s var(--ease) infinite}
+.sc .fdr{overflow:hidden;white-space:nowrap;left:108px;top:14px;width:70px;height:44px;border-radius:6px;background:var(--warn);display:grid;place-items:center;color:#222;font-weight:700;animation:scBounce 3.4s var(--ease) infinite}
 .sc .keys{position:absolute;inset:0;display:flex;gap:6px;align-items:center;justify-content:center;padding:0 8px}
-.sc .kc{position:static;flex:1;height:46px;border-radius:8px;border:1px solid var(--mut);background:var(--glass2);display:grid;place-content:center;text-align:center;font-weight:700;animation:scKc 3.4s var(--ease) infinite}.sc .kc small{display:block;font-weight:400;color:var(--mut);font-size:9px}
-.sc .nm{overflow:hidden}.sc .nm span{position:absolute;left:22px;top:2px;animation:scA 3.4s var(--ease) infinite}.sc .nm span+span{opacity:0;color:var(--acc);font-weight:650;animation:scB 3.4s var(--ease) infinite}
+.sc .kc{position:static;flex:1;min-width:0;overflow:hidden;height:46px;border-radius:8px;border:1px solid var(--mut);background:var(--glass2);display:grid;place-content:center;text-align:center;font-weight:700;animation:scKc 3.4s var(--ease) infinite}.sc .kc small{display:block;font-weight:400;color:var(--mut);font-size:9px}
+.sc .nm{overflow:hidden}.sc .nm span{position:absolute;left:22px;right:6px;top:2px;overflow:hidden;text-overflow:ellipsis;animation:scA 3.4s var(--ease) infinite}.sc .nm span+span{opacity:0;color:var(--acc);font-weight:650;animation:scB 3.4s var(--ease) infinite}
 .sc .sp{left:166px;top:8px;width:16px;height:16px;background:var(--acc);clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation:scSp 3.4s linear infinite}
-.sc .ch{left:108px;right:8px;justify-content:center;border:1px solid var(--stroke);background:var(--glass2);animation:scCh 3.4s var(--ease) infinite;padding:0}
+.sc .ch{left:104px;right:8px;justify-content:center;border:1px solid var(--stroke);background:var(--glass2);animation:scCh 3.4s var(--ease) infinite;padding:0}
 .sc .snd{left:10px;top:26px;animation:scSnd 3.4s var(--ease) infinite}
 .sc .pbar{position:relative;flex:1;height:7px;border-radius:4px;background:var(--scb);overflow:hidden}.sc .pbar i{left:0;top:0;bottom:0;width:0;border-radius:4px;background:linear-gradient(90deg,var(--acc),var(--acc2));animation:scFill 3.4s var(--ease) infinite}
 .sc .ring{position:absolute;left:14px;top:9px;width:54px;height:54px;transform:rotate(-90deg)}.sc .ring circle{fill:none;stroke-width:5;stroke-linecap:round}.sc .ring .tr{stroke:var(--scb)}.sc .ring .fg{stroke:var(--acc);stroke-dasharray:106;stroke-dashoffset:106;animation:scRing 3.4s var(--ease) infinite}
-.sc .qt{left:80px;top:18px;line-height:15px}.sc .qt b{position:static;display:block;font-size:13px}
+.sc .qt{left:78px;top:18px;right:6px;line-height:15px;white-space:nowrap;overflow:hidden}.sc .qt b{position:static;display:block;font-size:13px}
 .sc .arw{left:88px;top:24px;font-size:20px;color:var(--acc);font-weight:800;animation:scDn2 3.4s ease infinite}
 .sc .chip{left:122px;top:14px;width:52px;height:42px;border-radius:9px;background:var(--acc);color:#fff;display:grid;place-items:center;font-weight:800;font-size:15px;animation:scPopC 3.4s var(--ease) infinite}
 .sc .vold{left:16px;top:16px;font-size:13px;text-decoration:line-through;color:var(--mut);animation:scVo 3.4s ease infinite}.sc .vnew{left:104px;top:13px;font-size:17px;font-weight:800;color:var(--acc);animation:scVn 3.4s var(--ease) infinite}
@@ -561,17 +561,17 @@ const SC={
  multi:'<div class="sc"><div class="rw p1 pk"><s></s>foto-1.jpg<q class="ckd"></q></div><div class="rw p2"><s></s>foto-2.jpg</div><div class="rw p3 pk2"><s></s>foto-3.jpg<q class="ckd" style="animation-delay:.9s"></q></div><u class="key">Ctrl</u></div>',
  menu:'<div class="sc"><div class="rw p1"><s></s>foto-1.jpg</div><div class="rw p2 pk"><s></s>foto-2.jpg</div><div class="rw p3"><s></s>foto-3.jpg</div><u class="mn"><i>Aç</i><i>İndir</i><i class="rd">Sil</i></u><b class="cur"></b></div>',
  drop:'<div class="sc"><u class="dz"><span>Drive</span></u><u class="fchip fall">foto.jpg</u><i class="okm">✓</i></div>',
- key:'<div class="sc"><u class="dz"><span>🔒 Güvenli</span></u><u class="fchip fall">API anahtarı</u><i class="okm">✓</i></div>',
+ key:'<div class="sc"><u class="dz"><span>Güvenli</span></u><u class="fchip fall">API</u><i class="okm">✓</i></div>',
  move:'<div class="sc"><u class="fdr"><span>2024</span></u><u class="fchip mv">foto.jpg</u></div>',
- keys:'<div class="sc"><div class="keys"><u class="kc">Ctrl+A<small>tümü</small></u><u class="kc" style="animation-delay:.85s">Esc<small>kaldır</small></u><u class="kc" style="animation-delay:1.7s">Del<small>çöpe at</small></u><u class="kc" style="animation-delay:2.55s">F2<small>ad değiştir</small></u></div></div>',
- rename:'<div class="sc"><div class="rw p1 nm"><s></s><span>IMG_4021.jpg</span><span>38 YILTUR 014-1.jpg</span></div><div class="rw p2 nm"><s></s><span style="animation-delay:.4s">IMG_4022.jpg</span><span style="animation-delay:.4s">38 YILTUR 014-2.jpg</span></div><div class="rw p3 nm"><s></s><span style="animation-delay:.8s">IMG_4023.jpg</span><span style="animation-delay:.8s">38 YILTUR 014-3.jpg</span></div><i class="sp"></i></div>',
- prev:'<div class="sc"><div class="rw p1"><s></s>IMG_01 → 014-1<q class="ckd"></q></div><div class="rw p2"><s></s>IMG_02 → 014-2<q class="ckd" style="animation-delay:.5s"></q></div><div class="rw p3"><s></s>IMG_03 → 014-3<q class="ckd" style="animation-delay:1s"></q></div></div>',
- share:'<div class="sc"><u class="fchip snd" style="top:26px;left:10px">foto.jpg</u><div class="rw ch p1">✉ E-posta</div><div class="rw ch p2" style="animation-delay:.6s">⧉ Panoya kopyala</div><div class="rw ch p3" style="animation-delay:1.2s">📁 Gezgin</div></div>',
- live:'<div class="sc"><div class="rw p1">↑ video.mp4<u class="pbar"><i style="--w:100%"></i></u></div><div class="rw p2">↓ liste.zip<u class="pbar"><i style="--w:68%"></i></u></div><div class="rw p3">✎ düzenleme<u class="pbar"><i style="--w:36%"></i></u></div></div>',
- quota:'<div class="sc"><svg class="ring" viewBox="0 0 40 40"><circle class="tr" cx="20" cy="20" r="17" style="stroke-dasharray:none"/><circle class="fg" cx="20" cy="20" r="17"/></svg><u class="qt"><b>1.5 / 5 TB</b>kullanılan alan</u></div>',
+ keys:'<div class="sc"><div class="keys"><u class="kc">Ctrl+A<small>tümü</small></u><u class="kc" style="animation-delay:.85s">Esc<small>iptal</small></u><u class="kc" style="animation-delay:1.7s">Del<small>sil</small></u><u class="kc" style="animation-delay:2.55s">F2<small>ad</small></u></div></div>',
+ rename:'<div class="sc"><div class="rw p1 nm"><s></s><span>IMG_4021.jpg</span><span>Sahil-01.jpg</span></div><div class="rw p2 nm"><s></s><span style="animation-delay:.4s">IMG_4022.jpg</span><span style="animation-delay:.4s">Sahil-02.jpg</span></div><div class="rw p3 nm"><s></s><span style="animation-delay:.8s">IMG_4023.jpg</span><span style="animation-delay:.8s">Sahil-03.jpg</span></div><i class="sp"></i></div>',
+ prev:'<div class="sc"><div class="rw p1"><s></s>IMG_01 → Sahil-01<q class="ckd"></q></div><div class="rw p2"><s></s>IMG_02 → Sahil-02<q class="ckd" style="animation-delay:.5s"></q></div><div class="rw p3"><s></s>IMG_03 → Sahil-03<q class="ckd" style="animation-delay:1s"></q></div></div>',
+ share:'<div class="sc"><u class="fchip snd" style="top:26px;left:10px">foto.jpg</u><div class="rw ch p1">✉ E-posta</div><div class="rw ch p2" style="animation-delay:.6s">⧉ Pano</div><div class="rw ch p3" style="animation-delay:1.2s">▤ Gezgin</div></div>',
+ live:'<div class="sc"><div class="rw p1">↑ video.mp4<u class="pbar"><i style="--w:100%"></i></u></div><div class="rw p2">↓ liste.zip<u class="pbar"><i style="--w:68%"></i></u></div><div class="rw p3">✎ ad düzeni<u class="pbar"><i style="--w:36%"></i></u></div></div>',
+ quota:'<div class="sc"><svg class="ring" viewBox="0 0 40 40"><circle class="tr" cx="20" cy="20" r="17" style="stroke-dasharray:none"/><circle class="fg" cx="20" cy="20" r="17"/></svg><u class="qt"><b>1.5 / 5 TB</b>kullanım</u></div>',
  drv:'<div class="sc"><u class="fdr" style="left:12px;width:66px"><span>Drive</span></u><i class="arw">→</i><u class="chip">X:</u></div>',
  upd:'<div class="sc"><u class="vold">v0.16.0</u><u class="vnew">v0.16.1</u><u class="upb"><i></i></u></div>',
- tog:'<div class="sc"><div class="rw p1">Forum eklentisi<u class="tg"><i></i></u></div><div class="rw p2" style="animation-delay:.7s">Windows ile başlat<u class="tg" style="animation-delay:.7s"><i style="animation-delay:.7s"></i></u></div></div>'
+ tog:'<div class="sc"><div class="rw p1">Eklenti<u class="tg"><i></i></u></div><div class="rw p2" style="animation-delay:.7s">Başlangıç<u class="tg" style="animation-delay:.7s"><i style="animation-delay:.7s"></i></u></div></div>'
 };
 let infoOff=JSON.parse(localStorage.getItem('infoOff')||'{}'),infoTm={};
 function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.querySelector('.info');
@@ -596,12 +596,12 @@ let fSearch='',vmode=localStorage.getItem('vmode')||'l';
 function applyVM(){const b=$('frows');b.className=vmode=='l'?'':'g '+vmode;document.querySelectorAll('#vmodes b').forEach(x=>x.classList.toggle('on',x.dataset.m==vmode))}
 $('vmodes').onclick=e=>{const m=e.target.dataset.m;if(m){vmode=m;localStorage.setItem('vmode',m);applyVM();loadFiles(true)}};
 applyVM();
-let fSig='';
-async function loadFiles(silent){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}];fSearch=''}
+let fSig='',fTok=0;
+async function loadFiles(silent){if(!sel)return;const tok=++fTok;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}];fSearch=''}
  const me=sel,box=$('frows');if(!silent&&!box.children.length)box.innerHTML='<div class="mut" style="padding:14px">Yükleniyor…</div>';
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>{const sep=i?'<span>›</span>':'',a=`<a data-i="${i}" title="${esc(p.name)}">${esc(p.name)}</a>`;
    if(fPath.length>4&&i>=1&&i<fPath.length-2)return i==1?sep+'<a data-more="1" title="Ara klasörler">…</a>':'';return sep+a}).join('');
- try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
+ try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel||tok!=fTok)return;
   const sg=curId()+'|'+fSearch+'|'+vmode+'|'+JSON.stringify(items.map(({thumb,...q})=>q));if(silent&&sg===fSig){return}fSig=sg;const keep=new Set(selRows().map(x=>x.dataset.id));
   box.classList.toggle('noan',window.__fk===(window.__fk=curId()+'|'+fSearch+'|'+vmode));box.innerHTML=items.length?items.map((f,ix)=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
    return `<div class="fr ${f.folder?'d':''}" style="--i:${Math.min(ix,24)}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="menu" title="Seçenekler">⋯</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
@@ -611,7 +611,8 @@ async function loadFiles(silent){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{i
 let lastRow=null;
 function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('fclr').classList.toggle('hide',!any);$('frows').classList.toggle('hs',any)}
 $('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
-$('fq').onkeydown=e=>{if(e.key=='Enter'){fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
+let fqT=0;$('fq').oninput=()=>{clearTimeout(fqT);fqT=setTimeout(()=>{const v=$('fq').value.trim();if(v===fSearch)return;fSearch=v;loadFiles()},260)};
+$('fq').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(fqT);fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
 $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows .ck:checked')].map(c=>c.closest('.fr'));if(!rows.length)return;
  if(!await confirmBox('Çöp kutusuna taşı',`${rows.length} öğe Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;
  let bad=0;for(const r of rows){try{await invoke('fs_trash',{email:sel,id:r.dataset.id})}catch(x){bad++}}
