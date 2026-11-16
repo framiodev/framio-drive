@@ -140,6 +140,21 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .hide{display:none!important}
 ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:var(--track);border-radius:9px}
 @media (max-width:1100px){.grid{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}}
+@keyframes tabin{from{opacity:0;transform:translateY(10px)}}
+.tab:not(.hide){animation:tabin .38s var(--ease) both}
+.panel{transition:transform .3s var(--ease),box-shadow .3s}.panel:hover{transform:translateY(-2px)}
+.btn:active{transform:scale(.96)}.btn{transition:transform .2s var(--ease),background .25s,border-color .25s}
+#frows.noan .fr{animation:none!important}
+.fr{animation:in .35s var(--ease) both;animation-delay:calc(var(--i,0)*18ms)}
+.tabs a{position:relative}.tabs a.on{animation:pop .3s var(--ease) both}
+.info{display:flex;gap:14px;align-items:center;padding:12px 16px;border-radius:18px;margin-bottom:2px;animation:in .5s var(--ease) both;position:relative;overflow:hidden}
+.info .ic{width:38px;height:38px;flex:none;position:relative;display:grid;place-items:center;color:var(--acc)}
+.info .ic::before,.info .ic::after{content:'';position:absolute;inset:0;border-radius:50%;border:2px solid var(--acc);opacity:.5;animation:ping 2.4s var(--ease) infinite}.info .ic::after{animation-delay:1.2s}
+@keyframes ping{from{transform:scale(.55);opacity:.7}to{transform:scale(1.35);opacity:0}}
+.info .ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;animation:float 3s ease-in-out infinite}
+.info .tx{flex:1;min-width:0}.info .tt{font-weight:650}.info .ln{color:var(--mut);font-size:13px;transition:opacity .35s,transform .35s var(--ease);min-height:19px}.info .ln.o{opacity:0;transform:translateY(5px)}
+.info .dots{display:flex;gap:4px;margin-top:6px}.info .dots i{width:14px;height:3px;border-radius:3px;background:var(--track);transition:background .3s,width .3s}.info .dots i.on{background:var(--acc);width:22px}
+.info .cl{cursor:pointer;color:var(--mut);padding:4px 8px;border-radius:8px;flex:none}.info .cl:hover{background:var(--track);color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .pop{position:absolute;right:0;top:46px;width:286px;padding:16px;z-index:30;background:var(--glass2);animation:pop .35s var(--ease) both}
@@ -183,9 +198,9 @@ select option{background:#222;color:#fff}
     <h1 id="emptyT">Bir hesap seç</h1><p id="emptyP">Soldan bir hesap seç ya da Google ile yeni hesap ekle. Drive'ın bilgisayarında bir klasör gibi görünecek.</p></div></div>
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
-      <span class="mut" id="ver" style="align-self:center;margin-right:6px"></span><button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri" id="upd" style="display:none"></button>
+      <button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn pri" id="upd" style="display:none"></button>
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
-    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
+    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
         <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
@@ -265,11 +280,17 @@ select option{background:#222;color:#fff}
         <div class="acts" style="margin-top:4px"><button class="btn pri" id="pfSave">Profili kaydet</button><span class="mut" id="pfMsg"></span></div></div>
       <div class="glass panel"><h2>Forumlar <span>Kendi forum hesabınla giriş yap; bilgilerin yalnızca bu bilgisayarda Windows Kimlik Bilgisi Yöneticisi’nde tutulur, oturum düşerse kendiliğinden yenilenir</span></h2>
         <div id="forumList"></div><div class="mut" id="frmMsg" style="min-height:18px"></div></div>
+      <div class="glass panel"><h2>Hesap</h2>
+        <div class="acts" style="margin-top:0"><button class="btn" id="rename">Adı değiştir</button><button class="btn danger" id="signout">Çıkış yap</button></div></div>
+    </div>
+    <div class="tab scroll hide" id="t_app">
+      <div class="glass panel"><h2>Sürüm ve güncelleme <span>Uygulama kendiliğinden de denetler</span></h2>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><b id="ver" style="font-size:18px"></b><button class="btn" id="chkupd">Güncelleme ara</button><span class="mut" id="updNote"></span></div></div>
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
-      <div class="glass panel"><h2>Hesap</h2>
-        <div class="acts" style="margin-top:0"><button class="btn" id="rename">Adı değiştir</button><button class="btn danger" id="signout">Çıkış yap</button></div></div>
+      <div class="glass panel"><h2>Bilgi kartları <span>Her sekmenin üstünde ne işe yaradığını gösteren küçük kartlar</span></h2>
+        <div class="acts" style="margin-top:0"><button class="btn" id="infoReset">Kartları yeniden göster</button></div></div>
     </div>
   </div>
 </main></div>
@@ -420,7 +441,7 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
  try{await invoke('sign_out',{email:sel});toast('Çıkış yapıldı (kullanıcı adın hatırlanır, parola silindi)');sel=null;localStorage.removeItem('sel');refresh()}catch(e){toast(String(e),true)}};
 
 let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
-async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');if(v){b.textContent='Güncelle: v'+v;b.style.display='';if(manual)toast('Yeni sürüm var: v'+v)}else{b.style.display='none';if(manual)toast('Güncelsin (v'+appVer+')');$('updNote').textContent=v?'Yeni sürüm: v'+v:'Güncelsin'}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
 invoke('autostart_get').then(v=>$('autos').checked=v).catch(()=>{});
 $('autos').onchange=()=>invoke('autostart_set',{on:$('autos').checked}).then(()=>toast($('autos').checked?'Windows ile başlayacak':'Otomatik başlatma kapalı')).catch(e=>{toast(String(e),true);$('autos').checked=!$('autos').checked});
 invoke('classic_menu_get').then(v=>$('classic').checked=v).catch(()=>{});
@@ -453,8 +474,28 @@ function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
- $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_shr').classList.toggle('hide',t!='shr');$('t_set').classList.toggle('hide',t!='set');if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit();if(t=='shr')shrInit()}
+ $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_shr').classList.toggle('hide',t!='shr');$('t_set').classList.toggle('hide',t!='set');$('t_app').classList.toggle('hide',t!='app');infoShow(t);if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit();if(t=='shr')shrInit()}
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
+/* bilgi kartlari: her sekmenin ustunde, ozellikleri sirayla anlatan hareketli kart */
+const INFO={
+ files:{ic:'<path d="M3 7h6l2 2h10v10H3z"/>',t:'Dosyalar',l:['Tek tıkla seç, çift tıkla aç. Ctrl ve Shift ile birden çok öğe seçebilirsin.','Sağ tık ya da satırın sonundaki ⋯ ile Aç, İndir, Gemini, Yeniden adlandır ve Sil.','Dosyaları bu pencereye sürükleyip bırakarak Drive’a yükleyebilirsin.','Bir öğeyi sürükleyip bir klasörün ya da yol çubuğundaki bir adımın üstüne bırakarak taşı.']},
+ org:{ic:'<path d="M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/>',t:'Düzenle',l:['Yapay zekâ klasördeki görselleri okuyup dosya ve klasör adlarını senin desenine göre düzenler.','Profil seç; hangi bilgilerin okunacağını ve adların nasıl oluşacağını profilden ayarlarsın.','İşlem öncesi önizleme görürsün; onaylamadan hiçbir şey değişmez.']},
+ shr:{ic:'<path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4"/>',t:'Paylaş',l:['Seçtiğin dosyaları e-posta, panoya kopyalama ya da Gezgin’de gösterme ile paylaş.','Dosyalar sekmesinde bir görsele sağ tıklayıp “Forumda paylaş” ile buraya ekleyebilirsin.','Bağlı forumların varsa gönderi hazırlayıp doğrudan yayımlayabilirsin.']},
+ act:{ic:'<path d="M3 12h4l3-8 4 16 3-8h4"/>',t:'Etkinlik',l:['Yüklemeleri, indirmeleri ve düzenleme işlemlerini canlı izle.','Depolama kullanımın ve kotan burada görünür.']},
+ set:{ic:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',t:'Ayarlar',l:['Sürücü: Drive’ı Gezgin’de gerçek bir sürücü harfi olarak bağlar; yer kaplamaz.','Yapay zekâ: Gemini anahtarını ve toplu düzenleme ayarlarını yönet.','Düzenleme profilleri ve forum bağlantıları da burada.']},
+ app:{ic:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="M9 12l2 2 4-4"/>',t:'Uygulama',l:['Sürümünü gör, güncelleme ara. Yeni sürüm olunca üstte “Güncelle” düğmesi çıkar.','Windows ile başlatma ve sağ tık menüsü ayarları burada.']}
+};
+let infoOff=JSON.parse(localStorage.getItem('infoOff')||'{}'),infoTm={};
+function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.querySelector('.info');
+ if(infoOff[t]){if(c)c.remove();return}
+ if(c)return;const d=INFO[t];c=document.createElement('div');c.className='glass info';
+ c.innerHTML=`<div class="ic"><svg viewBox="0 0 24 24">${d.ic}</svg></div><div class="tx"><div class="tt">${esc(d.t)}</div><div class="ln"></div><div class="dots">${d.l.map(()=>'<i></i>').join('')}</div></div><span class="cl" title="Bu kartı gizle">✕</span>`;
+ box.insertBefore(c,box.firstChild);let i=0;const ln=c.querySelector('.ln'),dots=c.querySelectorAll('.dots i');
+ const show=()=>{ln.classList.add('o');setTimeout(()=>{ln.textContent=d.l[i];ln.classList.remove('o');dots.forEach((x,k)=>x.classList.toggle('on',k==i));i=(i+1)%d.l.length},d.l.length&&ln.textContent?280:0)};
+ show();clearInterval(infoTm[t]);infoTm[t]=setInterval(()=>{if(!c.isConnected){clearInterval(infoTm[t]);return}if(!document.hidden)show()},5500);
+ c.querySelector('.cl').onclick=()=>{infoOff[t]=1;localStorage.setItem('infoOff',JSON.stringify(infoOff));clearInterval(infoTm[t]);c.style.transition='opacity .3s,transform .3s';c.style.opacity=0;c.style.transform='scale(.96)';setTimeout(()=>c.remove(),300)}}
+$('infoReset').onclick=()=>{infoOff={};localStorage.removeItem('infoOff');toast('Bilgi kartları yeniden gösterilecek')};
+
 const curId=()=>fPath[fPath.length-1].id;
 let fSearch='',vmode=localStorage.getItem('vmode')||'l';
 function applyVM(){const b=$('frows');b.className=vmode=='l'?'':'g '+vmode;document.querySelectorAll('#vmodes b').forEach(x=>x.classList.toggle('on',x.dataset.m==vmode))}
@@ -465,8 +506,8 @@ async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'roo
  $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>{const sep=i?'<span>›</span>':'',a=`<a data-i="${i}" title="${esc(p.name)}">${esc(p.name)}</a>`;
    if(fPath.length>4&&i>=1&&i<fPath.length-2)return i==1?sep+'<a data-more="1" title="Ara klasörler">…</a>':'';return sep+a}).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
-  box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="menu" title="Seçenekler">⋯</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+  box.classList.toggle('noan',window.__fk===(window.__fk=curId()+'|'+fSearch+'|'+vmode));box.innerHTML=items.length?items.map((f,ix)=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
+   return `<div class="fr ${f.folder?'d':''}" style="--i:${Math.min(ix,24)}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="menu" title="Seçenekler">⋯</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  selChanged();lastRow=null;
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
