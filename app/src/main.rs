@@ -51,6 +51,28 @@ fn settings_path() -> PathBuf { data_dir().join("settings.json") }
 fn load_settings() -> Value { std::fs::read_to_string(settings_path()).ok().and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_else(|| json!({})) }
 fn save_settings(v: &Value) { let _ = std::fs::create_dir_all(data_dir()); let _ = std::fs::write(settings_path(), v.to_string()); }
 
+/// Eklenti katalogu: (kimlik, ad, aciklama, hedef kitle, varsayilan)
+const EXTS: &[(&str, &str, &str, &str, bool)] = &[
+    ("forum", "Forum paylaşımı", "Flarum tabanlı forumlara galeri, kategori ve içerik gönderme; birden çok foruma aktarma, filigran ve zamanlama.", "Yalnızca ilgili forumların üyeleri için", false),
+];
+pub fn ext_on(id: &str) -> bool {
+    let d = EXTS.iter().find(|e| e.0 == id).map(|e| e.4).unwrap_or(false);
+    load_settings()["extensions"][id].as_bool().unwrap_or(d)
+}
+#[tauri::command]
+fn ext_list() -> Value {
+    json!(EXTS.iter().map(|e| json!({ "id": e.0, "name": e.1, "desc": e.2, "audience": e.3, "enabled": ext_on(e.0), "builtin": true })).collect::<Vec<_>>())
+}
+#[tauri::command]
+fn ext_set(id: String, on: bool) -> Result<(), String> {
+    if !EXTS.iter().any(|e| e.0 == id) { return Err("Bilinmeyen eklenti".into()); }
+    let mut s = load_settings();
+    if !s["extensions"].is_object() { s["extensions"] = json!({}); }
+    s["extensions"][id.as_str()] = json!(on);
+    save_settings(&s);
+    Ok(())
+}
+
 fn hex_name(c: (u8, u8, u8)) -> String { format!("{:02x}{:02x}{:02x}", c.0, c.1, c.2) }
 
 /// Dosya adı renge bağlıdır: renk değişince Windows'un simge önbelleği yeni dosyayı okur.
@@ -939,7 +961,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
+        .invoke_handler(tauri::generate_handler![ext_list, ext_set, client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

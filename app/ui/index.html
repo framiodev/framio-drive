@@ -284,7 +284,7 @@ select option{background:#222;color:#fff}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Dosya adı deseni ({n} = sıra no)</div><input id="pfFile"></div><div><div class="mut" style="margin-bottom:4px">Klasör deseni (/ ile derinlik)</div><input id="pfFolder"></div></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px"><div><div class="mut" style="margin-bottom:4px">Zorunlu alan (boşsa dokunma)</div><select id="pfReq"></select></div><div><div class="mut" style="margin-bottom:4px">Okunamayanlar klasörü</div><input id="pfUnk"></div><div><div class="mut" style="margin-bottom:4px">Boş alan yerine yazı</div><input id="pfUnkV"></div></div>
         <div class="acts" style="margin-top:4px"><button class="btn pri" id="pfSave">Profili kaydet</button><span class="mut" id="pfMsg"></span></div></div>
-      <div class="glass panel"><h2>Forumlar <span>Kendi forum hesabınla giriş yap; bilgilerin yalnızca bu bilgisayarda Windows Kimlik Bilgisi Yöneticisi’nde tutulur, oturum düşerse kendiliğinden yenilenir</span></h2>
+      <div class="glass panel" id="forumPanel"><h2>Forumlar <span>Kendi forum hesabınla giriş yap; bilgilerin yalnızca bu bilgisayarda Windows Kimlik Bilgisi Yöneticisi’nde tutulur, oturum düşerse kendiliğinden yenilenir</span></h2>
         <div id="forumList"></div><div class="mut" id="frmMsg" style="min-height:18px"></div></div>
       <div class="glass panel"><h2>Hesap</h2>
         <div class="acts" style="margin-top:0"><button class="btn" id="rename">Adı değiştir</button><button class="btn danger" id="signout">Çıkış yap</button></div></div>
@@ -295,6 +295,8 @@ select option{background:#222;color:#fff}
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive\'ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
+      <div class="glass panel"><h2>Eklentiler <span>İsteğe bağlı özellikler; ihtiyacın olanı aç, olmayanı kapalı bırak</span></h2>
+        <div id="extList"></div><div class="mut" style="margin-top:8px">Üçüncü taraf eklentileri ekleme desteği sonraki sürümlerde gelecek.</div></div>
       <div class="glass panel"><h2>Bilgi kartları <span>Her sekmenin üstünde ne işe yaradığını gösteren küçük kartlar</span></h2>
         <div class="acts" style="margin-top:0"><button class="btn" id="infoReset">Kartları yeniden göster</button></div></div>
     </div>
@@ -505,6 +507,13 @@ function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.quer
  const show=()=>{ln.classList.add('o');setTimeout(()=>{ln.textContent=d.l[i];ln.classList.remove('o');dots.forEach((x,k)=>x.classList.toggle('on',k==i));i=(i+1)%d.l.length},d.l.length&&ln.textContent?280:0)};
  show();clearInterval(infoTm[t]);infoTm[t]=setInterval(()=>{if(!c.isConnected){clearInterval(infoTm[t]);return}if(!document.hidden)show()},5500);
  c.querySelector('.cl').onclick=()=>{infoOff[t]=1;localStorage.setItem('infoOff',JSON.stringify(infoOff));clearInterval(infoTm[t]);c.style.transition='opacity .3s,transform .3s';c.style.opacity=0;c.style.transform='scale(.96)';setTimeout(()=>c.remove(),300)}}
+let EXT={};
+const extCss=document.createElement('style');extCss.textContent='.ext{display:flex;gap:14px;align-items:center;padding:12px 4px;border-top:1px solid var(--stroke)}.ext:first-child{border-top:0}.ext .tx{flex:1;min-width:0}.ext small{color:var(--mut);display:block}.ext .tg{width:44px;height:26px;border-radius:14px;background:var(--track);position:relative;cursor:pointer;flex:none;transition:background .3s}.ext .tg::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}.ext .tg.on{background:var(--acc)}.ext .tg.on::after{transform:translateX(18px)}';document.head.appendChild(extCss);
+async function loadExt(){let l=[];try{l=await invoke('ext_list')}catch(e){}EXT={};l.forEach(x=>EXT[x.id]=x.enabled);
+ $('forumPanel').classList.toggle('hide',!EXT.forum);
+ $('extList').innerHTML=l.map(x=>`<div class="ext"><div class="tx"><b>${esc(x.name)}</b><small>${esc(x.desc)}</small><small>${esc(x.audience)}</small></div><div class="tg${x.enabled?' on':''}" data-id="${esc(x.id)}" data-on="${x.enabled?1:0}" role="switch"></div></div>`).join('')}
+$('extList').onclick=async e=>{const g=e.target.closest('.tg');if(!g)return;const on=g.dataset.on!='1';try{await invoke('ext_set',{id:g.dataset.id,on});await loadExt();toast(on?'Eklenti açıldı':'Eklenti kapatıldı');if(tab=='shr')shrInit()}catch(x){toast(String(x),true)}};
+loadExt();
 $('infoReset').onclick=()=>{infoOff={};localStorage.removeItem('infoOff');toast('Bilgi kartları yeniden gösterilecek')};
 
 const curId=()=>fPath[fPath.length-1].id;
@@ -547,7 +556,7 @@ function rowMenu(r,x,y){const rows=selRows();
  const fo=r.dataset.f=='1',nat=String(r.dataset.m).startsWith('application/vnd.google-apps'),img=!fo&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img',it=[];
  it.push({t:fo?'Klasörü aç':'Aç',f:()=>openRow(r)});
  if(!fo&&!nat)it.push({t:'İndir',f:()=>doAct('dl',r)});
- if(!fo){it.push('-');if(img){it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});it.push({t:'Forumda paylaş',f:()=>doAct('fshare',r)})}it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
+ if(!fo){it.push('-');if(img){it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});if(EXT.forum)it.push({t:'Forumda paylaş',f:()=>doAct('fshare',r)})}it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
  it.push('-');if(!fSearch)it.push({t:'Yeniden adlandır',f:()=>doAct('ren',r)});it.push({t:'Çöpe at',cls:'danger',f:()=>doAct('del',r)});showMenu(it,x,y)}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
@@ -792,7 +801,7 @@ $('shrAdd').onclick=()=>{shrAddLocal($('shrPath').value);$('shrPath').value='';s
 let shrDest='mail',shrHasForum=false;
 const shrDests=()=>[['mail','E-posta'],['copy','Panoya kopyala'],['show','Klasörde göster']].concat(shrHasForum?[['forum','Forum']]:[]);
 function shrDestRender(){if(!shrDests().some(d=>d[0]==shrDest))shrDest='mail';
- $('shrDest').innerHTML=shrDests().map(d=>`<button class="btn sm${d[0]==shrDest?' on':''}" data-d="${d[0]}">${d[1]}</button>`).join('')+(shrHasForum?'':'<button class="btn sm" data-d="addforum">+ Forum ekle</button>');
+ $('shrDest').innerHTML=shrDests().map(d=>`<button class="btn sm${d[0]==shrDest?' on':''}" data-d="${d[0]}">${d[1]}</button>`).join('')+(shrHasForum||!EXT.forum?'':'<button class="btn sm" data-d="addforum">+ Forum ekle</button>');
  const f=shrDest=='forum';document.querySelectorAll('.shr-fo').forEach(x=>x.classList.toggle('hide',!f));$('shrGen').classList.toggle('hide',f);
  $('shrGenTx').textContent={mail:'Seçili dosyaların bağlantıları ve adları, varsayılan posta uygulamanda hazır bir iletiye yazılır.',copy:'Seçili dosyaların bağlantıları (Drive) ya da yolları panoya kopyalanır.',show:'Bilgisayardaki ilk dosya Gezgin’de seçili olarak gösterilir.'}[shrDest]||''}
 function shrLinkOf(x){const s=x.src;if(s.kind=='drive')return 'https://drive.google.com/file/d/'+s.key+'/view'+(s.email?'?authuser='+encodeURIComponent(s.email):'');return s.path}
@@ -805,7 +814,7 @@ $('shrGenGo').onclick=async()=>{if(!shrIt.length){toast('Önce bir dosya ekle',t
   else if(shrDest=='show'){const l=shrIt.find(x=>x.src.kind!='drive');if(!l){toast('Bu dosya Drive’da; Dosyalar sekmesinden aç',true);return}await invoke('share_reveal',{path:l.src.path})}
  }catch(er){toast(String(er),true)}};
 async function shrInit(){let fl=[],all=[];try{all=await invoke('forum_list');fl=all.filter(f=>f.user)}catch(e){}
- shrHasForum=all.length>0;shrDestRender();if(shrDest!='forum'){shrRender();return}
+ shrHasForum=all.length>0;if(!shrHasForum&&shrDest=='forum')shrDest='mail';shrDestRender();if(shrDest!='forum'){shrRender();return}
  const cur=shrFo();$('shrForum').innerHTML=fl.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.user)})</option>`).join('');if(fl.some(f=>f.id==cur))$('shrForum').value=cur;
  $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();shrFormRender();if(fl.length)await shrLoadMeta()}
 async function shrLoadMeta(){const id=shrFo();if(!id)return;

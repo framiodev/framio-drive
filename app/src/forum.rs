@@ -31,6 +31,8 @@ pub fn find(id: &str) -> Result<(String, Value), String> {
 
 #[tauri::command]
 pub fn forum_list() -> Value {
+    // Forum eklentisi kapaliysa forum ozellikleri hic gorunmez
+    if !crate::ext_on("forum") { return Value::Array(vec![]); }
     migrate_legacy();
     Value::Array(profiles().into_iter().map(|mut p| {
         let s = p["id"].as_str().and_then(forum::load_session);
