@@ -218,14 +218,14 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .info .cl{cursor:pointer;color:var(--mut);padding:4px 8px;border-radius:8px;flex:none}.info .cl:hover{background:var(--track);color:var(--text)}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-.pop{position:absolute;right:0;top:46px;width:286px;padding:16px;z-index:30;background:var(--glass2);animation:pop .35s var(--ease) both}
-#wheel{display:block;margin:2px auto 0;touch-action:none;cursor:crosshair}
-.pop h3{margin:0 0 10px;font-size:13px}.sw{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.sw i{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid var(--stroke);transition:transform .25s var(--ease)}.sw i:hover{transform:scale(1.18)}
+.pop{position:absolute;right:0;top:46px;width:300px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:16px;z-index:30;background:var(--glass2);animation:pop .35s var(--ease) both}
+#wheel{display:block;max-width:100%;margin:2px auto 0;touch-action:none;cursor:crosshair}
+.pop h3{margin:0 0 10px;font-size:13px}.sw{display:flex;gap:6px;justify-content:space-between;margin-bottom:14px}
+.sw i{flex:none;width:25px;height:25px;box-sizing:border-box;border-radius:50%;cursor:pointer;border:2px solid var(--stroke);transition:transform .25s var(--ease)}.sw i:hover{transform:scale(1.18)}
 .rgb{display:grid;grid-template-columns:18px 1fr 34px;gap:8px;align-items:center;margin:6px 0;font-size:12px;color:var(--mut)}
 .rgb input[type=range]{margin:0;padding:0;height:6px;accent-color:var(--acc);background:none;border:0}
 .rgb b{color:var(--text);font-weight:600;text-align:right}
-.hexrow{display:flex;gap:8px;margin-top:10px}.hexrow input{margin:0}
+.hexrow{display:flex;gap:8px;margin-top:12px;align-items:center}.hexrow input{margin:0;flex:1;min-width:0;width:auto;box-sizing:border-box}.hexrow .btn{flex:none}
 .top{position:relative}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px;margin:8px 0}
 #fcrumbs{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1 1 100%}#fcrumbs a{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 auto}#fcrumbs a:last-child{flex:0 1 auto;min-width:40px}#fcrumbs a:last-child{font-weight:650;background:var(--glass2)}#fcrumbs span{flex:none}
