@@ -771,6 +771,13 @@ async fn set_vdrive(app: AppHandle, email: String, on: bool, letter: String, lab
 #[tauri::command]
 async fn install_winfsp() -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(|| {
+        // Once kurulum paketiyle gelen MSI (yonetici izni ister), olmazsa winget
+        let msi = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join("winfsp.msi"))).filter(|p| p.exists());
+        if let Some(m) = msi {
+            let cmd = format!("Start-Process msiexec -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList '/i','\"{}\"','/qn','/norestart'", m.display());
+            run_hidden("powershell", &["-NoProfile", "-Command", &cmd]);
+            if drivefs::winfsp_installed() { return Ok(()); }
+        }
         let ok = run_hidden("winget", &["install", "--id", "WinFsp.WinFsp", "-e", "--silent", "--accept-package-agreements", "--accept-source-agreements"]);
         if drivefs::winfsp_installed() { Ok(()) } else if ok { Err("Yükleme tamamlandı ama WinFsp algılanamadı; uygulamayı yeniden başlat".into()) } else { Err("WinFsp yüklenemedi. winget yoksa https://winfsp.dev adresinden elle kur".into()) }
     }).await.map_err(|e| e.to_string())?

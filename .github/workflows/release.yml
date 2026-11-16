@@ -47,6 +47,7 @@ jobs:
           $msi = Get-ChildItem $env:RUNNER_TEMP -Filter 'winfsp*.msi' | Select-Object -First 1
           Start-Process msiexec -ArgumentList '/i', "`"$($msi.FullName)`"", '/qn', 'ADDLOCAL=ALL' -Wait
           if (-not (Test-Path 'C:\Program Files (x86)\WinFsp\inc')) { throw 'WinFsp inc klasoru yok' }
+          Copy-Item $msi.FullName 'app/winfsp.msi'  # kurulum paketine gomulur, kurulumda otomatik yuklenir
 
       - uses: dtolnay/rust-toolchain@stable
         if: steps.chk.outputs.skip != 'true'

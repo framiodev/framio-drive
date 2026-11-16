@@ -4,3 +4,4 @@ target/
 client.json
 *.key
 *.key.pub.bak
+app/winfsp.msi

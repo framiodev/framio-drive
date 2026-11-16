@@ -409,7 +409,7 @@ async function loadDirs(){const fl=sm.querySelector('#flist');fl.innerHTML='<div
 let vFor=null,mountedLetter='';
 async function loadV(email){vFor=email;try{const d=await invoke('vdrive_info',{email});if(vFor!=email)return;
  $('vletter').innerHTML='<option value="">Harf seç</option>'+d.letters.map(l=>`<option value="${l}">${l}:</option>`).join('');$('vletter').value=d.letter||(d.letters.includes('X')?'X':'');$('vlabel').value=d.label;
- $('vinst').style.display=d.installed?'none':'';$('von').disabled=!d.installed;
+ $('vinst').style.display=d.installed?'none':'';if(!d.installed&&!window.__wfAuto){window.__wfAuto=1;setTimeout(()=>$('vinst').click(),400)}$('von').disabled=!d.installed;
  $('vnote').textContent=!d.installed?'Bunun için WinFsp gerekli (ücretsiz sürücü bileşeni).':d.mounted?`Bağlı: ${d.letter}:`:(d.on?'Açık ama bağlanamadı'+(d.err?': '+d.err:'')+' — Bağla’ya basıp tekrar dene.':'Bağlı değil.');$('von').style.display=d.mounted?'none':'';$('voff').style.display=d.mounted?'':'none';$('vletter').disabled=$('vlabel').disabled=!!d.mounted;$('vmsg').textContent='';if(d.mounted)mountedLetter=d.letter;else mountedLetter=''}catch(e){}}
 $('von').onclick=async()=>{$('vmsg').textContent='Bağlanıyor…';try{await invoke('set_vdrive',{email:sel,on:true,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü bağlandı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true);vFor=null;loadV(sel)}};
 $('voff').onclick=async()=>{$('vmsg').textContent='Ayrılıyor…';try{await invoke('set_vdrive',{email:sel,on:false,letter:$('vletter').value,label:$('vlabel').value});toast('Sürücü ayrıldı');vFor=null;loadV(sel)}catch(e){$('vmsg').textContent='';toast(String(e),true)}};
