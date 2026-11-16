@@ -274,6 +274,15 @@ select option{background:#222;color:#fff}
 .wmmode{display:flex;flex-direction:column;gap:8px}.wseg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--track)}.wseg b{font-weight:500;font-size:12px;text-align:center;padding:7px 4px;border-radius:9px;cursor:pointer;transition:background .2s}.wseg b.on{background:var(--acc);color:#fff}
 .wmout{display:flex;flex-direction:column;gap:6px;margin-top:14px;padding:12px;border-radius:12px;background:var(--track)}.wmout label{display:flex;align-items:center;gap:8px;cursor:pointer}.wmout input[type=checkbox]{width:auto;margin:0;accent-color:var(--acc)}.wmdirr{display:flex;align-items:center;gap:8px}.wmdirr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
 .wrow.on::after{content:'✓';color:var(--acc);font-weight:700;margin-left:6px}.wmddb{border-color:color-mix(in srgb,var(--acc) 55%,var(--stroke))}
+
+.metag{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}.mright{display:flex;flex-direction:column;gap:14px}@media (max-width:860px){.metag{grid-template-columns:1fr}}
+.msteps{display:flex;flex-direction:column;gap:8px}.mst{border-radius:14px;background:var(--track);border:1px solid transparent;transition:border-color .25s,background .25s}.mst.on{border-color:color-mix(in srgb,var(--acc) 60%,transparent);background:color-mix(in srgb,var(--acc) 8%,var(--track))}
+.mh{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}.mh b{flex:1;font-weight:600;font-size:13.5px}.mh i{font-style:normal;opacity:.5;transition:transform .25s var(--ease)}.mst.on .mh i{transform:rotate(180deg)}
+.mn{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--stroke);flex:none}.mst.on .mn{background:var(--acc);color:#fff}.mst.ok .mn{background:#2fa26a;color:#fff}
+.mb{display:none;padding:0 12px 12px 46px;font-size:13px;line-height:1.5;color:var(--mut)}.mst.on .mb{display:block;animation:in .35s var(--ease) both}
+.mform{display:flex;flex-direction:column;gap:6px}.mform input{margin:0}.mres{display:none;padding:9px 12px;border-radius:11px;background:rgba(47,162,106,.18);font-size:13px}.mres.show{display:block}.mres.bad{background:rgba(220,60,60,.2)}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.mchips b{font-weight:500;font-size:12px;padding:5px 10px;border-radius:9px;background:var(--track);cursor:pointer;transition:background .2s}.mchips b:hover{background:var(--acc);color:#fff}
+.panel textarea#mQ{width:100%;resize:vertical;margin:0}.mans{margin-top:10px;padding:12px;border-radius:12px;background:var(--track);white-space:pre-wrap;font-size:13px;line-height:1.55;max-height:320px;overflow:auto}
 .wmfo{display:flex;flex-wrap:wrap;gap:5px}.wmfo b{font-weight:500;font-size:12px;padding:4px 10px;border-radius:9px;background:var(--track);cursor:pointer}.wmfo b.on{background:var(--acc);color:#fff}
 .mgg{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;min-height:360px}.mgf{display:flex;flex-direction:column;gap:3px;max-height:420px;overflow:auto}
 .mf{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .2s}.mf:hover{background:var(--track)}.mf.on{background:color-mix(in srgb,var(--acc) 16%,transparent);font-weight:600}.mf .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mf small{margin-left:auto;color:var(--mut)}.mf i{font-style:normal;opacity:0;font-size:12px;padding:0 3px}.mf:hover i{opacity:.7}.mf i:hover{opacity:1}
@@ -306,7 +315,7 @@ select option{background:#222;color:#fff}
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
       <button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn pri" id="upd" style="display:none"></button>
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><input type="range" id="vsl" min="8" max="100"><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
-    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
+    <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="meta">Meta</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
         <div class="ftools"><input id="fq" placeholder="Ara…"><button class="btn sm" id="frecent" title="Drive’daki gibi: en son açtığın dosyalar">Son kullanılanlar</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm pri fplus" id="fplus" title="Yükle ve oluştur"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni</button><button class="btn sm iconmore" id="fmore" title="Diğer işlemler">⋯</button></div>
@@ -361,6 +370,27 @@ select option{background:#222;color:#fff}
       </div>
       <div class="glass panel"><h2>Sürücü durumu</h2><div class="big" id="actT">—</div><div class="mut" id="actS"></div></div>
       <div class="glass panel"><h2>Etkinlik günlüğü</h2><div class="log" id="log" style="height:260px"></div></div>
+    </div>
+    <div class="tab scroll hide" id="t_meta">
+      <div class="metag">
+        <div class="glass panel"><h2>Instagram bağlantı rehberi <span id="mprog"></span></h2>
+          <div class="mut" style="margin-bottom:10px">Kendi Meta uygulamanı oluşturup Instagram işletme/oluşturucu hesabını bağlarsın. Yöntem: “Instagram API with Instagram Login” — Facebook Sayfası gerekmez. Kişisel hesaplar desteklenmez.</div>
+          <div class="msteps" id="msteps"></div></div>
+        <div class="mright">
+          <div class="glass panel"><h2>Bağlantı <span id="mstat"></span></h2>
+            <div class="mform"><label class="mut">Instagram uygulama kimliği (App ID)</label><input id="mAppId" placeholder="örn. 1234567890123456" autocomplete="off">
+            <label class="mut">Instagram uygulama gizli anahtarı (App secret)</label><input id="mSecret" type="password" placeholder="kayıtlıysa boş bırak" autocomplete="off">
+            <label class="mut">Erişim belirteci (Generate token ile aldığın)</label><input id="mToken" type="password" placeholder="kayıtlıysa boş bırak" autocomplete="off">
+            <div class="mut" style="font-size:12px">Gizli anahtar ve belirteç yalnızca bu bilgisayarda, Windows Kimlik Bilgisi Yöneticisi’nde saklanır; dışarı gönderilmez.</div>
+            <div class="acts" style="margin:4px 0 0"><button class="btn pri" id="mSave">Kaydet ve test et</button><button class="btn" id="mLong" title="Kısa ömürlü belirteci 60 günlüğe çevirir (gizli anahtar gerekir)">Uzun ömürlüye çevir</button><button class="btn" id="mRef" title="60 günlük belirteci 60 gün daha uzatır">Süreyi uzat</button><button class="btn danger" id="mClr">Bağlantıyı kaldır</button></div>
+            <div class="mres" id="mres"></div></div></div>
+          <div class="glass panel"><h2>Yardımcı <span>takıldığın yeri sor</span></h2>
+            <div class="mchips" id="mchips"></div>
+            <textarea id="mQ" rows="2" placeholder="Örn: Instagram profesyonel hesaba nasıl geçerim?"></textarea>
+            <div class="acts" style="margin:6px 0 0"><button class="btn pri" id="mAsk">Sor</button><span class="mut" id="mAskS"></span></div>
+            <div class="mans hide" id="mAns"></div></div>
+        </div>
+      </div>
     </div>
     <div class="tab scroll hide" id="t_set">
       <div class="glass panel"><h2>Sürücü <span>Gezgin'de gerçek sürücü olarak görünür, hesap kotasını gösterir, yer kaplamaz</span></h2>
@@ -586,7 +616,7 @@ function ficon(f){if(f.folder)return `<svg viewBox="0 0 24 24" style="stroke:var
 const dsz=b=>b==null?'':b>=1073741824?(b/1073741824).toFixed(2)+' GB':b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB';
 const dfmt=t=>{if(!t)return '';const d=new Date(t);return isNaN(d)?'':d.toLocaleDateString('tr-TR')+' '+d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})};
 function setTab(t){tab=t;document.querySelectorAll('#tabs a').forEach(a=>a.classList.toggle('on',a.dataset.t==t));
- $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_shr').classList.toggle('hide',t!='shr');$('t_set').classList.toggle('hide',t!='set');$('t_app').classList.toggle('hide',t!='app');infoShow(t);if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit();if(t=='shr')shrInit()}
+ $('t_files').classList.toggle('hide',t!='files');$('t_act').classList.toggle('hide',t!='act');$('t_org').classList.toggle('hide',t!='org');$('t_shr').classList.toggle('hide',t!='shr');$('t_meta').classList.toggle('hide',t!='meta');$('t_set').classList.toggle('hide',t!='set');$('t_app').classList.toggle('hide',t!='app');infoShow(t);if(t=='files')loadFiles();if(t=='act')loadUsage();if(t=='org')orgInit();if(t=='shr')shrInit();if(t=='meta')metaInit()}
 $('tabs').onclick=e=>{const t=e.target.dataset.t;if(t)setTab(t)};
 /* bilgi kartlari: her sekmenin ustunde, ozellikleri sirayla anlatan hareketli kart */
 const INFO={
@@ -663,6 +693,34 @@ $('frecent').onclick=()=>{fRecent=!fRecent;fSearch='';$('fq').value='';loadFiles
 $('fall').onclick=()=>setSel([...document.querySelectorAll('#frows .fr')]);$('fclr').onclick=()=>setSel([]);
 $('fcrumbs').onclick=e=>{if(e.target.dataset.more){const r=e.target.getBoundingClientRect();showMenu(fPath.slice(1,-2).map((p,k)=>({t:p.name,f:()=>{fPath=fPath.slice(0,k+2);loadFiles()}})),r.left,r.bottom+4);return}
  const i=e.target.dataset.i;if(i===undefined)return;fRecent=false;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
+
+const META_STEPS=[
+ {t:'Instagram hesabını profesyonel yap',d:'Instagram uygulaması > Ayarlar > Hesap türü ve araçlar > Profesyonel hesaba geç (İşletme ya da Oluşturucu). Kişisel hesap API ile kullanılamaz.',l:[['Instagram yardım','https://help.instagram.com/']]},
+ {t:'Meta geliştirici hesabı aç',d:'developers.facebook.com’a Facebook hesabınla gir ve “Başlayın” ile geliştirici kaydını tamamla (telefon doğrulaması istenebilir).',l:[['Meta for Developers','https://developers.facebook.com/']]},
+ {t:'Uygulamayı oluştur',d:'Uygulamalarım > Uygulama oluştur. Uygulama türü olarak “Business” (İşletme) seç; ad serbest. Kullanım senaryosu sorulursa Instagram ile içerik yönetimini seç.',l:[['Uygulamalarım','https://developers.facebook.com/apps/']]},
+ {t:'Instagram ürününü ekle',d:'Uygulama panosunda Instagram ürününü ekle ve “API setup with Instagram business login” bölümünü aç.',l:[]},
+ {t:'Hesabını ekle ve belirteç üret',d:'Aynı sayfada “Generate access tokens” kısmında Instagram hesabını ekle, giriş yap, “Generate token” de ve çıkan belirteci kopyala. Kendi hesabın için uygulama geliştirme modunda kalması yeterli; hesabın uygulamada Yönetici/Test kullanıcısı olarak görünmeli (Uygulama rolleri).',l:[['Rehber (Meta)','https://developers.facebook.com/documentation/instagram-platform/instagram-api-with-instagram-login/get-started']]},
+ {t:'İzinleri kontrol et',d:'Gerekli izinler: instagram_business_basic ve instagram_business_content_publish. Belirteç üretirken bunları onayla.',l:[]},
+ {t:'Kimlik ve gizli anahtarı al',d:'Aynı sayfada “Set up Instagram business login” > Business login settings içindeki Instagram uygulama kimliği ve gizli anahtarı kopyala (Meta uygulama kimliğinden farklı olabilir).',l:[]},
+ {t:'Buraya yapıştır ve test et',d:'Sağdaki forma kimliği, gizli anahtarı ve belirteci yapıştır, “Kaydet ve test et”e bas. Kullanıcı adın görünüyorsa bağlantı hazır. Süre dolmadan “Süreyi uzat” ile belirteci yenileyebilirsin.',l:[]}];
+let metaOn=false,metaDone=JSON.parse(localStorage.getItem('metaDone')||'[]'),metaOpen=-1;
+const metaCur=()=>{let i=META_STEPS.findIndex((_,k)=>!metaDone.includes(k));return i<0?META_STEPS.length-1:i};
+function metaSteps(){const cur=metaOpen>=0?metaOpen:metaCur();$('mprog').textContent=`${metaDone.length}/${META_STEPS.length} adım`;
+ $('msteps').innerHTML=META_STEPS.map((st,i)=>`<div class="mst${metaDone.includes(i)?' ok':''}${i==cur?' on':''}" data-i="${i}"><div class="mh"><span class="mn">${metaDone.includes(i)?'✓':i+1}</span><b>${esc(st.t)}</b><i>▾</i></div><div class="mb"><div>${esc(st.d)}</div><div class="acts" style="margin:8px 0 0">${st.l.map(l=>`<button class="btn sm" data-u="${esc(l[1])}">${esc(l[0])} ↗</button>`).join('')}<button class="btn sm ${metaDone.includes(i)?'':'pri'}" data-done="${i}">${metaDone.includes(i)?'Geri al':'Tamamlandı'}</button></div></div></div>`).join('')}
+function metaFmt(c){if(!c.has_token)return'Bağlı değil';let t=c.username?`@${c.username}`:'Belirteç kayıtlı (test edilmedi)';if(c.expires_at){const d=Math.ceil((c.expires_at*1000-Date.now())/864e5);t+=d>0?` · ${d} gün geçerli`:' · süresi dolmuş'}return t}
+async function metaLoad(){try{const c=await invoke('meta_cfg_get');$('mstat').textContent=metaFmt(c);$('mstat').style.color=c.username?'var(--ok,#3ecf8e)':'';if(c.app_id&&!$('mAppId').value)$('mAppId').value=c.app_id;$('mSecret').placeholder=c.has_secret?'kayıtlı — değiştirmek için yaz':'yapıştır';$('mToken').placeholder=c.has_token?'kayıtlı — değiştirmek için yaz':'yapıştır';$('mAskS').textContent=c.has_gemini?'':'Gemini anahtarı yok: Ayarlar > Yapay zekâ';return c}catch(e){}}
+const metaRes=(t,bad)=>{const r=$('mres');r.textContent=t;r.className='mres'+(t?' show':'')+(bad?' bad':'')};
+function metaInit(){metaSteps();metaLoad();if(metaOn)return;metaOn=true;
+ $('mchips').innerHTML=['Profesyonel hesaba nasıl geçerim?','Uygulama türü olarak ne seçmeliyim?','Belirteç neden çalışmıyor?','App ID ile Instagram App ID farkı ne?'].map(q=>`<b>${esc(q)}</b>`).join('');
+ $('mchips').onclick=e=>{if(e.target.tagName=='B'){$('mQ').value=e.target.textContent;$('mAsk').click()}};
+ $('msteps').onclick=e=>{const u=e.target.dataset.u;if(u){invoke('meta_open',{url:u}).catch(x=>toast(String(x),true));return}
+  const dn=e.target.dataset.done;if(dn!==undefined){const k=+dn;metaDone=metaDone.includes(k)?metaDone.filter(x=>x!=k):[...metaDone,k];localStorage.setItem('metaDone',JSON.stringify(metaDone));metaOpen=-1;metaSteps();return}
+  const h=e.target.closest('.mh');if(h){metaOpen=+h.parentNode.dataset.i;metaSteps()}};
+ $('mSave').onclick=async()=>{metaRes('');try{await invoke('meta_cfg_set',{appId:$('mAppId').value,secret:$('mSecret').value,token:$('mToken').value});$('mSecret').value='';$('mToken').value='';const v=await invoke('meta_test');metaRes(`Bağlantı tamam: @${v.username} (${v.account_type||'hesap'}${v.media_count!=null?', '+v.media_count+' gönderi':''})`);if(!metaDone.includes(7)){metaDone.push(7);localStorage.setItem('metaDone',JSON.stringify(metaDone));metaSteps()}}catch(e){metaRes(String(e),true)}metaLoad()};
+ $('mLong').onclick=async()=>{metaRes('');try{const r=await invoke('meta_exchange',{short:$('mToken').value});$('mToken').value='';metaRes(`Uzun ömürlü belirteç kaydedildi (${Math.round(r.expires_in/86400)} gün)`)}catch(e){metaRes(String(e),true)}metaLoad()};
+ $('mRef').onclick=async()=>{metaRes('');try{const r=await invoke('meta_refresh');metaRes(`Süre uzatıldı (${Math.round(r.expires_in/86400)} gün)`)}catch(e){metaRes(String(e),true)}metaLoad()};
+ $('mClr').onclick=async()=>{if(!await confirmBox('Bağlantıyı kaldır','Kayıtlı gizli anahtar ve belirteç bu bilgisayardan silinecek.','Kaldır'))return;await invoke('meta_clear');$('mAppId').value='';metaRes('');metaLoad()};
+ $('mAsk').onclick=async()=>{const q=$('mQ').value.trim();if(!q)return;const a=$('mAns');a.classList.remove('hide');a.textContent='Düşünüyor…';$('mAsk').disabled=true;try{a.textContent=await invoke('meta_ask',{question:q,step:META_STEPS[metaOpen>=0?metaOpen:metaCur()].t})}catch(e){a.textContent=String(e)}$('mAsk').disabled=false}}
 function selRows(){return[...document.querySelectorAll('#frows .fr.sel')]}
 function setSel(rows){document.querySelectorAll('#frows .fr').forEach(r=>{const on=rows.includes(r);r.classList.toggle('sel',on);r.querySelector('.ck').checked=on});selChanged()}
 function showMenu(items,x,y){closeMenu();const m=document.createElement('div');m.className='glass ctx';m.id='ctxm';

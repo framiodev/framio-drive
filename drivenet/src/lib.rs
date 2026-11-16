@@ -3,6 +3,7 @@
 use drivecore::upload::{next_chunk, parse_confirmed, DEFAULT_CHUNK};
 pub mod auth;
 pub mod gemini;
+pub mod meta;
 pub mod forum;
 use serde::Deserialize;
 
