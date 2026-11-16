@@ -219,6 +219,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
 .pop{position:absolute;right:0;top:46px;width:300px;max-width:calc(100vw - 24px);box-sizing:border-box;padding:16px;z-index:30;background:var(--glass2);animation:pop .35s var(--ease) both}
+#vsl{-webkit-appearance:none;appearance:none;display:block;width:220px;height:12px;padding:0;margin:14px auto 4px;border:0;border-radius:8px;cursor:pointer}#vsl::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.45);box-shadow:0 1px 4px rgba(0,0,0,.3)}
 #wheel{display:block;max-width:100%;margin:2px auto 0;touch-action:none;cursor:crosshair}
 .pop h3{margin:0 0 10px;font-size:13px}.sw{display:flex;gap:6px;justify-content:space-between;margin-bottom:14px}
 .sw i{flex:none;width:25px;height:25px;box-sizing:border-box;border-radius:50%;cursor:pointer;border:2px solid var(--stroke);transition:transform .25s var(--ease)}.sw i:hover{transform:scale(1.18)}
@@ -241,7 +242,11 @@ select option{background:#222;color:#fff}
 .modal .glass.xl{width:min(900px,94vw);max-height:92vh;overflow:auto}
 .wmg{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px}
 .wmprev{position:relative;border-radius:14px;background:repeating-conic-gradient(var(--track) 0 25%,transparent 0 50%) 0 0/16px 16px;overflow:hidden;display:grid;place-items:center;min-height:240px}
-.wmprev canvas{width:100%;height:auto;display:block}.wmmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px}
+.wmprev canvas{width:100%;height:auto;display:block}.wmprev.ld{min-height:280px}.wmprev.ld::before{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--acc) 14%,transparent) 50%,transparent 70%);background-size:220% 100%;animation:wsh 1.4s linear infinite}@keyframes wsh{from{background-position:120% 0}to{background-position:-120% 0}}
+.wml{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}.wml small{font-size:11.5px;opacity:.8}
+.wsp{width:34px;height:34px;border-radius:50%;border:3.5px solid var(--track);border-top-color:var(--acc);animation:spin .85s linear infinite}
+.wmth{display:flex;flex-wrap:wrap;gap:6px;max-height:150px;overflow:auto;padding:2px}.wt{all:unset;box-sizing:border-box;width:58px;height:58px;border-radius:10px;cursor:pointer;background:repeating-conic-gradient(var(--track) 0 25%,transparent 0 50%) 0 0/10px 10px;border:2px solid transparent;display:grid;place-items:center;transition:transform .2s var(--ease),border-color .2s}.wt:hover{transform:scale(1.06)}.wt.on{border-color:var(--acc)}.wt img{max-width:100%;max-height:100%;object-fit:contain}
+.wmmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px}
 .wmctl{display:flex;flex-direction:column;gap:8px}.wmctl input[type=range]{width:100%;margin:0;padding:0;accent-color:var(--acc)}.wmctl label{display:flex;justify-content:space-between}
 .wmpos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:108px}.wmpos b{height:24px;border-radius:7px;background:var(--track);cursor:pointer;transition:background .2s,transform .2s var(--ease)}.wmpos b:hover{transform:scale(1.08)}.wmpos b.on{background:var(--acc)}
 @media (max-width:760px){.wmg{grid-template-columns:1fr}}
@@ -267,7 +272,7 @@ select option{background:#222;color:#fff}
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
       <button class="btn" id="gem" title="Gemini'yi aç (kendi hesabınla giriş yaparsın, paketin limitleri geçerli)">Gemini</button><button class="btn pri" id="upd" style="display:none"></button>
-            <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
+            <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><input type="range" id="vsl" min="8" max="100"><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
@@ -436,20 +441,16 @@ const h2=n=>n.toString(16).padStart(2,'0');
 function hsv2hex(h,s,v){const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return '#'+[f(5),f(3),f(1)].map(x=>h2(Math.round(x*255))).join('')}
 function hex2hsv(hex){const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255);const mx=Math.max(r,g,b),mn=Math.min(r,g,b),d=mx-mn;let h=0;
  if(d){if(mx==r)h=((g-b)/d)%6;else if(mx==g)h=(b-r)/d+2;else h=(r-g)/d+4;h*=60;if(h<0)h+=360}return [h,mx?d/mx:0,mx]}
-const cv=$('wheel'),cx2=cv.getContext('2d'),W=220,CC=W/2,dpr=window.devicePixelRatio||1,RO=106,RI=82,SQ=57;
+const cv=$('wheel'),cx2=cv.getContext('2d'),W=220,CC=W/2,dpr=window.devicePixelRatio||1,RD=102;
 cv.width=cv.height=W*dpr;cv.style.width=cv.style.height=W+'px';
-let H=350,S=.9,V=.7,pm=null;
+let H=350,S=.9,V=.7,pm=false;
 function knob(x,y,fill){cx2.beginPath();cx2.arc(x,y,8,0,6.283);cx2.fillStyle=fill;cx2.fill();cx2.lineWidth=2.5;cx2.strokeStyle='#fff';cx2.stroke();cx2.beginPath();cx2.arc(x,y,9.6,0,6.283);cx2.lineWidth=1;cx2.strokeStyle='rgba(0,0,0,.45)';cx2.stroke()}
-function draw(){cx2.setTransform(dpr,0,0,dpr,0,0);cx2.clearRect(0,0,W,W);
- const g=cx2.createConicGradient(-Math.PI/2,CC,CC);for(let i=0;i<=6;i++)g.addColorStop(i/6,`hsl(${i*60},100%,50%)`);
- cx2.beginPath();cx2.arc(CC,CC,(RO+RI)/2,0,6.283);cx2.lineWidth=RO-RI;cx2.strokeStyle=g;cx2.stroke();
- const x0=CC-SQ,y0=CC-SQ,sz=SQ*2;
- cx2.fillStyle=`hsl(${H},100%,50%)`;cx2.fillRect(x0,y0,sz,sz);
- let gw=cx2.createLinearGradient(x0,0,x0+sz,0);gw.addColorStop(0,'#fff');gw.addColorStop(1,'rgba(255,255,255,0)');cx2.fillStyle=gw;cx2.fillRect(x0,y0,sz,sz);
- let gb=cx2.createLinearGradient(0,y0,0,y0+sz);gb.addColorStop(0,'rgba(0,0,0,0)');gb.addColorStop(1,'#000');cx2.fillStyle=gb;cx2.fillRect(x0,y0,sz,sz);
- const a=(H-90)*Math.PI/180,rm=(RO+RI)/2;
- knob(CC+Math.cos(a)*rm,CC+Math.sin(a)*rm,`hsl(${H},100%,50%)`);
- knob(x0+S*sz,y0+(1-V)*sz,hsv2hex(H,S,V))}
+function hsvRgb(h,s,v){const c=v*s,x=c*(1-Math.abs((h/60)%2-1)),m=v-c;let r=0,g=0,b=0;if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}return[(r+m)*255,(g+m)*255,(b+m)*255]}
+function draw(){const N=Math.round(W*dpr),img=cx2.createImageData(N,N),d=img.data,c=N/2,R=RD*dpr;
+ for(let y=0;y<N;y++)for(let x=0;x<N;x++){const dx=x+.5-c,dy=y+.5-c,r=Math.hypot(dx,dy);if(r>R+1)continue;const h=(Math.atan2(dy,dx)*180/Math.PI+90+360)%360,k=hsvRgb(h,Math.min(1,r/R),V),i=(y*N+x)*4;d[i]=k[0];d[i+1]=k[1];d[i+2]=k[2];d[i+3]=r>R?Math.max(0,255*(R+1-r)):255}
+ cx2.setTransform(1,0,0,1,0,0);cx2.clearRect(0,0,N,N);cx2.putImageData(img,0,0);cx2.setTransform(dpr,0,0,dpr,0,0);
+ const a=(H-90)*Math.PI/180;knob(CC+Math.cos(a)*S*RD,CC+Math.sin(a)*S*RD,hsv2hex(H,S,V));
+ $('vsl').style.background=`linear-gradient(90deg,#000,${hsv2hex(H,S,1)})`;$('vsl').value=Math.round(V*100)}
 function setAccent(hex,save=true,fromPicker=false){if(!/^#[0-9a-f]{6}$/i.test(hex))return;hex=hex.toLowerCase();if(save)localStorage.setItem('accent',hex);
  const r=document.documentElement.style;r.setProperty('--acc',hex);invoke('set_accent',{hex}).catch(()=>{});const [R,G,B]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16));
  r.setProperty('--onacc',(0.299*R+0.587*G+0.114*B)>175?'#111':'#fff');
@@ -459,11 +460,10 @@ $('sw').innerHTML=PRE.map(c=>`<i style="background:${c}" data-c="${c}"></i>`).jo
 $('sw').onclick=e=>{if(e.target.dataset.c)setAccent(e.target.dataset.c)};
 const clamp=x=>Math.max(0,Math.min(1,x));
 function pos(e){const b=cv.getBoundingClientRect();return {x:e.clientX-b.left,y:e.clientY-b.top}}
-function mv(e){const p=pos(e);if(pm=='h')H=(Math.atan2(p.y-CC,p.x-CC)*180/Math.PI+90+360)%360;else{S=clamp((p.x-(CC-SQ))/(2*SQ));V=1-clamp((p.y-(CC-SQ))/(2*SQ))}setAccent(hsv2hex(H,S,V),true,true)}
-cv.onpointerdown=e=>{const p=pos(e),d=Math.hypot(p.x-CC,p.y-CC);
- if(d>=RI-3&&d<=RO+4)pm='h';else if(Math.abs(p.x-CC)<=SQ+3&&Math.abs(p.y-CC)<=SQ+3)pm='sv';else return;
- cv.setPointerCapture(e.pointerId);mv(e)};
-cv.onpointermove=e=>{if(pm)mv(e)};cv.onpointerup=cv.onpointercancel=()=>{pm=null};
+function mv(e){const p=pos(e),dx=p.x-CC,dy=p.y-CC;H=(Math.atan2(dy,dx)*180/Math.PI+90+360)%360;S=clamp(Math.hypot(dx,dy)/RD);setAccent(hsv2hex(H,S,V),true,true)}
+cv.onpointerdown=e=>{const p=pos(e);if(Math.hypot(p.x-CC,p.y-CC)>RD+6)return;pm=true;cv.setPointerCapture(e.pointerId);mv(e)};
+cv.onpointermove=e=>{if(pm)mv(e)};cv.onpointerup=cv.onpointercancel=()=>{pm=false};
+$('vsl').oninput=()=>{V=$('vsl').value/100;setAccent(hsv2hex(H,S,V),true,true)};
 $('hex').oninput=()=>{let v=$('hex').value.trim();if(v[0]!='#')v='#'+v;setAccent(v)};
 $('rst').onclick=()=>setAccent(DEF);
 $('pal').onclick=e=>{e.stopPropagation();$('pop').classList.toggle('hide')};
@@ -654,8 +654,8 @@ async function wmOpen(rows){if(!rows.length)return;
  let S=Object.assign({id:'',pos:8,scale:.22,op:.8,mg:.03,suf:'-filigran'},JSON.parse(localStorage.getItem('wmset')||'{}'));
  const m=document.createElement('div');m.className='modal';
  m.innerHTML=`<div class="glass xl"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b style="font-size:16px">Filigran ekle</b><span class="mut">${rows.length} görsel · orijinal dosyalara dokunulmaz, kopya aynı klasöre kaydedilir</span></div>
- <div class="wmg"><div class="wmprev"><canvas id="wmc" width="520" height="340"></canvas><div class="wmmsg mut" id="wmmsg">Önizleme yükleniyor…</div></div>
- <div class="wmctl"><div class="mut">Filigran (şeffaf PNG)</div><div style="display:flex;gap:6px"><select id="wmsel" style="flex:1;min-width:0;margin:0"></select><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm danger" id="wmdel" title="Seçili filigranı kitaplıktan kaldır">Kaldır</button></div>
+ <div class="wmg"><div class="wmprev ld" id="wmprev"><canvas id="wmc" width="520" height="340"></canvas><div class="wmmsg mut" id="wmmsg"><div class="wml"><i class="wsp"></i><span id="wmtx">Görsel yükleniyor…</span><small>Büyük dosyalarda birkaç saniye sürebilir</small></div></div></div>
+ <div class="wmctl"><div class="mut">Filigran (şeffaf PNG)</div><div class="wmth" id="wmth"></div><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm" id="wmopen" title="Filigranların saklandığı klasörü aç">Klasörü aç</button><button class="btn sm danger" id="wmdel" title="Seçili filigranı kitaplıktan kaldır">Kaldır</button></div>
  <div class="mut">Konum</div><div class="wmpos" id="wmpos">${[0,1,2,3,4,5,6,7,8].map(i=>`<b data-p="${i}"></b>`).join('')}</div>
  <label class="mut">Boyut <span id="wmv1"></span></label><input type="range" id="wms" min="5" max="80" step="1">
  <label class="mut">Saydamlık <span id="wmv2"></span></label><input type="range" id="wmo" min="10" max="100" step="1">
@@ -672,10 +672,11 @@ async function wmOpen(rows){if(!rows.length)return;
   m.querySelectorAll('#wmpos b').forEach(b=>b.classList.toggle('on',+b.dataset.p==S.pos));draw()};
  const loadWm=async()=>{wmimg=null;if(!S.id){draw();return}try{const u=await invoke('wm_data',{id:S.id});const im=new Image();im.onload=()=>{wmimg=im;draw()};im.src=u}catch(e){}};
  const loadList=async()=>{try{list=await invoke('wm_list')}catch(e){list=[]}if(!list.some(w=>w.id==S.id))S.id=list.length?list[list.length-1].id:'';
-  q('wmsel').innerHTML=list.length?list.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}</option>`).join(''):'<option value="">Henüz filigran yok — “PNG ekle…”</option>';q('wmsel').value=S.id;await loadWm()};
+  q('wmth').innerHTML=list.length?list.map(w=>`<button class="wt${w.id==S.id?' on':''}" data-id="${esc(w.id)}" title="${esc(w.name)}"><img alt=""></button>`).join(''):'<div class="mut">Henüz filigran yok. “PNG ekle…” ile cihazından şeffaf bir PNG seç; uygulama saklar, bir daha seçmen gerekmez.</div>';
+  list.forEach(w=>invoke('wm_data',{id:w.id}).then(u=>{const b=[...q('wmth').querySelectorAll('.wt')].find(x=>x.dataset.id==w.id);if(b)b.querySelector('img').src=u}).catch(()=>{}));await loadWm()};
  const close=()=>{m.remove()};
  q('wmcancel').onclick=close;m.addEventListener('mousedown',e=>{if(e.target==m)m._dn=1;else m._dn=0});m.addEventListener('click',e=>{if(e.target==m&&m._dn)close()});
- q('wmsel').onchange=()=>{S.id=q('wmsel').value;loadWm()};
+ q('wmth').onclick=e=>{const b=e.target.closest('.wt');if(!b)return;S.id=b.dataset.id;q('wmth').querySelectorAll('.wt').forEach(x=>x.classList.toggle('on',x==b));loadWm()};q('wmopen').onclick=()=>invoke('wm_open_dir').catch(e=>toast(String(e),true));
  q('wmadd').onclick=async()=>{try{const w=await invoke('wm_pick');if(w){S.id=w.id;await loadList()}}catch(e){toast(String(e),true)}};
  q('wmdel').onclick=async()=>{if(!S.id)return;if(!await confirmBox('Filigranı kaldır','Bu filigran uygulamanın kitaplığından silinecek (cihazdaki orijinal PNG dosyan durur).','Kaldır'))return;try{await invoke('wm_remove',{id:S.id});S.id='';await loadList()}catch(e){toast(String(e),true)}};
  q('wmpos').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;S.pos=+b.dataset.p;ui()};
@@ -686,7 +687,7 @@ async function wmOpen(rows){if(!rows.length)return;
   try{const r=await invoke('wm_apply',{email:sel,ids,wm:S.id,pos:S.pos,scale:S.scale,opacity:S.op,margin:S.mg,suffix:S.suf});
    opStatus(`${r.done} kopya oluşturuldu`+(r.failed.length?` · ${r.failed.length} başarısız`:''),r.done?'ok':'bad');if(r.failed.length)toast(r.failed.join(' · '),true);loadFiles()}catch(e){opStatus(String(e),'bad')}};
  ui();await loadList();
- try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmmsg').textContent='Önizleme yüklenemedi: '+e}}
+ try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;q('wmprev').classList.remove('ld');q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmprev').classList.remove('ld');q('wmmsg').querySelector('.wsp').style.display='none';q('wmtx').textContent='Önizleme yüklenemedi: '+e;q('wmmsg').querySelector('small').style.display='none'}}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){

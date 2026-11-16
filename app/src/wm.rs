@@ -13,16 +13,48 @@ fn ps_out(script: &str) -> String {
         .unwrap_or_default()
 }
 
-fn wm_dir() -> PathBuf {
+/// Yedek: %APPDATA%\FramioDrive\watermarks (kurulum klasörü silinse bile filigranlar kaybolmaz).
+fn wm_backup() -> PathBuf {
     let d = data_dir().join("watermarks");
     let _ = std::fs::create_dir_all(&d);
     d
+}
+
+/// Ana klasör: uygulamanın kurulu olduğu dizinde `Filigranlar`; yazılamıyorsa yedek klasör kullanılır.
+fn wm_dir() -> PathBuf {
+    if let Some(p) = std::env::current_exe().ok().and_then(|e| e.parent().map(|d| d.join("Filigranlar"))) {
+        if std::fs::create_dir_all(&p).is_ok() {
+            let t = p.join(".yaz");
+            if std::fs::write(&t, b"1").is_ok() {
+                let _ = std::fs::remove_file(&t);
+                return p;
+            }
+        }
+    }
+    wm_backup()
+}
+
+fn pngs(d: &Path) -> Vec<String> {
+    std::fs::read_dir(d).map(|rd| rd.flatten().map(|e| e.file_name().to_string_lossy().into_owned()).filter(|f| f.to_lowercase().ends_with(".png")).collect()).unwrap_or_default()
+}
+
+/// Ana klasör boşsa (yeni kurulum/yeniden kurulum) yedekten geri yükler; ana klasördekileri yedeğe kopyalar.
+fn wm_sync() {
+    let (a, b) = (wm_dir(), wm_backup());
+    if a == b { return; }
+    if pngs(&a).is_empty() {
+        for f in pngs(&b) { let _ = std::fs::copy(b.join(&f), a.join(&f)); }
+    }
+    for f in pngs(&a) {
+        if !b.join(&f).exists() { let _ = std::fs::copy(a.join(&f), b.join(&f)); }
+    }
 }
 
 fn disp(file: &str) -> String { file.split_once('_').map(|x| x.1).unwrap_or(file).to_string() }
 
 #[tauri::command]
 pub fn wm_list() -> Value {
+    wm_sync();
     let mut v: Vec<(String, String)> = vec![];
     if let Ok(rd) = std::fs::read_dir(wm_dir()) {
         for e in rd.flatten() {
@@ -45,6 +77,7 @@ pub async fn wm_pick() -> Result<Value, String> {
         let ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
         let id = format!("{ms}_{name}");
         std::fs::copy(&src, wm_dir().join(&id)).map_err(|e| e.to_string())?;
+        let _ = std::fs::copy(&src, wm_backup().join(&id));
         Ok(json!({ "id": id, "name": name }))
     }).await.map_err(|e| e.to_string())?
 }
@@ -52,7 +85,14 @@ pub async fn wm_pick() -> Result<Value, String> {
 #[tauri::command]
 pub fn wm_remove(id: String) -> Result<(), String> {
     if id.contains('\\') || id.contains('/') || id.contains("..") { return Err("Geçersiz".into()); }
+    let _ = std::fs::remove_file(wm_backup().join(&id));
     std::fs::remove_file(wm_dir().join(id)).map_err(|e| e.to_string())
+}
+
+/// Filigran klasörünü Gezgin'de açar.
+#[tauri::command]
+pub fn wm_open_dir() -> Result<(), String> {
+    std::process::Command::new("explorer.exe").arg(wm_dir()).spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
