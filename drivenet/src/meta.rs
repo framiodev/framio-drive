@@ -20,17 +20,33 @@ async fn get(url: &str, q: &[(&str, &str)]) -> Result<Value, String> {
     Ok(v)
 }
 
-/// Belirtecin sahibi hesabı sorgular.
-pub async fn me(token: &str) -> Result<Value, String> {
-    get("https://graph.instagram.com/v21.0/me", &[("fields", "user_id,username,account_type,media_count"), ("access_token", token)]).await
+/// Belirtecin sahibi hesabı sorgular. platform: instagram | facebook | threads
+pub async fn me(p: &str, token: &str) -> Result<Value, String> {
+    match p {
+        "threads" => get("https://graph.threads.net/v1.0/me", &[("fields", "id,username,name"), ("access_token", token)]).await,
+        "facebook" => get("https://graph.facebook.com/v21.0/me", &[("fields", "id,name,category"), ("access_token", token)]).await,
+        _ => get("https://graph.instagram.com/v21.0/me", &[("fields", "user_id,username,account_type,media_count"), ("access_token", token)]).await,
+    }
 }
-/// Uzun ömürlü belirteci 60 gün daha uzatır. {access_token, expires_in}
-pub async fn refresh(token: &str) -> Result<Value, String> {
-    get("https://graph.instagram.com/refresh_access_token", &[("grant_type", "ig_refresh_token"), ("access_token", token)]).await
+/// Uzun ömürlü belirteci uzatır (Instagram, Threads). {access_token, expires_in}
+pub async fn refresh(p: &str, token: &str) -> Result<Value, String> {
+    match p {
+        "threads" => get("https://graph.threads.net/refresh_access_token", &[("grant_type", "th_refresh_token"), ("access_token", token)]).await,
+        "instagram" => get("https://graph.instagram.com/refresh_access_token", &[("grant_type", "ig_refresh_token"), ("access_token", token)]).await,
+        _ => Err("Facebook Sayfa belirteci uzatılmaz: uzun ömürlü kullanıcı belirtecinden alınan Sayfa belirtecinin son kullanma tarihi yoktur".into()),
+    }
 }
-/// Kısa ömürlü belirteci uzun ömürlüye (60 gün) çevirir.
-pub async fn exchange(secret: &str, short: &str) -> Result<Value, String> {
-    get("https://graph.instagram.com/access_token", &[("grant_type", "ig_exchange_token"), ("client_secret", secret), ("access_token", short)]).await
+/// Kısa ömürlü belirteci uzun ömürlüye çevirir.
+pub async fn exchange(p: &str, app_id: &str, secret: &str, short: &str) -> Result<Value, String> {
+    match p {
+        "threads" => get("https://graph.threads.net/access_token", &[("grant_type", "th_exchange_token"), ("client_secret", secret), ("access_token", short)]).await,
+        "facebook" => get("https://graph.facebook.com/v21.0/oauth/access_token", &[("grant_type", "fb_exchange_token"), ("client_id", app_id), ("client_secret", secret), ("fb_exchange_token", short)]).await,
+        _ => get("https://graph.instagram.com/access_token", &[("grant_type", "ig_exchange_token"), ("client_secret", secret), ("access_token", short)]).await,
+    }
+}
+/// Kullanıcı belirteciyle yönetilen Facebook Sayfaları (her biri kendi Sayfa belirteciyle).
+pub async fn fb_pages(token: &str) -> Result<Value, String> {
+    get("https://graph.facebook.com/v21.0/me/accounts", &[("fields", "id,name,access_token"), ("limit", "50"), ("access_token", token)]).await
 }
 
 /// Gemini ile sohbet (rehber yardımcısı).
