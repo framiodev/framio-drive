@@ -21,6 +21,7 @@ pub struct DriveFile {
     /// Drive'ın hazır küçük resmi (thumbnail sağlayıcısı için).
     #[serde(default)] pub thumbnail_link: Option<String>,
     #[serde(default)] pub parents: Vec<String>,
+    #[serde(default)] pub viewed_by_me_time: Option<String>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -95,6 +96,19 @@ impl Drive {
     }
 
     /// Ada göre arama (çöpteki dosyalar hariç, ilk 100 sonuç).
+    /// Drive'daki "Son kullanılanlar": benim en son görüntülediğim dosyalar (yeniden eskiye).
+    pub async fn recent(&self) -> Result<Vec<DriveFile>, Error> {
+        let r = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
+            ("q", "trashed=false and viewedByMeTime > '2000-01-01T00:00:00' and mimeType != 'application/vnd.google-apps.folder'".to_string()),
+            ("orderBy", "viewedByMeTime desc".to_string()),
+            ("fields", "files(id,name,mimeType,size,md5Checksum,modifiedTime,thumbnailLink,parents,viewedByMeTime)".to_string()),
+            ("pageSize", "60".to_string()),
+        ]).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let l: FileList = r.json().await?;
+        Ok(l.files)
+    }
+
     pub async fn search(&self, text: &str) -> Result<Vec<DriveFile>, Error> {
         let esc = text.replace('\\', "\\\\").replace('\'', "\\'");
         let r = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[

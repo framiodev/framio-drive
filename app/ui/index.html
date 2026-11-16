@@ -305,7 +305,7 @@ select option{background:#222;color:#fff}
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="frecent" title="Drive’daki gibi: en son açtığın dosyalar">Son kullanılanlar</button><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
@@ -631,18 +631,18 @@ $('wmMg').onclick=()=>wmManage();$('wmDirOpen').onclick=()=>invoke('wm_open_dir'
 $('infoReset').onclick=()=>{infoOff={};localStorage.removeItem('infoOff');toast('Bilgi kartları yeniden gösterilecek')};
 
 const curId=()=>fPath[fPath.length-1].id;
-let fSearch='',vmode=localStorage.getItem('vmode')||'l';
+let fRecent=false,fSearch='',vmode=localStorage.getItem('vmode')||'l';
 function applyVM(){const b=$('frows');b.className=vmode=='l'?'':'g '+vmode;document.querySelectorAll('#vmodes b').forEach(x=>x.classList.toggle('on',x.dataset.m==vmode))}
 $('vmodes').onclick=e=>{const m=e.target.dataset.m;if(m){vmode=m;localStorage.setItem('vmode',m);applyVM();loadFiles(true)}};
 applyVM();
 let fSig='',fTok=0;
 async function loadFiles(silent){if(!sel)return;const tok=++fTok;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}];fSearch=''}
  const me=sel,box=$('frows');if(!silent&&!box.children.length)box.innerHTML='<div class="mut" style="padding:14px">Yükleniyor…</div>';
- $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>{const sep=i?'<span>›</span>':'',a=`<a data-i="${i}" title="${esc(p.name)}">${esc(p.name)}</a>`;
+ $('frecent').classList.toggle('pri',fRecent);$('fcrumbs').innerHTML=fRecent?`<a data-i="-2">Drive</a><span>›</span><a>Son kullanılanlar</a>`:fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>{const sep=i?'<span>›</span>':'',a=`<a data-i="${i}" title="${esc(p.name)}">${esc(p.name)}</a>`;
    if(fPath.length>4&&i>=1&&i<fPath.length-2)return i==1?sep+'<a data-more="1" title="Ara klasörler">…</a>':'';return sep+a}).join('');
- try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel||tok!=fTok)return;
-  const sg=curId()+'|'+fSearch+'|'+vmode+'|'+JSON.stringify(items.map(({thumb,...q})=>q));if(silent&&sg===fSig){return}fSig=sg;const keep=new Set(selRows().map(x=>x.dataset.id));
-  box.classList.toggle('noan',window.__fk===(window.__fk=curId()+'|'+fSearch+'|'+vmode));box.innerHTML=items.length?items.map((f,ix)=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
+ try{const items=fRecent?await invoke('fs_recent',{email:me}):fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel||tok!=fTok)return;
+  const sg=curId()+'|'+fRecent+'|'+fSearch+'|'+vmode+'|'+JSON.stringify(items.map(({thumb,...q})=>q));if(silent&&sg===fSig){return}fSig=sg;const keep=new Set(selRows().map(x=>x.dataset.id));
+  box.classList.toggle('noan',window.__fk===(window.__fk=curId()+'|'+fRecent+'|'+fSearch+'|'+vmode));box.innerHTML=items.length?items.map((f,ix)=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
    return `<div class="fr ${f.folder?'d':''}" style="--i:${Math.min(ix,24)}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="menu" title="Seçenekler">⋯</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
  if(silent&&keep.size)setSel([...document.querySelectorAll('#frows .fr')].filter(x=>keep.has(x.dataset.id)));else selChanged();lastRow=null;
@@ -650,15 +650,16 @@ async function loadFiles(silent){if(!sel)return;const tok=++fTok;if(fFor!=sel){f
 let lastRow=null;
 function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('fclr').classList.toggle('hide',!any);$('fwm').classList.toggle('hide',!selRows().some(isImg));$('frows').classList.toggle('hs',any)}
 $('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
-let fqT=0;$('fq').oninput=()=>{clearTimeout(fqT);fqT=setTimeout(()=>{const v=$('fq').value.trim();if(v===fSearch)return;fSearch=v;loadFiles()},260)};
+let fqT=0;$('fq').oninput=()=>{clearTimeout(fqT);fqT=setTimeout(()=>{const v=$('fq').value.trim();if(v===fSearch)return;fRecent=false;fSearch=v;loadFiles()},260)};
 $('fq').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(fqT);fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
 $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows .ck:checked')].map(c=>c.closest('.fr'));if(!rows.length)return;
  if(!await confirmBox('Çöp kutusuna taşı',`${rows.length} öğe Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;
  let bad=0;for(const r of rows){try{await invoke('fs_trash',{email:sel,id:r.dataset.id})}catch(x){bad++}}
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
+$('frecent').onclick=()=>{fRecent=!fRecent;fSearch='';$('fq').value='';loadFiles()};
 $('fall').onclick=()=>setSel([...document.querySelectorAll('#frows .fr')]);$('fclr').onclick=()=>setSel([]);
 $('fcrumbs').onclick=e=>{if(e.target.dataset.more){const r=e.target.getBoundingClientRect();showMenu(fPath.slice(1,-2).map((p,k)=>({t:p.name,f:()=>{fPath=fPath.slice(0,k+2);loadFiles()}})),r.left,r.bottom+4);return}
- const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
+ const i=e.target.dataset.i;if(i===undefined)return;fRecent=false;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
 function selRows(){return[...document.querySelectorAll('#frows .fr.sel')]}
 function setSel(rows){document.querySelectorAll('#frows .fr').forEach(r=>{const on=rows.includes(r);r.classList.toggle('sel',on);r.querySelector('.ck').checked=on});selChanged()}
 function showMenu(items,x,y){closeMenu();const m=document.createElement('div');m.className='glass ctx';m.id='ctxm';
@@ -821,7 +822,7 @@ async function wmOpen(rows){if(!rows.length)return;
   if(my!=tok)return;base=im;const c=q('wmc'),W=Math.min(1100,im.width);c.width=W+2*PAD;c.height=Math.round(W*im.height/im.width)+2*PAD;loader(false);slide(dir);draw();
   if(multi&&i+1<ids.length&&!bases[ids[i+1]]){invoke('wm_preview',{email:sel,id:ids[i+1]}).then(u=>{const x=new Image();x.onload=()=>{bases[ids[i+1]]=x};x.src=u}).catch(()=>{})}}
  modeUi();await goTo(0,0)}
-function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
+function openRow(r){if(r.dataset.f=='1'){fRecent=false;if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){
  if(a=='gimg'){askImage({name:r.dataset.n,id:r.dataset.id,mime:r.dataset.m});return}
