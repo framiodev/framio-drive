@@ -263,6 +263,13 @@ select option{background:#222;color:#fff}
 .wmfoot{position:sticky;bottom:-1px;margin:14px -4px -4px!important;padding:12px 4px 4px;justify-content:flex-end;background:linear-gradient(transparent,rgba(18,20,28,.96) 35%);z-index:5}
 .glass.xl{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--acc) 55%,transparent) transparent}
 .glass.xl::-webkit-scrollbar{width:8px}.glass.xl::-webkit-scrollbar-track{background:transparent;margin:18px 0}.glass.xl::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--acc) 55%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}.glass.xl::-webkit-scrollbar-thumb:hover{background:var(--acc);background-clip:padding-box}
+.wnav{position:absolute;top:50%;transform:translateY(-50%);z-index:4;width:38px;height:38px;border-radius:50%;border:0;background:rgba(0,0,0,.5);color:#fff;font-size:24px;line-height:1;cursor:pointer;backdrop-filter:blur(6px);transition:background .2s,transform .2s var(--ease)}.wnav:hover:not(:disabled){background:var(--acc);transform:translateY(-50%) scale(1.08)}.wnav:disabled{opacity:.25;cursor:default}.wnav.l{left:10px}.wnav.r{right:10px}
+.wcnt{position:absolute;left:10px;bottom:8px;z-index:4;font-size:12px;padding:3px 9px;border-radius:9px;background:rgba(0,0,0,.55);color:#fff;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wcnt:empty{display:none}
+.wmprev canvas.slL{animation:slL .38s var(--ease) both}.wmprev canvas.slR{animation:slR .38s var(--ease) both}@keyframes slL{from{transform:translateX(60px);opacity:0}to{transform:none;opacity:1}}@keyframes slR{from{transform:translateX(-60px);opacity:0}to{transform:none;opacity:1}}
+.wmstrip{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:thin}.wst{position:relative;flex:none;width:76px;height:54px;border-radius:10px;overflow:hidden;cursor:pointer;background:var(--track);border:2px solid transparent;opacity:.65;transition:opacity .2s,transform .25s var(--ease),border-color .2s}.wst:hover{opacity:1;transform:translateY(-2px)}.wst.on{opacity:1;border-color:var(--acc);transform:scale(1.06)}.wst img{width:100%;height:100%;object-fit:cover;display:block}.wst span{position:absolute;right:3px;bottom:2px;font-size:10.5px;padding:1px 5px;border-radius:6px;background:rgba(0,0,0,.6);color:#fff}
+.wmmode{display:flex;flex-direction:column;gap:8px}.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:12px;background:var(--track)}.seg b{font-weight:500;font-size:12px;text-align:center;padding:7px 4px;border-radius:9px;cursor:pointer;transition:background .2s}.seg b.on{background:var(--acc);color:#fff}
+.wmout{display:flex;flex-direction:column;gap:6px;margin-top:14px;padding:12px;border-radius:12px;background:var(--track)}.wmout label{display:flex;align-items:center;gap:8px;cursor:pointer}.wmout input[type=checkbox]{width:auto;margin:0;accent-color:var(--acc)}.wmdirr{display:flex;align-items:center;gap:8px}.wmdirr span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
+.wrow.on::after{content:'✓';color:var(--acc);font-weight:700;margin-left:6px}.wmddb{border-color:color-mix(in srgb,var(--acc) 55%,var(--stroke))}
 .wmfo{display:flex;flex-wrap:wrap;gap:5px}.wmfo b{font-weight:500;font-size:12px;padding:4px 10px;border-radius:9px;background:var(--track);cursor:pointer}.wmfo b.on{background:var(--acc);color:#fff}
 .mgg{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;min-height:360px}.mgf{display:flex;flex-direction:column;gap:3px;max-height:420px;overflow:auto}
 .mf{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .2s}.mf:hover{background:var(--track)}.mf.on{background:color-mix(in srgb,var(--acc) 16%,transparent);font-weight:600}.mf .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mf small{margin-left:auto;color:var(--mut)}.mf i{font-style:normal;opacity:0;font-size:12px;padding:0 3px}.mf:hover i{opacity:.7}.mf i:hover{opacity:1}
@@ -709,17 +716,17 @@ async function wmManage(done){let lib=await wmLib(),fol='*',selI=new Set();
 async function wmOpen(rows){if(!rows.length)return;
  let S=Object.assign({id:'',cx:.82,cy:.9,scale:.22,rot:0,op:.85,suf:'-filigran',fol:'*'},JSON.parse(localStorage.getItem('wmset2')||'{}'));
  const m=document.createElement('div');m.className='modal';
- m.innerHTML=`<div class="glass xl"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b style="font-size:16px">Filigran ekle</b><span class="mut">${rows.length} görsel · orijinal dosyalara dokunulmaz, kopya aynı klasöre kaydedilir</span></div>
- <div class="wmg"><div><div class="wmprev ld" id="wmprev"><canvas id="wmc" width="640" height="420"></canvas><div class="wmmsg mut" id="wmmsg"><div class="wml"><i class="wsp"></i><span id="wmtx">Görsel yükleniyor…</span><small>Büyük dosyalarda birkaç saniye sürebilir</small></div></div></div>
- <div class="mut" style="margin-top:8px;font-size:12px">Sürükle: taşı · Köşe: boyutlandır · Üstteki nokta: döndür · Tekerlek: boyut · Ok tuşları: ince ayar · Çift tık: ortala</div></div>
- <div class="wmctl"><div style="display:flex;align-items:center;gap:6px"><b>İmza</b><span class="mut" style="margin-left:auto"></span><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm" id="wmmg">Yönet…</button></div>
+ m.innerHTML=`<div class="glass xl"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b style="font-size:16px">Filigran ekle</b><span class="mut">${rows.length} görsel · orijinal dosyalara dokunulmaz, kopyalar oluşturulur</span></div>
+ <div class="wmg"><div><div class="wmprev ld" id="wmprev"><canvas id="wmc" width="640" height="420"></canvas><button class="wnav l" id="wmpb" type="button" title="Önceki görsel">‹</button><button class="wnav r" id="wmnb" type="button" title="Sonraki görsel">›</button><span class="wcnt" id="wmcnt"></span><div class="wmmsg mut" id="wmmsg"><div class="wml"><i class="wsp"></i><span id="wmtx">Görsel yükleniyor…</span><small>Büyük dosyalarda birkaç saniye sürebilir</small></div></div></div>
+ <div class="wmstrip" id="wmstrip"></div><div class="mut" style="margin-top:8px;font-size:12px">Sürükle: taşı · Köşe: boyutlandır · Üstteki nokta: döndür · Tekerlek: boyut · Ok tuşları: ince ayar · Çift tık: ortala</div></div>
+ <div class="wmctl"><div class="wmmode" id="wmmodebox"><div class="seg" id="wmmode"><b data-m="same">Hepsine aynı ayar</b><b data-m="each">Her görsele ayrı</b></div><button class="btn sm" id="wmall" type="button" title="Şu anki ayarı tüm görsellere kopyala">Bunu tümüne uygula</button></div><div style="display:flex;align-items:center;gap:6px"><b>İmza</b><span class="mut" style="margin-left:auto"></span><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm" id="wmmg">Yönet…</button></div>
  <div class="wmfo" id="wmfo"></div><div class="wmdd" id="wmdd"><button class="wmddb" id="wmddb" type="button"></button><div class="wmddl" id="wmth" hidden></div></div>
  <div class="wmrow"><span class="mut">Hızlı konum</span><button class="btn sm" id="wmreset" type="button" title="Boyut, konum, döndürme ve saydamlığı varsayılana döndür">Sıfırla</button></div><div class="wmpos" id="wmpos">${['Sol üst','Üst orta','Sağ üst','Sol orta','Orta','Sağ orta','Sol alt','Alt orta','Sağ alt'].map((t,i)=>`<b data-p="${i}" title="${t}"><i></i></b>`).join('')}</div>
  <label class="mut nl">Boyut (%) <input type="number" id="wmn1" min="1" max="2000" step="1"></label><input type="range" id="wms" min="1" max="400" step="1" title="Kaydırıcı 400’e kadar; daha büyük değeri kutuya yazabilirsin">
  <label class="mut nl">Döndürme (°) <input type="number" id="wmn4" min="-360" max="360" step="1"></label><input type="range" id="wmr" min="-180" max="180" step="1">
  <label class="mut nl">Saydamlık (%) <input type="number" id="wmn2" min="5" max="100" step="1"></label><input type="range" id="wmo" min="5" max="100" step="1">
  <div class="nl2"><label class="mut nl">Yatay konum (%) <input type="number" id="wmnx" min="0" max="100" step="1"></label><label class="mut nl">Dikey konum (%) <input type="number" id="wmny" min="0" max="100" step="1"></label></div><div class="mut">Kopya dosya adı eki</div><input id="wmsuf" style="margin:0" placeholder="-filigran"></div></div>
- <div class="acts wmfoot"><span class="mut" id="wmst" style="margin-right:auto"></span><button class="btn" id="wmcancel">Vazgeç</button><button class="btn pri" id="wmgo">Kopya oluştur</button></div></div>`;
+ <div class="wmout"><b>Nereye kaydedilsin?</b><label><input type="checkbox" id="wmdrv"> Drive’a (görselin klasörüne)</label><label><input type="checkbox" id="wmdev"> Cihaza indir</label><div class="wmdirr" id="wmdirr"><span class="mut" id="wmdirt"></span><button class="btn sm" id="wmdir" type="button">Klasör seç…</button></div></div><div class="acts wmfoot"><span class="mut" id="wmst" style="margin-right:auto"></span><button class="btn" id="wmcancel">Vazgeç</button><button class="btn pri" id="wmgo">Kopya oluştur</button></div></div>`;
  document.body.appendChild(m);const q=i=>m.querySelector('#'+i);
  let base=null,wmimg=null,lib={items:[],folders:[]};const ACC=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#b3122b';
  const PAD=34;const geo=()=>{if(!base)return null;const c=q('wmc');return{ox:PAD,oy:PAD,bw:c.width-2*PAD,bh:c.height-2*PAD}};
@@ -763,7 +770,7 @@ async function wmOpen(rows){if(!rows.length)return;
  const resetAll=()=>{S.scale=.22;S.rot=0;S.op=.85;place(8)};
  const loadWm=async()=>{wmimg=null;if(!S.id){draw();return}try{const u=await wmUrl(S.id);const im=new Image();im.onload=()=>{wmimg=im;draw()};im.src=u}catch(e){}};
  const renderLib=async()=>{lib=await wmLib();if(!lib.items.some(w=>w.id==S.id))S.id=lib.items.length?lib.items[0].id:'';if(S.fol!='*'&&S.fol!='.'&&!lib.folders.includes(S.fol))S.fol='*';
-  q('wmfo').innerHTML=lib.folders.length||lib.items.some(w=>w.folder)?[['*','Tümü'],['.','Genel']].concat(lib.folders.map(f=>[f,f])).map(f=>`<b data-f="${esc(f[0])}" class="${S.fol==f[0]?'on':''}">${esc(f[1])}</b>`).join(''):'';
+  q('wmfo').innerHTML=lib.folders.length||lib.items.some(w=>w.folder)?'<span class="mut" style="align-self:center">Klasör:</span>'+[['*','Tümü'],['.','Genel']].concat(lib.folders.map(f=>[f,f])).map(f=>`<b data-f="${esc(f[0])}" class="${S.fol==f[0]?'on':''}">${esc(f[1])}</b>`).join(''):'';
   const l=lib.items.filter(w=>S.fol=='*'||w.folder==(S.fol=='.'?'':S.fol));
   const cw=lib.items.find(w=>w.id==S.id);q('wmddb').innerHTML=cw?`<span class="wcard" data-id="${esc(cw.id)}"><span class="im" data-bg="lt"><img alt=""></span><span class="nm">${esc(cw.name)}</span></span><i>▾</i>`:'<span class="nm mut">İmza seç…</span><i>▾</i>';wmFill(q('wmddb'));
   q('wmth').innerHTML=l.length?l.map(w=>`<div class="wrow${w.id==S.id?' on':''}" data-id="${esc(w.id)}"><span class="wcard" data-id="${esc(w.id)}"><span class="im" data-bg="lt"><img alt=""></span></span><span class="nm">${esc(w.name)}${w.folder?' <small>· '+esc(w.folder)+'</small>':''}</span><b class="rm" data-rm="1" title="Bu imzayı kitaplıktan kaldır">✕</b></div>`).join(''):'<div class="mut" style="padding:10px">'+(lib.items.length?'Bu klasörde imza yok.':'Henüz imza yok. “PNG ekle…” ile cihazından şeffaf PNG’ler seç.')+'</div>';wmFill(q('wmth'));await loadWm()};
@@ -781,13 +788,39 @@ async function wmOpen(rows){if(!rows.length)return;
  q('wms').oninput=()=>{S.scale=q('wms').value/100;upd()};q('wmr').oninput=()=>{S.rot=+q('wmr').value;upd()};q('wmo').oninput=()=>{S.op=q('wmo').value/100;upd()};const nin=(id,f)=>{q(id).oninput=()=>{const v=parseFloat(q(id).value);if(isNaN(v))return;f(v);draw();q('wms').value=Math.round(S.scale*100);q('wmr').value=Math.round(S.rot);q('wmo').value=Math.round(S.op*100)}};
  nin('wmn1',v=>S.scale=Math.min(20,Math.max(.01,v/100)));nin('wmn4',v=>S.rot=Math.max(-360,Math.min(360,v)));nin('wmn2',v=>S.op=Math.min(1,Math.max(.05,v/100)));nin('wmnx',v=>S.cx=clamp(v/100));nin('wmny',v=>S.cy=clamp(v/100));
  q('wmsuf').oninput=()=>{S.suf=q('wmsuf').value};
+ const OUT=Object.assign({drv:true,dev:false,dir:''},JSON.parse(localStorage.getItem('wmout')||'{}'));
+ const outUi=()=>{q('wmdrv').checked=OUT.drv;q('wmdev').checked=OUT.dev;q('wmdirr').style.display=OUT.dev?'flex':'none';q('wmdirt').textContent=OUT.dir||'Varsayılan: İndirilenler\\Filigranlı'};
+ q('wmdrv').onchange=()=>{OUT.drv=q('wmdrv').checked};q('wmdev').onchange=()=>{OUT.dev=q('wmdev').checked;outUi()};
+ q('wmdir').onclick=async()=>{try{const d=await invoke('wm_pick_dir');if(d){OUT.dir=d;outUi()}}catch(e){toast(String(e),true)}};outUi();
  q('wmgo').onclick=async()=>{if(!S.id){toast('Önce bir imza (filigran) seç ya da ekle',true);return}
-  localStorage.setItem('wmset2',JSON.stringify(S));const ids=rows.map(r=>r.dataset.id);close();
-  opStatus(`Filigran uygulanıyor (${ids.length} görsel)…`);
-  try{const r=await invoke('wm_apply',{email:sel,ids,wm:S.id,cx:S.cx,cy:S.cy,scale:S.scale,angle:S.rot,opacity:S.op,suffix:S.suf});
-   opStatus(`${r.done} kopya oluşturuldu`+(r.failed.length?` · ${r.failed.length} başarısız`:''),r.done?'ok':'bad');if(r.failed.length)toast(r.failed.join(' · '),true);loadFiles()}catch(e){opStatus(String(e),'bad')}};
+  if(!OUT.drv&&!OUT.dev){toast('Kaydedilecek yeri seç: Drive ve/veya cihaz',true);return}
+  if(mode=='each')PL[ids[idx]]=snap();localStorage.setItem('wmset2',JSON.stringify(S));localStorage.setItem('wmout',JSON.stringify(OUT));localStorage.setItem('wmmode',mode);
+  const items=ids.map(id=>{const o=mode=='each'?(PL[id]||snap()):snap();return{id,cx:o.cx,cy:o.cy,scale:o.scale,angle:o.rot,opacity:o.op}});close();
+  opStatus(`Filigran uygulanıyor (${items.length} görsel)…`);
+  try{const r=await invoke('wm_apply',{email:sel,items,wm:S.id,suffix:S.suf,toDrive:OUT.drv,toDevice:OUT.dev,dest:OUT.dir});
+   opStatus(`${r.done} kopya oluşturuldu`+(OUT.dev&&r.device?' · cihaza kaydedildi':'')+(r.failed.length?` · ${r.failed.length} başarısız`:''),r.done?'ok':'bad');if(r.failed.length)toast(r.failed.join(' · '),true);if(OUT.drv)loadFiles()}catch(e){opStatus(String(e),'bad')}};
  syncUi();await renderLib();
- try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;const c=q('wmc'),W=Math.min(1100,im.width);c.width=W+2*PAD;c.height=Math.round(W*im.height/im.width)+2*PAD;q('wmprev').classList.remove('ld');q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmprev').classList.remove('ld');q('wmmsg').querySelector('.wsp').style.display='none';q('wmtx').textContent='Önizleme yüklenemedi: '+e;q('wmmsg').querySelector('small').style.display='none'}}
+
+ const ids=rows.map(r=>r.dataset.id),names=rows.map(r=>r.dataset.n),PL={},bases={};let idx=0,tok=0,mode=ids.length>1&&localStorage.getItem('wmmode')=='each'?'each':'same';
+ const snap=()=>({cx:S.cx,cy:S.cy,scale:S.scale,rot:S.rot,op:S.op});const loadG=o=>{S.cx=o.cx;S.cy=o.cy;S.scale=o.scale;S.rot=o.rot;S.op=o.op};
+ const multi=ids.length>1;q('wmmodebox').style.display=multi?'flex':'none';q('wmpb').style.display=q('wmnb').style.display=q('wmstrip').style.display=multi?'':'none';
+ const modeUi=()=>{q('wmmode').querySelectorAll('b').forEach(b=>b.classList.toggle('on',b.dataset.m==mode));q('wmall').style.display=mode=='each'?'':'none'};
+ q('wmmode').onclick=e=>{const b=e.target.closest('[data-m]');if(!b||b.dataset.m==mode)return;mode=b.dataset.m;if(mode=='each')PL[ids[idx]]=snap();modeUi()};
+ q('wmall').onclick=()=>{const o=snap();ids.forEach(id=>PL[id]=Object.assign({},o));toast('Ayar tüm görsellere uygulandı')};
+ q('wmstrip').innerHTML=rows.map((r,i)=>{const im=r.querySelector('img.th');return`<div class="wst" data-i="${i}" title="${esc(names[i])}">${im?`<img src="${esc(im.src)}" referrerpolicy="no-referrer" alt="">`:''}<span>${i+1}</span></div>`}).join('');
+ q('wmstrip').onclick=e=>{const t=e.target.closest('.wst');if(t)goTo(+t.dataset.i)};q('wmpb').onclick=()=>goTo(idx-1);q('wmnb').onclick=()=>goTo(idx+1);
+ const loader=(on,msg)=>{q('wmprev').classList.toggle('ld',on);const mm=q('wmmsg');mm.style.display=on||msg?'':'none';mm.querySelector('.wsp').style.display=msg?'none':'';mm.querySelector('small').style.display=msg?'none':'';q('wmtx').textContent=msg||'Görsel yükleniyor…'};
+ const slide=d=>{const c=q('wmc');c.classList.remove('slL','slR');void c.offsetWidth;if(d)c.classList.add(d>0?'slL':'slR')};
+ async function goTo(i,d){if(i<0||i>=ids.length)return;const my=++tok;
+  if(mode=='each'&&i!=idx){PL[ids[idx]]=snap();if(PL[ids[i]])loadG(PL[ids[i]]);else PL[ids[i]]=snap()}
+  const dir=d==null?Math.sign(i-idx):d;idx=i;
+  q('wmcnt').textContent=multi?`${i+1} / ${ids.length} · ${names[i]}`:'';q('wmpb').disabled=i==0;q('wmnb').disabled=i==ids.length-1;
+  q('wmstrip').querySelectorAll('.wst').forEach((x,k)=>{x.classList.toggle('on',k==i);if(k==i)x.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'})});
+  syncUi();markPos&&markPos();
+  let im=bases[ids[i]];if(!im){base=null;draw();loader(true);try{const u=await invoke('wm_preview',{email:sel,id:ids[i]});im=await new Promise((ok,no)=>{const x=new Image();x.onload=()=>ok(x);x.onerror=()=>no('görsel çözülemedi');x.src=u});bases[ids[i]]=im}catch(e){if(my==tok)loader(false,'Önizleme yüklenemedi: '+e);return}}
+  if(my!=tok)return;base=im;const c=q('wmc'),W=Math.min(1100,im.width);c.width=W+2*PAD;c.height=Math.round(W*im.height/im.width)+2*PAD;loader(false);slide(dir);draw();
+  if(multi&&i+1<ids.length&&!bases[ids[i+1]]){invoke('wm_preview',{email:sel,id:ids[i+1]}).then(u=>{const x=new Image();x.onload=()=>{bases[ids[i+1]]=x};x.src=u}).catch(()=>{})}}
+ modeUi();await goTo(0,0)}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){

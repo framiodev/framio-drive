@@ -259,18 +259,37 @@ if('@FMT@' -eq 'png'){ $b.Save('@DST@',[System.Drawing.Imaging.ImageFormat]::Png
  $b.Save('@DST@',$enc,$ep) }
 $g.Dispose(); $b.Dispose(); $i.Dispose(); $w.Dispose()"#;
 
-/// Seçili Drive görsellerine filigran ekler; her biri için aynı klasöre `<ad><ek>.<uzantı>` kopyası yükler.
+/// Cihaza kaydetmek için klasör seçtirir (boş dönerse iptal).
 #[tauri::command]
-pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, cx: f64, cy: f64, scale: f64, angle: f64, opacity: f64, suffix: String) -> Result<Value, String> {
+pub async fn wm_pick_dir() -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        Ok(ps_out("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $f=New-Object System.Windows.Forms.Form -Property @{TopMost=$true}; $d=New-Object System.Windows.Forms.FolderBrowserDialog; $d.Description='Filigranlı görsellerin kaydedileceği klasörü seç'; if($d.ShowDialog($f) -eq 'OK'){ $d.SelectedPath }"))
+    }).await.map_err(|e| e.to_string())?
+}
+
+/// Seçili Drive görsellerine filigran ekler. `items` her görsel için ayrı yerleşim taşır
+/// ({id,cx,cy,scale,angle,opacity}). Sonuç Drive'a (aynı klasöre) ve/veya cihaza kaydedilir.
+#[tauri::command]
+pub async fn wm_apply(email: String, items: Vec<Value>, wm: String, suffix: String, to_drive: bool, to_device: bool, dest: String) -> Result<Value, String> {
     let wmp = wm_dir().join(safe_rel(&wm)?);
     if !wmp.exists() { return Err("Filigran dosyası bulunamadı".into()); }
+    if !to_drive && !to_device { return Err("Kaydedilecek yer seçilmedi (Drive ya da cihaz)".into()); }
     let d = drv(&email).await?;
     let dir = std::env::temp_dir().join("FramioOpen");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let (scale, opacity, cx, cy, angle) = (scale.clamp(0.01, 20.0), opacity.clamp(0.05, 1.0), cx.clamp(0.0, 1.0), cy.clamp(0.0, 1.0), angle.clamp(-360.0, 360.0));
+    let dev_dir = if !to_device { None } else {
+        let p = if dest.trim().is_empty() {
+            PathBuf::from(std::env::var("USERPROFILE").unwrap_or_default()).join("Downloads").join("Filigranlı")
+        } else { PathBuf::from(dest.trim()) };
+        std::fs::create_dir_all(&p).map_err(|e| format!("Cihaz klasörü oluşturulamadı: {e}"))?;
+        Some(p)
+    };
     let suffix = clean_name(if suffix.trim().is_empty() { "-filigran" } else { suffix.trim() });
     let (mut done, mut failed) = (0u32, vec![]);
-    for id in ids {
+    for it in items {
+        let id = it["id"].as_str().unwrap_or_default().to_string();
+        let g = |k: &str, df: f64| it[k].as_f64().unwrap_or(df);
+        let (scale, opacity, cx, cy, angle) = (g("scale", 0.22).clamp(0.01, 20.0), g("opacity", 0.85).clamp(0.05, 1.0), g("cx", 0.8).clamp(0.0, 1.0), g("cy", 0.9).clamp(0.0, 1.0), g("angle", 0.0).clamp(-360.0, 360.0));
         let meta = match d.file_meta(&id).await { Ok(m) => m, Err(e) => { failed.push(format!("{id}: {}", de(e))); continue } };
         let name = meta.name.clone();
         let parent = meta.parents.first().cloned().unwrap_or_else(|| "root".into());
@@ -287,8 +306,17 @@ pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, cx: f64, cy: 
         let _ = tauri::async_runtime::spawn_blocking(move || ps(&script)).await;
         let _ = std::fs::remove_file(&src);
         if !dst.exists() { failed.push(format!("{name}: görsel işlenemedi")); continue; }
-        match put_file(&d, &dst, &out_name, &parent).await { Ok(()) => { done += 1; drivefs::note_ok(&out_name) } Err(e) => failed.push(format!("{name}: {e}")) }
+        let mut ok = true;
+        if let Some(dd) = &dev_dir {
+            let nm = uniq(dd, &out_name);
+            if let Err(e) = std::fs::copy(&dst, dd.join(&nm)) { failed.push(format!("{name}: cihaza kaydedilemedi ({e})")); ok = false; }
+        }
+        if ok && to_drive {
+            match put_file(&d, &dst, &out_name, &parent).await { Ok(()) => drivefs::note_ok(&out_name), Err(e) => { failed.push(format!("{name}: {e}")); ok = false } }
+        }
+        if ok { done += 1 }
         let _ = std::fs::remove_file(&dst);
     }
-    Ok(json!({ "done": done, "failed": failed }))
+    if let Some(dd) = &dev_dir { if done > 0 { let _ = std::process::Command::new("explorer.exe").arg(dd).spawn(); } }
+    Ok(json!({ "done": done, "failed": failed, "device": dev_dir.map(|p| p.display().to_string()) }))
 }
