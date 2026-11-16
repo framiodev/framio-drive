@@ -96,11 +96,11 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .tabs a{padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--mut);transition:background .25s,color .25s}
 .tabs a:hover{background:var(--glass)}.tabs a.on{background:var(--glass2);color:var(--text);border:1px solid var(--stroke)}
 .tab{flex:1;min-height:0}.tab.tfiles{display:flex;flex-direction:column;gap:12px}
-.fbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
+.fbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-radius:16px}
 .flistw{flex:1;min-height:0;overflow:auto;padding:8px;position:relative;border-radius:18px}
 .flistw.drag{outline:2px dashed var(--acc);outline-offset:-6px}
-.fr{user-select:none;display:grid;grid-template-columns:18px 34px 1fr 90px 130px 250px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
-.fr:hover{background:var(--glass2)}.fr.d{cursor:pointer}
+.fr{user-select:none;display:grid;grid-template-columns:20px 34px 1fr 90px 130px 40px;gap:10px;align-items:center;padding:9px 12px;border-radius:12px;cursor:default}
+.fr:hover{background:var(--glass2)}.fr.d{cursor:default}
 .fr svg{width:22px;height:22px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;justify-self:center}
 .fr .th{width:34px;height:34px;object-fit:cover;border-radius:8px;background:var(--track)}
 .fr.dropt{background:color-mix(in srgb,var(--acc) 28%,transparent);outline:2px solid var(--acc)}
@@ -109,7 +109,14 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .fr .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:550}
 .fr .m{color:var(--mut);font-size:12.5px;text-align:right}
 .fr .x{display:flex;gap:4px;justify-content:flex-end;opacity:0;transition:opacity .2s}.fr:hover .x{opacity:1}
-.fr .x b{cursor:pointer;padding:3px 7px;border-radius:8px;font-weight:500;font-size:12px;color:var(--mut);background:var(--track)}.fr .x b:hover{color:var(--text)}
+.fr .x b{cursor:pointer;padding:2px 9px;border-radius:8px;font-weight:600;font-size:16px;line-height:1.2;color:var(--mut);background:var(--track)}.fr .x b:hover{color:var(--text);background:var(--glass2)}
+.fr{transition:background .15s}.fr.sel{background:color-mix(in srgb,var(--acc) 16%,transparent)}.fr.sel:hover{background:color-mix(in srgb,var(--acc) 22%,transparent)}
+.fr .ck{appearance:none;-webkit-appearance:none;width:18px;height:18px;margin:0;padding:0;border-radius:50%;border:1.5px solid var(--mut);background:transparent;cursor:pointer;opacity:0;justify-self:center;position:relative;transition:opacity .15s,background .15s,transform .15s}
+.fr:hover .ck,#frows.hs .ck,.fr .ck:checked{opacity:1}.fr .ck:hover{transform:scale(1.12)}
+.fr .ck:checked{background:var(--acc);border-color:var(--acc)}.fr .ck:checked::after{content:'';position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+#frows.g .fr .ck{background:rgba(0,0,0,.35);border-color:#fff}#frows.g .fr .ck:checked{background:var(--acc)}
+.ctx{position:fixed;z-index:60;min-width:200px;padding:6px;border-radius:14px;display:flex;flex-direction:column;gap:1px;animation:pop .18s var(--ease) both;transform-origin:top left}
+.ctx b{font-weight:500;font-size:13px;padding:8px 12px;border-radius:9px;cursor:pointer}.ctx b:hover{background:var(--track)}.ctx b.danger{color:#ff6b6b}.ctx hr{border:0;border-top:1px solid var(--stroke);margin:4px 2px}
 .dropmsg{position:absolute;inset:0;display:grid;place-items:center;font-size:18px;font-weight:650;background:color-mix(in srgb,var(--bg) 70%,transparent);border-radius:18px}
 .fusage{display:flex;align-items:center;gap:14px;padding:10px 16px;border-radius:16px}
 .ubar{width:220px;height:8px;border-radius:9px;background:var(--track);overflow:hidden;flex:none}.ubar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .8s var(--ease)}
@@ -145,6 +152,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .hexrow{display:flex;gap:8px;margin-top:10px}.hexrow input{margin:0}
 .top{position:relative}
 .crumbs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:13px;margin:8px 0}
+#fcrumbs{flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1 1 260px}#fcrumbs a{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 1 auto}#fcrumbs a:last-child{font-weight:650;background:var(--glass2)}#fcrumbs span{flex:none}
 .crumbs a{cursor:pointer;padding:3px 8px;border-radius:8px;background:var(--track)}.crumbs a:hover{background:var(--glass2)}
 .crumbs span{color:var(--mut)}
 .flist{height:210px;overflow:auto;border-radius:12px;background:var(--track);padding:6px;margin-bottom:10px}
@@ -179,7 +187,7 @@ select option{background:#222;color:#fff}
             <div class="iconbtn" id="pal" title="Vurgu rengi"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.4 0 2-1 1.6-2-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/></svg></div><div class="iconbtn" id="theme" title="Tema: otomatik / gündüz / gece"></div><div class="glass pop hide" id="pop"><h3>Vurgu rengi</h3><div class="sw" id="sw"></div><canvas id="wheel"></canvas><div class="mut" id="rgbv" style="text-align:center;margin-top:6px"></div><div class="hexrow"><input id="hex" maxlength="7" placeholder="#b3122b"><button class="btn sm" id="rst">Sıfırla</button></div></div></div>
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a></div>
     <div class="tab tfiles" id="t_files">
-      <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0;flex:1"></div>
+      <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
         <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
@@ -454,32 +462,63 @@ $('vmodes').onclick=e=>{const m=e.target.dataset.m;if(m){vmode=m;localStorage.se
 applyVM();
 async function loadFiles(){if(!sel)return;if(fFor!=sel){fFor=sel;fPath=[{id:'root',name:'Drive'}];fSearch=''}
  const me=sel,box=$('frows');if(!box.children.length)box.innerHTML='<div class="mut" style="padding:14px">Yükleniyor…</div>';
- $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>(i?'<span>›</span>':'')+`<a data-i="${i}">${esc(p.name)}</a>`).join('');
+ $('fcrumbs').innerHTML=fSearch?`<a data-i="-2">Drive</a><span>›</span><a>Arama: ${esc(fSearch)}</a>`:fPath.map((p,i)=>{const sep=i?'<span>›</span>':'',a=`<a data-i="${i}" title="${esc(p.name)}">${esc(p.name)}</a>`;
+   if(fPath.length>4&&i>=1&&i<fPath.length-2)return i==1?sep+'<a data-more="1" title="Ara klasörler">…</a>':'';return sep+a}).join('');
  try{const items=fSearch?await invoke('fs_search',{email:me,q:fSearch}):await invoke('fs_list',{email:me,parent:curId()});if(me!=sel)return;
   box.innerHTML=items.length?items.map(f=>{const nat=!f.folder&&String(f.mime).startsWith('application/vnd.google-apps');
-   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x">${f.folder?'':nat?'<b data-a="web">Aç</b>':'<b data-a="open">Aç</b><b data-a="dl">İndir</b>'}${f.folder?'':(fcat(f)=='img'?'<b data-a="gimg">Gemini’ye sor</b><b data-a="fshare">Forumda paylaş</b>':'')+'<b data-a="gem">Gemini</b>'}${fSearch?'':'<b data-a="ren">Ad</b>'}<b data-a="del">Sil</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
+   return `<div class="fr ${f.folder?'d':''}" data-id="${esc(f.id)}" data-n="${esc(f.name)}" data-f="${f.folder?1:0}" data-m="${esc(f.mime||'')}"><input type="checkbox" class="ck">${ficon(f)}<span class="n">${esc(f.name)}</span><span class="m">${f.folder?'':dsz(f.size)}</span><span class="m">${dfmt(f.modified)}</span><span class="x"><b data-a="menu" title="Seçenekler">⋯</b></span></div>`}).join(''):'<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg><div>'+(fSearch?'Sonuç yok':'Bu klasör boş — dosya sürükleyip bırakabilirsin')+'</div></div>'}
  catch(e){box.innerHTML='<div class="mut" style="padding:14px">'+esc(e)+'</div>'}
- selChanged();
+ selChanged();lastRow=null;
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
-function selChanged(){$('fdelsel').classList.toggle('hide',!document.querySelector('#frows .ck:checked'))}
-$('frows').onchange=selChanged;
+let lastRow=null;
+function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('frows').classList.toggle('hs',any)}
+$('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
 $('fq').onkeydown=e=>{if(e.key=='Enter'){fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
 $('fdelsel').onclick=async()=>{const rows=[...document.querySelectorAll('#frows .ck:checked')].map(c=>c.closest('.fr'));if(!rows.length)return;
  if(!await confirmBox('Çöp kutusuna taşı',`${rows.length} öğe Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;
  let bad=0;for(const r of rows){try{await invoke('fs_trash',{email:sel,id:r.dataset.id})}catch(x){bad++}}
  toast(`${rows.length-bad} öğe çöpe taşındı`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()};
-$('fcrumbs').onclick=e=>{const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
-$('frows').onclick=async e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;const a=e.target.dataset.a;
+$('fcrumbs').onclick=e=>{if(e.target.dataset.more){const r=e.target.getBoundingClientRect();showMenu(fPath.slice(1,-2).map((p,k)=>({t:p.name,f:()=>{fPath=fPath.slice(0,k+2);loadFiles()}})),r.left,r.bottom+4);return}
+ const i=e.target.dataset.i;if(i===undefined)return;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
+function selRows(){return[...document.querySelectorAll('#frows .fr.sel')]}
+function setSel(rows){document.querySelectorAll('#frows .fr').forEach(r=>{const on=rows.includes(r);r.classList.toggle('sel',on);r.querySelector('.ck').checked=on});selChanged()}
+function showMenu(items,x,y){closeMenu();const m=document.createElement('div');m.className='glass ctx';m.id='ctxm';
+ m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':`<b data-i="${i}" class="${it.cls||''}">${esc(it.t)}</b>`).join('');
+ m.onclick=e=>{const b=e.target.closest('[data-i]');if(!b)return;const it=items[+b.dataset.i];closeMenu();it.f()};
+ document.body.appendChild(m);m.style.left=Math.max(6,Math.min(x,innerWidth-m.offsetWidth-6))+'px';m.style.top=Math.max(6,Math.min(y,innerHeight-m.offsetHeight-6))+'px'}
+function closeMenu(){const m=document.getElementById('ctxm');if(m)m.remove()}
+document.addEventListener('mousedown',e=>{if(!e.target.closest('#ctxm'))closeMenu()},true);window.addEventListener('blur',closeMenu);
+function rowMenu(r,x,y){const rows=selRows();
+ if(rows.length>1&&rows.includes(r)){showMenu([{t:rows.length+' öğeyi çöpe at',cls:'danger',f:()=>$('fdelsel').click()}],x,y);return}
+ const fo=r.dataset.f=='1',nat=String(r.dataset.m).startsWith('application/vnd.google-apps'),img=!fo&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img',it=[];
+ it.push({t:fo?'Klasörü aç':'Aç',f:()=>openRow(r)});
+ if(!fo&&!nat)it.push({t:'İndir',f:()=>doAct('dl',r)});
+ if(!fo){it.push('-');if(img){it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});it.push({t:'Forumda paylaş',f:()=>doAct('fshare',r)})}it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
+ it.push('-');if(!fSearch)it.push({t:'Yeniden adlandır',f:()=>doAct('ren',r)});it.push({t:'Çöpe at',cls:'danger',f:()=>doAct('del',r)});showMenu(it,x,y)}
+function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
+ invoke(String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).catch(x=>toast(String(x),true))}
+async function doAct(a,r){
  if(a=='gimg'){askImage({name:r.dataset.n,id:r.dataset.id,mime:r.dataset.m});return}
  if(a=='fshare'){shrPush(r.dataset.n,{kind:'drive',email:sel,key:r.dataset.id});setTab('shr');toast('Paylaş sekmesine eklendi');return}
  if(a=='gem'){invoke('gemini_ask',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).then(()=>toast('İstem panoya kopyalandı — Gemini penceresinde Ctrl+V ile yapıştır')).catch(x=>toast(String(x),true));return}
- if(a=='web'){invoke('fs_web',{email:sel,id:r.dataset.id,mime:r.dataset.m}).catch(x=>toast(String(x),true));return}
- if(a=='open'){toast('Açılıyor…');invoke('fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n}).catch(x=>toast(String(x),true));return}
  if(a=='dl'){toast('İndiriliyor…');invoke('fs_download',{email:sel,id:r.dataset.id,name:r.dataset.n}).then(p=>toast('İndirildi: '+p)).catch(x=>toast(String(x),true));return}
  if(a=='ren'){const n=await ask('Yeni ad',r.dataset.n);if(n&&n!==r.dataset.n){try{await invoke('fs_rename',{email:sel,id:r.dataset.id,name:n,parent:curId()});loadFiles()}catch(x){toast(String(x),true)}}return}
- if(a=='del'){if(!await confirmBox('Çöp kutusuna taşı',`“${r.dataset.n}” Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;try{await invoke('fs_trash',{email:sel,id:r.dataset.id});loadFiles()}catch(x){toast(String(x),true)}return}
- if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles()}};
-$('frows').ondblclick=e=>{const r=e.target.closest('.fr');if(r&&r.dataset.f=='0'&&!e.target.dataset.a&&!e.target.classList.contains('ck'))invoke(String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m}).catch(x=>toast(String(x),true))};
+ if(a=='del'){if(!await confirmBox('Çöp kutusuna taşı',`“${r.dataset.n}” Drive çöp kutusuna taşınacak (30 gün geri alınabilir).`,'Çöpe at'))return;try{await invoke('fs_trash',{email:sel,id:r.dataset.id});loadFiles()}catch(x){toast(String(x),true)}return}}
+$('frows').onclick=e=>{const r=e.target.closest('.fr');if(!r||e.target.classList.contains('ck'))return;
+ if(e.target.closest('[data-a=menu]')){const b=e.target.getBoundingClientRect();if(!r.classList.contains('sel'))setSel([r]);rowMenu(r,b.left-150,b.bottom+4);return}
+ const all=[...document.querySelectorAll('#frows .fr')];
+ if(e.shiftKey&&lastRow&&all.includes(lastRow)){const a=all.indexOf(lastRow),b=all.indexOf(r);setSel(all.slice(Math.min(a,b),Math.max(a,b)+1));return}
+ if(e.ctrlKey||e.metaKey){setSel(r.classList.contains('sel')?selRows().filter(x=>x!==r):[...selRows(),r]);lastRow=r;return}
+ setSel([r]);lastRow=r};
+$('frows').ondblclick=e=>{const r=e.target.closest('.fr');if(r&&!e.target.classList.contains('ck')&&!e.target.closest('[data-a]'))openRow(r)};
+$('frows').oncontextmenu=e=>{const r=e.target.closest('.fr');e.preventDefault();if(!r)return;if(!r.classList.contains('sel'))setSel([r]);lastRow=r;rowMenu(r,e.clientX,e.clientY)};
+document.addEventListener('keydown',e=>{if(tab!='files'||document.querySelector('.modal')||e.target.closest('input,textarea,select'))return;
+ const rows=selRows();
+ if(e.key=='Escape'){closeMenu();setSel([]);return}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='a'){e.preventDefault();setSel([...document.querySelectorAll('#frows .fr')]);return}
+ if(e.key=='Enter'&&rows.length==1){openRow(rows[0]);return}
+ if(e.key=='Delete'&&rows.length){rows.length>1?$('fdelsel').click():doAct('del',rows[0]);return}
+ if(e.key=='F2'&&rows.length==1&&!fSearch)doAct('ren',rows[0])});
 $('fnew').onclick=async()=>{const n=await ask('Yeni klasör adı');if(n){try{await invoke('fs_mkdir',{email:sel,parent:curId(),name:n});loadFiles()}catch(x){toast(String(x),true)}}};
 $('fdoc').onclick=async()=>{const k=await new Promise(r=>{const m=document.createElement('div');m.className='modal';m.innerHTML='<div class="glass"><div style="font-weight:650;margin-bottom:12px">Yeni Google belgesi</div><div style="display:flex;flex-direction:column;gap:8px"><button class="btn" data-k="doc">Doküman (Docs)</button><button class="btn" data-k="sheet">Tablo (Sheets)</button><button class="btn" data-k="slides">Sunum (Slides)</button><button class="btn" data-k="">Vazgeç</button></div></div>';m.onclick=e=>{const b=e.target.closest('[data-k]');if(b||e.target==m){m.remove();r(b?b.dataset.k:'')}};document.body.appendChild(m)});
  if(!k)return;const n=await ask('Belge adı','Adsız '+({doc:'doküman',sheet:'tablo',slides:'sunum'}[k]));if(!n)return;

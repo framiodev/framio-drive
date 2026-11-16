@@ -156,7 +156,18 @@ struct Pending {
     mtime: u64,
 }
 
+/// Henuz Drive'da olusturulmamis (gecikmeli olusturulan) klasor. Kimligi onceden uretildigi icin
+/// ad degisse de kimlik sabit kalir; Drive'a ilk ihtiyacta ya da kisa bir bekleyisten sonra yazilir.
+#[derive(Clone)]
+struct PDir {
+    parent: String,
+    name: String,
+    born: Instant,
+}
+
 struct Core {
+    stop: AtomicBool,
+    pdirs: Mutex<HashMap<String, PDir>>,
     rt: Runtime,
     client: auth::Client,
     email: String,
@@ -189,9 +200,18 @@ impl Core {
                 return Ok(v.clone());
             }
         }
+        if self.pdirs.lock().unwrap().contains_key(id) {
+            // Henuz Drive'da olusmamis klasor: icerigi yok (cocuk gelince klasor once olusturulur)
+            return Ok(Arc::new(Vec::new()));
+        }
         let d = self.drive()?;
         let files = self.rt.block_on(d.list_children(id)).map_err(io_err)?;
         let mut v = entries_from(files, self.created);
+        for (did, pd) in self.pdirs.lock().unwrap().iter() {
+            if pd.parent == id && !v.iter().any(|e| e.name.eq_ignore_ascii_case(&pd.name)) {
+                v.push(Entry { name: pd.name.clone(), id: did.clone(), dir: true, size: 0, mtime: self.created });
+            }
+        }
         // Bekleyen (yuklenmekte olan) dosyalari listeye kat
         for (tid, p) in self.pending.lock().unwrap().iter() {
             if p.parent == id && !v.iter().any(|e| e.name.eq_ignore_ascii_case(&p.name)) {
@@ -201,6 +221,73 @@ impl Core {
         let v = Arc::new(v);
         self.lists.lock().unwrap().insert(id.to_string(), (Instant::now(), v.clone()));
         Ok(v)
+    }
+
+    /// Gecikmeli klasor `id` hala bekliyorsa Drive'da olusturur (onceden uretilmis kimlikle, tekrar denemeye dayanikli).
+    fn ensure_dir(&self, id: &str) -> Result<()> {
+        let first = self.pdirs.lock().unwrap().get(id).cloned();
+        let Some(mut cur) = first else { return Ok(()) };
+        loop {
+            self.ensure_dir(&cur.parent)?; // ust klasor de bekliyor olabilir
+            let d = self.drive()?;
+            let mut last = None;
+            for k in 0..3u64 {
+                match self.rt.block_on(d.create_folder_with_id(id, &cur.name, &cur.parent)) {
+                    Ok(()) => {
+                        last = None;
+                        break;
+                    }
+                    Err(e) => {
+                        last = Some(e);
+                        std::thread::sleep(Duration::from_millis(600 * (k + 1)));
+                    }
+                }
+            }
+            if let Some(e) = last {
+                return Err(io_err(e));
+            }
+            // Bu sirada yeniden adlandirildi/tasindiysa son halini Drive'a yansit
+            let now = {
+                let mut g = self.pdirs.lock().unwrap();
+                match g.get(id).cloned() {
+                    None => return Ok(()),
+                    Some(n) if n.name == cur.name && n.parent == cur.parent => {
+                        g.remove(id);
+                        None
+                    }
+                    Some(n) => Some(n),
+                }
+            };
+            match now {
+                None => {
+                    self.invalidate(&cur.parent);
+                    return Ok(());
+                }
+                Some(n) => {
+                    self.ensure_dir(&n.parent)?;
+                    self.rt.block_on(d.move_rename(id, &n.name, &n.parent)).map_err(io_err)?;
+                    self.invalidate(&cur.parent);
+                    cur = n;
+                }
+            }
+        }
+    }
+
+    /// Bekleyen klasorleri olusturur; `min_age` kadar bekleyenler (0 = hepsi).
+    fn flush_dirs(&self, min_age: Duration) {
+        let ids: Vec<String> = self
+            .pdirs
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|(_, p)| p.born.elapsed() >= min_age)
+            .map(|(k, _)| k.clone())
+            .collect();
+        for id in ids {
+            if let Err(e) = self.ensure_dir(&id) {
+                eprintln!("[drivefs] klasor olusturulamadi: {e:?}");
+            }
+        }
     }
 
     fn invalidate(&self, parent: &str) {
@@ -412,6 +499,9 @@ impl Fs {
         let id = ctx.id();
         let parent = ctx.parent.lock().unwrap().clone();
         let name = ctx.name.lock().unwrap().clone();
+        if let Err(e) = self.core.ensure_dir(&parent) {
+            eprintln!("[drivefs] ust klasor olusturulamadi: {e:?}");
+        }
         let tid = if id.starts_with("tmp:") {
             id.clone()
         } else {
@@ -521,7 +611,16 @@ impl FileSystemContext for Fs {
         let now = filetime_now();
         let is_dir = create_options & 0x1 != 0; // FILE_DIRECTORY_FILE
         if is_dir {
+            self.core.ensure_dir(&parent.id)?;
             let d = self.core.drive()?;
+            // Gecikmeli olusturma: kimligi simdi al, klasoru Drive'a sonra yaz. Kullanici hemen
+            // "Yeni klasor"u yeniden adlandirirsa Drive'da tek, dogru adli klasor olusur.
+            if let Ok(gid) = self.core.rt.block_on(d.generate_id()) {
+                self.core.pdirs.lock().unwrap().insert(gid.clone(), PDir { parent: parent.id.clone(), name: name.clone(), born: Instant::now() });
+                self.core.cache_add(&parent.id, Entry { name: name.clone(), id: gid.clone(), dir: true, size: 0, mtime: now });
+                *file_info.as_mut() = make_info(true, 0, now, &gid);
+                return Ok(Ctx::new(gid, parent.id, name, true, 0, now));
+            }
             let id = self.core.rt.block_on(d.create_folder(&name, &parent.id)).map_err(io_err)?;
             self.core.cache_add(&parent.id, Entry { name: name.clone(), id: id.clone(), dir: true, size: 0, mtime: now });
             *file_info.as_mut() = make_info(true, 0, now, &id);
@@ -552,6 +651,8 @@ impl FileSystemContext for Fs {
                     let _ = std::fs::remove_file(&p.path);
                 }
                 *ctx.local.lock().unwrap() = None;
+            } else if self.core.pdirs.lock().unwrap().remove(&id).is_some() {
+                // Drive'a hic yazilmamis klasor: silmek icin yapilacak bir sey yok
             } else if let Ok(d) = self.core.drive() {
                 if let Err(e) = self.core.rt.block_on(d.trash(&id)) {
                     eprintln!("[drivefs] silme hatasi: {e:?}");
@@ -668,12 +769,21 @@ impl FileSystemContext for Fs {
             }
         }
         let old_parent = ctx.parent.lock().unwrap().clone();
-        if id.starts_with("tmp:") {
+        let is_pdir = self.core.pdirs.lock().unwrap().contains_key(&id);
+        if is_pdir {
+            // Henuz Drive'da yok: sadece kayittaki adi/konumu degistir (Drive'a tek, dogru istek gidecek)
+            self.core.ensure_dir(&new_parent.id)?;
+            if let Some(p) = self.core.pdirs.lock().unwrap().get_mut(&id) {
+                p.parent = new_parent.id.clone();
+                p.name = new_name.clone();
+            }
+        } else if id.starts_with("tmp:") {
             if let Some(p) = self.core.pending.lock().unwrap().get_mut(&id) {
                 p.parent = new_parent.id.clone();
                 p.name = new_name.clone();
             }
         } else {
+            self.core.ensure_dir(&new_parent.id)?;
             let d = self.core.drive()?;
             self.core.rt.block_on(d.move_rename(&id, &new_name, &new_parent.id)).map_err(io_err)?;
         }
@@ -817,16 +927,19 @@ pub struct Mount {
 impl Mount {
     /// Yuklenmeyi bekleyen dosya sayisi.
     pub fn pending(&self) -> usize {
-        self.core.pending.lock().unwrap().len()
+        self.core.pending.lock().unwrap().len() + self.core.pdirs.lock().unwrap().len()
     }
     /// Cikmadan once yuklemelerin bitmesini bekler (en fazla `max` sn).
     pub fn wait_uploads(&self, max: u64) {
+        let c = self.core.clone();
+        let _ = std::thread::spawn(move || c.flush_dirs(Duration::ZERO)).join();
         let t = Instant::now();
         while self.pending() > 0 && t.elapsed() < Duration::from_secs(max) {
             std::thread::sleep(Duration::from_secs(1));
         }
     }
     pub fn unmount(&mut self) {
+        self.core.stop.store(true, Ordering::SeqCst);
         self.host.stop();
         self.host.unmount();
     }
@@ -848,6 +961,8 @@ pub fn start(email: &str, letter: &str, share: &str, client: auth::Client) -> st
     let tmpdir = std::env::temp_dir().join("FramioDriveFs");
     let _ = std::fs::create_dir_all(&tmpdir);
     let core = Arc::new(Core {
+        stop: AtomicBool::new(false),
+        pdirs: Mutex::new(HashMap::new()),
         rt,
         client,
         email: email.to_string(),
@@ -882,6 +997,15 @@ pub fn start(email: &str, letter: &str, share: &str, client: auth::Client) -> st
     let mut host = FileSystemHost::<Fs, FineGuard>::new(vp, fs).map_err(|e| format!("surucu olusturulamadi: {e:?}"))?;
     host.mount(&letter).map_err(|e| format!("{letter} baglanamadi: {e:?}"))?;
     host.start().map_err(|e| format!("dispatcher baslamadi: {e:?}"))?;
+
+    // Bekleyen (gecikmeli) klasorleri kisa bir bekleyisten sonra Drive'a yaz.
+    let c2 = core.clone();
+    std::thread::spawn(move || {
+        while !c2.stop.load(Ordering::SeqCst) {
+            std::thread::sleep(Duration::from_secs(2));
+            c2.flush_dirs(Duration::from_secs(8));
+        }
+    });
 
     // Drive'daki (web/baska cihaz) degisiklikleri izle; olunca listeleri tazele.
     let c = core.clone();

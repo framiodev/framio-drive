@@ -216,6 +216,26 @@ impl Drive {
         v["id"].as_str().map(String::from).ok_or(Error::Protocol("id yok"))
     }
 
+    /// Drive'dan önceden kimlik üretir (files.generateIds). Klasör oluşturma isteği bu kimlikle tekrarlanabilir (idempotent).
+    pub async fn generate_id(&self) -> Result<String, Error> {
+        let r = self.http.get(format!("{API}/files/generateIds")).bearer_auth(&self.token)
+            .query(&[("count", "1"), ("space", "drive")]).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let v: serde_json::Value = r.json().await?;
+        v["ids"][0].as_str().map(String::from).ok_or(Error::Protocol("id yok"))
+    }
+
+    /// Önceden üretilmiş kimlikle klasör oluşturur. Aynı kimlik daha önce oluşturulduysa (409) başarı sayılır;
+    /// böylece zaman aşımı sonrası yeniden denemede ikinci bir "Yeni klasör" doğmaz.
+    pub async fn create_folder_with_id(&self, id: &str, name: &str, parent: &str) -> Result<(), Error> {
+        let meta = serde_json::json!({ "id": id, "name": name, "parents": [parent], "mimeType": "application/vnd.google-apps.folder" });
+        let r = self.http.post(format!("{API}/files")).bearer_auth(&self.token).query(&[("fields", "id")]).json(&meta).send().await?;
+        match r.status().as_u16() {
+            200..=299 | 409 => Ok(()),
+            s => Err(Error::Status(s, r.text().await?)),
+        }
+    }
+
     /// Verilen türde (ör. Google Doc/Sheet) boş bir öğe oluşturur; kimliğini döndürür.
     pub async fn create_item(&self, name: &str, parent: &str, mime: &str) -> Result<String, Error> {
         let meta = serde_json::json!({ "name": name, "parents": [parent], "mimeType": mime });
