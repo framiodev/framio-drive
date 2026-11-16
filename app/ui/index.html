@@ -290,7 +290,10 @@ select option{background:#222;color:#fff}
 .mpages{display:flex;flex-wrap:wrap;gap:6px;padding:10px;border-radius:11px;background:var(--track)}.mpages .mut{width:100%}
 .mhelp{display:flex;flex-direction:column;gap:10px}.mhh{display:flex;gap:12px;align-items:center}.mhh b{font-size:14px}.mhh .mut{font-size:12px}
 .spark{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;background:linear-gradient(135deg,var(--acc),#6a5cff);box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 35%,transparent)}.spark svg{width:20px;height:20px;fill:#fff}
-.mask{display:flex;gap:8px;align-items:stretch}.mask textarea{flex:1;margin:0;resize:none;min-height:64px}.mask .btn{align-self:stretch;white-space:nowrap}
+.mcomp{border-radius:16px;background:var(--track);border:1px solid var(--stroke);padding:10px 10px 8px;transition:border-color .2s,box-shadow .2s}.mcomp:focus-within{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+.mcomp textarea{width:100%;display:block;margin:0;padding:4px 6px;border:0!important;outline:0;background:transparent!important;color:inherit;font:inherit;line-height:1.5;resize:none;min-height:66px;box-shadow:none!important}.mcomp textarea::placeholder{color:var(--mut);opacity:.8}
+.mcbar{display:flex;align-items:center;gap:8px;margin-top:6px}.mcn{font-size:11.5px;margin-right:auto}
+.mcsend{display:inline-flex;align-items:center;gap:8px;border:0;cursor:pointer;color:#fff;font:inherit;font-weight:600;font-size:13px;padding:8px 14px;border-radius:12px;background:linear-gradient(135deg,var(--acc),color-mix(in srgb,var(--acc) 65%,#6a5cff));box-shadow:0 6px 16px color-mix(in srgb,var(--acc) 32%,transparent);transition:transform .25s var(--ease),box-shadow .25s}.mcsend:hover{transform:translateY(-1px)}.mcsend:active{transform:scale(.97)}.mcsend svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .mnote{font-size:12px;line-height:1.45}
 .mans{padding:12px 14px;border-radius:14px;border-top-left-radius:4px;background:color-mix(in srgb,var(--acc) 10%,var(--track));white-space:pre-wrap;font-size:13px;line-height:1.55;max-height:320px;overflow:auto}
 .wmfo{display:flex;flex-wrap:wrap;gap:5px}.wmfo b{font-weight:500;font-size:12px;padding:4px 10px;border-radius:9px;background:var(--track);cursor:pointer}.wmfo b.on{background:var(--acc);color:#fff}
@@ -397,9 +400,9 @@ select option{background:#222;color:#fff}
             <div class="mres" id="mres"></div><div class="mpages hide" id="mpages"></div></div></div>
           <div class="glass panel mhelp"><div class="mhh"><span class="spark"><svg viewBox="0 0 24 24"><path d="M12 2l2.2 6.3L20.5 10l-6.3 1.7L12 18l-2.2-6.3L3.5 10l6.3-1.7z"/></svg></span><div><b>Gemini yardımcısı</b><div class="mut" id="mhs">Takıldığın adımı sor; Gemini rehberin bağlamını bilerek cevaplar.</div></div></div>
             <div class="mchips" id="mchips"></div>
-            <div class="mask"><textarea id="mQ" rows="2" placeholder="Sorunu yaz…"></textarea><button class="btn pri" id="mWeb" title="Soru panoya kopyalanır, Gemini penceresi açılır; Ctrl+V ile yapıştır">Gemini’de sor</button></div>
+            <div class="mcomp"><textarea id="mQ" rows="3" placeholder="Takıldığın yeri anlat… (örn. “Business türünde uygulama oluşturdum ama Instagram ürünü görünmüyor”)"></textarea>
+              <div class="mcbar"><span class="mut mcn" id="mcn">Ctrl + Enter ile gönder</span><button class="btn sm hide" id="mAsk" title="Gemini API anahtarın varsa cevap burada görünür">Burada yanıtla</button><button class="mcsend" id="mWeb" title="Soru panoya kopyalanır, Gemini penceresi açılır; Ctrl+V ile yapıştır"><span>Gemini’de sor</span><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div></div>
             <div class="mut mnote" id="mnote">Gemini penceresi kendi hesabınla açılır; soru panoya kopyalanır, Ctrl+V ile yapıştırman yeterli.</div>
-            <button class="btn sm hide" id="mAsk">Burada yanıtla (API anahtarı)</button>
             <div class="mans hide" id="mAns"></div></div>
         </div>
       </div>
@@ -755,6 +758,7 @@ const metaRes=(t,bad)=>{const r=$('mres');r.textContent=t;r.className='mres'+(t?
 async function metaPages(){const box=$('mpages');try{const pg=await invoke('meta_fb_pages');box.classList.remove('hide');box.innerHTML=pg.length?'<div class="mut" style="margin-bottom:6px">Yönettiğin Sayfalar — birini seç:</div>'+pg.map(g=>`<button class="btn sm" data-pg="${esc(g.id)}">${esc(g.name)}</button>`).join(''):'<div class="mut">Bu belirteçle yönetilen Sayfa bulunamadı. pages_show_list iznini ve Sayfa yöneticiliğini kontrol et.</div>'}catch(e){box.classList.remove('hide');box.textContent=String(e)}}
 function metaInit(){metaSteps();metaLoad();if(metaOn)return;metaOn=true;
  $('mpf').onclick=e=>{const b=e.target.closest('[data-p]');if(!b||b.dataset.p==metaP)return;metaP=b.dataset.p;localStorage.setItem('metaP',metaP);metaOpen=-1;metaRes('');$('mpages').classList.add('hide');$('mAns').classList.add('hide');metaSteps();metaLoad()};
+ $('mQ').onkeydown=e=>{if(e.key=='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();$('mWeb').click()}};$('mQ').oninput=()=>{const t=$('mQ');t.style.height='auto';t.style.height=Math.min(180,t.scrollHeight)+'px'};
  $('mchips').onclick=e=>{if(e.target.tagName=='B'){$('mQ').value=e.target.textContent;$('mQ').focus()}};
  $('msteps').onclick=e=>{const u=e.target.dataset.u;if(u){invoke('meta_open',{url:u}).catch(x=>toast(String(x),true));return}
   const dn=e.target.dataset.done;if(dn!==undefined){const k=+dn,d=mDone(metaP);mSetDone(metaP,d.includes(k)?d.filter(x=>x!=k):[...d,k]);metaOpen=-1;metaSteps();return}
