@@ -34,59 +34,175 @@ fn wm_dir() -> PathBuf {
     wm_backup()
 }
 
-fn pngs(d: &Path) -> Vec<String> {
-    std::fs::read_dir(d).map(|rd| rd.flatten().map(|e| e.file_name().to_string_lossy().into_owned()).filter(|f| f.to_lowercase().ends_with(".png")).collect()).unwrap_or_default()
+/// Göreli kimlik: "dosya.png" ya da "Klasör/dosya.png". Üst dizine çıkışa izin verilmez.
+fn safe_rel(id: &str) -> Result<PathBuf, String> {
+    if id.is_empty() || id.contains("..") || id.contains('\\') || id.contains(':') || id.starts_with('/') || id.matches('/').count() > 1 {
+        return Err("Geçersiz yol".into());
+    }
+    Ok(PathBuf::from(id))
+}
+fn safe_name(n: &str) -> Result<String, String> {
+    let c = clean_name(n.trim()).trim_matches('.').trim().to_string();
+    if c.is_empty() { Err("Ad boş olamaz".into()) } else { Ok(c) }
+}
+fn roots() -> Vec<PathBuf> {
+    let (a, b) = (wm_dir(), wm_backup());
+    if a == b { vec![a] } else { vec![a, b] }
+}
+fn is_png(f: &str) -> bool { f.to_lowercase().ends_with(".png") }
+fn uniq(dir: &Path, name: &str) -> String {
+    if !dir.join(name).exists() { return name.to_string(); }
+    let (stem, ext) = name.rsplit_once('.').map(|(a, b)| (a.to_string(), format!(".{b}"))).unwrap_or((name.to_string(), String::new()));
+    for n in 2..1000 {
+        let c = format!("{stem} ({n}){ext}");
+        if !dir.join(&c).exists() { return c; }
+    }
+    name.to_string()
+}
+fn subdirs(d: &Path) -> Vec<String> {
+    std::fs::read_dir(d).map(|rd| rd.flatten().filter(|e| e.path().is_dir()).map(|e| e.file_name().to_string_lossy().into_owned()).collect()).unwrap_or_default()
+}
+fn files_in(d: &Path) -> Vec<String> {
+    std::fs::read_dir(d).map(|rd| rd.flatten().filter(|e| e.path().is_file()).map(|e| e.file_name().to_string_lossy().into_owned()).filter(|f| is_png(f)).collect()).unwrap_or_default()
+}
+fn count_all(d: &Path) -> usize { files_in(d).len() + subdirs(d).iter().map(|s| files_in(&d.join(s)).len()).sum::<usize>() }
+
+fn copy_missing(from: &Path, to: &Path) {
+    let _ = std::fs::create_dir_all(to);
+    for f in files_in(from) { if !to.join(&f).exists() { let _ = std::fs::copy(from.join(&f), to.join(&f)); } }
+    for d in subdirs(from) { copy_missing(&from.join(&d), &to.join(&d)); }
 }
 
-/// Ana klasör boşsa (yeni kurulum/yeniden kurulum) yedekten geri yükler; ana klasördekileri yedeğe kopyalar.
+/// Eski sürümlerin zaman damgalı adlarını (123456789_ad.png) sadeleştirir.
+fn strip_stamp(dir: &Path) {
+    for f in files_in(dir) {
+        if let Some((pre, rest)) = f.split_once('_') {
+            if pre.len() >= 9 && pre.chars().all(|c| c.is_ascii_digit()) && !rest.is_empty() {
+                let n = uniq(dir, rest);
+                let _ = std::fs::rename(dir.join(&f), dir.join(n));
+            }
+        }
+    }
+}
+
+/// Ana klasör boşsa yedekten geri yükler; ana klasördekileri yedeğe yansıtır.
 fn wm_sync() {
     let (a, b) = (wm_dir(), wm_backup());
+    for r in roots() { strip_stamp(&r); for d in subdirs(&r) { strip_stamp(&r.join(d)); } }
     if a == b { return; }
-    if pngs(&a).is_empty() {
-        for f in pngs(&b) { let _ = std::fs::copy(b.join(&f), a.join(&f)); }
-    }
-    for f in pngs(&a) {
-        if !b.join(&f).exists() { let _ = std::fs::copy(a.join(&f), b.join(&f)); }
-    }
+    if count_all(&a) == 0 { copy_missing(&b, &a); }
+    copy_missing(&a, &b);
 }
-
-fn disp(file: &str) -> String { file.split_once('_').map(|x| x.1).unwrap_or(file).to_string() }
 
 #[tauri::command]
 pub fn wm_list() -> Value {
     wm_sync();
-    let mut v: Vec<(String, String)> = vec![];
-    if let Ok(rd) = std::fs::read_dir(wm_dir()) {
-        for e in rd.flatten() {
-            let f = e.file_name().to_string_lossy().into_owned();
-            if f.to_lowercase().ends_with(".png") { v.push((f.clone(), disp(&f))); }
-        }
+    let r = wm_dir();
+    let mut items: Vec<Value> = vec![];
+    let mut push = |folder: &str, f: &str| {
+        let id = if folder.is_empty() { f.to_string() } else { format!("{folder}/{f}") };
+        items.push(json!({ "id": id, "name": f.trim_end_matches(".png").trim_end_matches(".PNG"), "folder": folder }));
+    };
+    let mut root_files = files_in(&r); root_files.sort_by_key(|x| x.to_lowercase());
+    for f in &root_files { push("", f); }
+    let mut folders = subdirs(&r); folders.sort_by_key(|x| x.to_lowercase());
+    for d in &folders {
+        let mut fs = files_in(&r.join(d)); fs.sort_by_key(|x| x.to_lowercase());
+        for f in &fs { push(d, f); }
     }
-    v.sort();
-    json!(v.iter().map(|(id, n)| json!({ "id": id, "name": n })).collect::<Vec<_>>())
+    json!({ "items": items, "folders": folders })
 }
 
-/// Cihazdan şeffaf PNG seçtirir ve uygulamanın filigran kitaplığına kopyalar.
+/// Cihazdan bir ya da birden çok şeffaf PNG seçtirir; `folder` klasörüne (boşsa ana klasöre) kopyalar.
 #[tauri::command]
-pub async fn wm_pick() -> Result<Value, String> {
-    tauri::async_runtime::spawn_blocking(|| {
-        let out = ps_out("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $f=New-Object System.Windows.Forms.Form -Property @{TopMost=$true}; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='PNG (şeffaf arka plan)|*.png'; $d.Title='Filigran olarak kullanılacak PNG dosyasını seç'; if($d.ShowDialog($f) -eq 'OK'){ $d.FileName }");
-        if out.is_empty() { return Ok(Value::Null); }
-        let src = PathBuf::from(&out);
-        let name = src.file_name().map(|n| clean_name(&n.to_string_lossy())).ok_or("Dosya adı okunamadı")?;
-        let ms = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_millis()).unwrap_or(0);
-        let id = format!("{ms}_{name}");
-        std::fs::copy(&src, wm_dir().join(&id)).map_err(|e| e.to_string())?;
-        let _ = std::fs::copy(&src, wm_backup().join(&id));
-        Ok(json!({ "id": id, "name": name }))
+pub async fn wm_pick_many(folder: String) -> Result<Value, String> {
+    let fol = if folder.is_empty() { String::new() } else { safe_name(&folder)? };
+    tauri::async_runtime::spawn_blocking(move || {
+        let out = ps_out("[Console]::OutputEncoding=[Text.Encoding]::UTF8; Add-Type -AssemblyName System.Windows.Forms; $f=New-Object System.Windows.Forms.Form -Property @{TopMost=$true}; $d=New-Object System.Windows.Forms.OpenFileDialog; $d.Filter='PNG (şeffaf arka plan)|*.png'; $d.Multiselect=$true; $d.Title='Filigran olarak kullanılacak PNG dosyalarını seç'; if($d.ShowDialog($f) -eq 'OK'){ $d.FileNames -join '|' }");
+        if out.is_empty() { return Ok(json!([])); }
+        let mut added = vec![];
+        for p in out.split('|') {
+            let src = PathBuf::from(p);
+            let Some(fname) = src.file_name().map(|n| clean_name(&n.to_string_lossy())) else { continue };
+            let dst_dir = if fol.is_empty() { wm_dir() } else { wm_dir().join(&fol) };
+            let _ = std::fs::create_dir_all(&dst_dir);
+            let name = uniq(&dst_dir, &fname);
+            if std::fs::copy(&src, dst_dir.join(&name)).is_ok() {
+                let bd = if fol.is_empty() { wm_backup() } else { wm_backup().join(&fol) };
+                let _ = std::fs::create_dir_all(&bd);
+                let _ = std::fs::copy(&src, bd.join(&name));
+                added.push(if fol.is_empty() { name } else { format!("{fol}/{name}") });
+            }
+        }
+        Ok(json!(added))
     }).await.map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-pub fn wm_remove(id: String) -> Result<(), String> {
-    if id.contains('\\') || id.contains('/') || id.contains("..") { return Err("Geçersiz".into()); }
-    let _ = std::fs::remove_file(wm_backup().join(&id));
-    std::fs::remove_file(wm_dir().join(id)).map_err(|e| e.to_string())
+pub fn wm_rename(id: String, name: String) -> Result<String, String> {
+    let rel = safe_rel(&id)?;
+    let mut nn = safe_name(&name)?;
+    if !is_png(&nn) { nn.push_str(".png"); }
+    let folder = rel.parent().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default();
+    let primary = wm_dir().join(&folder);
+    let nn = if primary.join(&nn).exists() && !primary.join(&nn).eq(&wm_dir().join(&rel)) { uniq(&primary, &nn) } else { nn };
+    for r in roots() { let _ = std::fs::rename(r.join(&rel), r.join(&folder).join(&nn)); }
+    Ok(if folder.is_empty() { nn } else { format!("{folder}/{nn}") })
+}
+
+#[tauri::command]
+pub fn wm_move(ids: Vec<String>, folder: String) -> Result<(), String> {
+    let fol = if folder.is_empty() { String::new() } else { safe_name(&folder)? };
+    for id in ids {
+        let rel = safe_rel(&id)?;
+        let fname = rel.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+        let target = if fol.is_empty() { wm_dir() } else { wm_dir().join(&fol) };
+        let _ = std::fs::create_dir_all(&target);
+        let nn = uniq(&target, &fname);
+        for r in roots() {
+            let td = if fol.is_empty() { r.clone() } else { r.join(&fol) };
+            let _ = std::fs::create_dir_all(&td);
+            let _ = std::fs::rename(r.join(&rel), td.join(&nn));
+        }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn wm_delete(ids: Vec<String>) -> Result<(), String> {
+    for id in ids {
+        let rel = safe_rel(&id)?;
+        for r in roots() { let _ = std::fs::remove_file(r.join(&rel)); }
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub fn wm_folder_new(name: String) -> Result<String, String> {
+    let n = safe_name(&name)?;
+    for r in roots() { std::fs::create_dir_all(r.join(&n)).map_err(|e| e.to_string())?; }
+    Ok(n)
+}
+
+#[tauri::command]
+pub fn wm_folder_rename(old: String, name: String) -> Result<String, String> {
+    let (o, n) = (safe_name(&old)?, safe_name(&name)?);
+    if wm_dir().join(&n).exists() { return Err("Bu adda bir klasör zaten var".into()); }
+    for r in roots() { let _ = std::fs::rename(r.join(&o), r.join(&n)); }
+    Ok(n)
+}
+
+/// Klasörü siler; içindeki imzalar ana klasöre taşınır (imza silinmez).
+#[tauri::command]
+pub fn wm_folder_delete(name: String) -> Result<(), String> {
+    let n = safe_name(&name)?;
+    let prim = wm_dir();
+    for f in files_in(&prim.join(&n)) {
+        let nn = uniq(&prim, &f);
+        for r in roots() { let _ = std::fs::rename(r.join(&n).join(&f), r.join(&nn)); }
+    }
+    for r in roots() { let _ = std::fs::remove_dir_all(r.join(&n)); }
+    Ok(())
 }
 
 /// Filigran klasörünü Gezgin'de açar.
@@ -97,8 +213,8 @@ pub fn wm_open_dir() -> Result<(), String> {
 
 #[tauri::command]
 pub fn wm_data(id: String) -> Result<String, String> {
-    if id.contains('\\') || id.contains('/') || id.contains("..") { return Err("Geçersiz".into()); }
-    let b = std::fs::read(wm_dir().join(id)).map_err(|e| e.to_string())?;
+    let rel = safe_rel(&id)?;
+    let b = std::fs::read(wm_dir().join(rel)).map_err(|e| e.to_string())?;
     Ok(format!("data:image/png;base64,{}", base64::engine::general_purpose::STANDARD.encode(b)))
 }
 
@@ -127,16 +243,15 @@ foreach($p in $i.PropertyItems){ if($p.Id -eq 274){ switch($p.Value[0]){ 3 {$i.R
 $w=[System.Drawing.Image]::FromFile('@WM@')
 $bw=$i.Width; $bh=$i.Height
 $tw=[int]($bw*@SCALE@); if($tw -lt 8){$tw=8}; $th=[int]($w.Height*$tw/$w.Width)
-$mg=[int]($bw*@MARGIN@)
-$col=@POS@ % 3; $row=[Math]::Floor(@POS@ / 3)
-if($col -eq 0){$x=$mg}elseif($col -eq 1){$x=[int](($bw-$tw)/2)}else{$x=$bw-$tw-$mg}
-if($row -eq 0){$y=$mg}elseif($row -eq 1){$y=[int](($bh-$th)/2)}else{$y=$bh-$th-$mg}
+$px=$bw*@CX@; $py=$bh*@CY@; $rx=[int](-$tw/2); $ry=[int](-$th/2)
 $b=New-Object System.Drawing.Bitmap $bw,$bh
 $g=[System.Drawing.Graphics]::FromImage($b); $g.InterpolationMode='HighQualityBicubic'; $g.SmoothingMode='HighQuality'
 $g.DrawImage($i,0,0,$bw,$bh)
 $cm=New-Object System.Drawing.Imaging.ColorMatrix; $cm.Matrix33=[single]@OP@
 $ia=New-Object System.Drawing.Imaging.ImageAttributes; $ia.SetColorMatrix($cm)
-$g.DrawImage($w,(New-Object System.Drawing.Rectangle $x,$y,$tw,$th),0,0,$w.Width,$w.Height,[System.Drawing.GraphicsUnit]::Pixel,$ia)
+$g.TranslateTransform([single]$px,[single]$py); $g.RotateTransform([single]@ROT@)
+$dr=New-Object System.Drawing.Rectangle $rx,$ry,$tw,$th
+$g.DrawImage($w,$dr,0,0,$w.Width,$w.Height,[System.Drawing.GraphicsUnit]::Pixel,$ia)
 if('@FMT@' -eq 'png'){ $b.Save('@DST@',[System.Drawing.Imaging.ImageFormat]::Png) } else {
  $enc=[System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq 'image/jpeg' }
  $ep=New-Object System.Drawing.Imaging.EncoderParameters 1
@@ -146,14 +261,13 @@ $g.Dispose(); $b.Dispose(); $i.Dispose(); $w.Dispose()"#;
 
 /// Seçili Drive görsellerine filigran ekler; her biri için aynı klasöre `<ad><ek>.<uzantı>` kopyası yükler.
 #[tauri::command]
-pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, pos: u32, scale: f64, opacity: f64, margin: f64, suffix: String) -> Result<Value, String> {
-    if wm.contains('\\') || wm.contains('/') || wm.contains("..") { return Err("Geçersiz filigran".into()); }
-    let wmp = wm_dir().join(&wm);
+pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, cx: f64, cy: f64, scale: f64, angle: f64, opacity: f64, suffix: String) -> Result<Value, String> {
+    let wmp = wm_dir().join(safe_rel(&wm)?);
     if !wmp.exists() { return Err("Filigran dosyası bulunamadı".into()); }
     let d = drv(&email).await?;
     let dir = std::env::temp_dir().join("FramioOpen");
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let (scale, opacity, margin, pos) = (scale.clamp(0.03, 0.9), opacity.clamp(0.05, 1.0), margin.clamp(0.0, 0.2), pos.min(8));
+    let (scale, opacity, cx, cy, angle) = (scale.clamp(0.03, 0.95), opacity.clamp(0.05, 1.0), cx.clamp(0.0, 1.0), cy.clamp(0.0, 1.0), angle.clamp(-360.0, 360.0));
     let suffix = clean_name(if suffix.trim().is_empty() { "-filigran" } else { suffix.trim() });
     let (mut done, mut failed) = (0u32, vec![]);
     for id in ids {
@@ -168,8 +282,8 @@ pub async fn wm_apply(email: String, ids: Vec<String>, wm: String, pos: u32, sca
         let dst = dir.join(format!("wa_{ms}.{fmt}"));
         if let Err(e) = d.download(&id, &src).await { failed.push(format!("{name}: {}", de(e))); continue; }
         let script = WM_PS.replace("@SRC@", &q(&src.display().to_string())).replace("@WM@", &q(&wmp.display().to_string()))
-            .replace("@DST@", &q(&dst.display().to_string())).replace("@FMT@", fmt).replace("@POS@", &pos.to_string())
-            .replace("@SCALE@", &format!("{scale:.4}")).replace("@MARGIN@", &format!("{margin:.4}")).replace("@OP@", &format!("{opacity:.3}"));
+            .replace("@DST@", &q(&dst.display().to_string())).replace("@FMT@", fmt).replace("@CX@", &format!("{cx:.5}")).replace("@CY@", &format!("{cy:.5}")).replace("@ROT@", &format!("{angle:.2}"))
+            .replace("@SCALE@", &format!("{scale:.5}")).replace("@OP@", &format!("{opacity:.3}"));
         let _ = tauri::async_runtime::spawn_blocking(move || ps(&script)).await;
         let _ = std::fs::remove_file(&src);
         if !dst.exists() { failed.push(format!("{name}: görsel işlenemedi")); continue; }
