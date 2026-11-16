@@ -2,6 +2,7 @@
 mod logo;
 mod org;
 mod forum;
+mod wm;
 use drivenet::auth;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -961,7 +962,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![ext_list, ext_set, client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
+        .invoke_handler(tauri::generate_handler![wm::wm_list, wm::wm_pick, wm::wm_remove, wm::wm_data, wm::wm_preview, wm::wm_apply, ext_list, ext_set, client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

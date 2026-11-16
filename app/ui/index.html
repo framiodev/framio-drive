@@ -238,6 +238,13 @@ select{width:100%;background:var(--track);color:var(--text);border:1px solid var
 select option{background:#222;color:#fff}
 .files{max-height:74px;overflow:auto;font-size:12.5px;color:var(--mut);margin-bottom:6px}
 .modal .glass.wide{width:520px}
+.modal .glass.xl{width:min(900px,94vw);max-height:92vh;overflow:auto}
+.wmg{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px}
+.wmprev{position:relative;border-radius:14px;background:repeating-conic-gradient(var(--track) 0 25%,transparent 0 50%) 0 0/16px 16px;overflow:hidden;display:grid;place-items:center;min-height:240px}
+.wmprev canvas{width:100%;height:auto;display:block}.wmmsg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:12px}
+.wmctl{display:flex;flex-direction:column;gap:8px}.wmctl input[type=range]{width:100%;margin:0;padding:0;accent-color:var(--acc)}.wmctl label{display:flex;justify-content:space-between}
+.wmpos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:108px}.wmpos b{height:24px;border-radius:7px;background:var(--track);cursor:pointer;transition:background .2s,transform .2s var(--ease)}.wmpos b:hover{transform:scale(1.08)}.wmpos b.on{background:var(--acc)}
+@media (max-width:760px){.wmg{grid-template-columns:1fr}}
 </style></head><body>
 <div class="blobs"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/></linearGradient></defs></svg>
@@ -264,7 +271,7 @@ select option{background:#222;color:#fff}
     <div class="tabs" id="tabs"><a data-t="files" class="on">Dosyalar</a><a data-t="org">Düzenle</a><a data-t="shr">Paylaş</a><a data-t="act">Etkinlik</a><a data-t="set">Ayarlar</a><a data-t="app">Uygulama</a></div>
     <div class="tab tfiles" id="t_files">
       <div class="glass fbar"><div class="crumbs" id="fcrumbs" style="margin:0"></div>
-        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
+        <input id="fq" placeholder="Ara…" style="width:160px;margin:0;padding:6px 10px"><button class="btn sm" id="fall">Tümünü seç</button><button class="btn sm hide" id="fclr">Seçimi kaldır</button><button class="btn sm hide" id="fwm">Filigran ekle</button><button class="btn sm danger hide" id="fdelsel">Seçilileri sil</button><div class="seg" id="vmodes"><b data-m="l" title="Liste">☰</b><b data-m="m" title="Orta simgeler">▦</b><b data-m="x" title="Büyük simgeler">▣</b></div><button class="btn sm" id="forg" title="Bu klasördeki görselleri yapay zekâyla adlandır ve klasörle">Akıllı düzenle</button><button class="btn sm" id="fdoc">+ Belge</button><button class="btn sm" id="fnew"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Yeni klasör</button>
         <button class="btn sm" id="freload">Yenile</button>
         <button class="btn sm" id="freveal"><svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/></svg>Gezgin'de aç</button></div>
       <div class="glass flistw" id="fdrop"><div id="frows"></div><div class="dropmsg hide" id="dropmsg">Yüklemek için bırak</div></div>
@@ -609,7 +616,7 @@ async function loadFiles(silent){if(!sel)return;const tok=++fTok;if(fFor!=sel){f
  if(silent&&keep.size)setSel([...document.querySelectorAll('#frows .fr')].filter(x=>keep.has(x.dataset.id)));else selChanged();lastRow=null;
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
 let lastRow=null;
-function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('fclr').classList.toggle('hide',!any);$('frows').classList.toggle('hs',any)}
+function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any);$('fclr').classList.toggle('hide',!any);$('fwm').classList.toggle('hide',!selRows().some(isImg));$('frows').classList.toggle('hs',any)}
 $('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
 let fqT=0;$('fq').oninput=()=>{clearTimeout(fqT);fqT=setTimeout(()=>{const v=$('fq').value.trim();if(v===fSearch)return;fSearch=v;loadFiles()},260)};
 $('fq').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(fqT);fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
@@ -633,14 +640,53 @@ function rowMenu(r,x,y){const rows=selRows();
   m.push({t:rows.length+' öğe seçili',f:()=>{}});m.push('-');
   if(dl.length)m.push({t:dl.length+' dosyayı indir',f:()=>bulkDl(dl)});
   if(fl.length)m.push({t:fl.length+' dosyayı paylaşa ekle',f:()=>{let n=0;fl.forEach(q=>{if(shrPush(q.dataset.n,{kind:'drive',email:sel,key:q.dataset.id}))n++});setTab('shr');toast(n+' dosya Paylaş sekmesine eklendi')}});
-  m.push({t:'Tümünü seç',f:()=>$('fall').click()});m.push({t:'Seçimi kaldır',f:()=>setSel([])});m.push('-');
+  const im=rows.filter(isImg);if(im.length)m.push({t:im.length+' görsele filigran ekle…',f:()=>wmOpen(im)});m.push({t:'Tümünü seç',f:()=>$('fall').click()});m.push({t:'Seçimi kaldır',f:()=>setSel([])});m.push('-');
   m.push({t:rows.length+' öğeyi çöpe at',cls:'danger',f:()=>$('fdelsel').click()});showMenu(m,x,y);return}
  const fo=r.dataset.f=='1',nat=String(r.dataset.m).startsWith('application/vnd.google-apps'),img=!fo&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img',it=[];
  it.push({t:fo?'Klasörü aç':'Aç',f:()=>openRow(r)});
  if(!fo&&!nat)it.push({t:'İndir',f:()=>doAct('dl',r)});
- if(!fo){it.push('-');if(img)it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});it.push({t:EXT.forum&&img?'Paylaş / forumda paylaş':'Paylaşa ekle',f:()=>doAct('fshare',r)});it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
+ if(!fo){it.push('-');if(img)it.push({t:'Gemini’ye sor…',f:()=>doAct('gimg',r)});if(img)it.push({t:'Filigran ekle…',f:()=>wmOpen([r])});it.push({t:EXT.forum&&img?'Paylaş / forumda paylaş':'Paylaşa ekle',f:()=>doAct('fshare',r)});it.push({t:'Gemini’de aç',f:()=>doAct('gem',r)})}
  it.push('-');if(!fSearch)it.push({t:'Yeniden adlandır',f:()=>doAct('ren',r)});it.push({t:'Çöpe at',cls:'danger',f:()=>doAct('del',r)});showMenu(it,x,y)}
 async function bulkDl(rows){let ok=0;for(let i=0;i<rows.length;i++){opStatus(`İndiriliyor ${i+1}/${rows.length}: ${rows[i].dataset.n}`);rows[i].classList.add('busy');try{await invoke('fs_download',{email:sel,id:rows[i].dataset.id,name:rows[i].dataset.n});ok++}catch(x){toast(String(x),true)}rows[i].classList.remove('busy')}opStatus(`${ok}/${rows.length} dosya indirildi`,ok?'ok':'bad')}
+const isImg=r=>r.dataset.f=='0'&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img';
+$('fwm').onclick=()=>{const im=selRows().filter(isImg);if(im.length)wmOpen(im)};
+async function wmOpen(rows){if(!rows.length)return;
+ let S=Object.assign({id:'',pos:8,scale:.22,op:.8,mg:.03,suf:'-filigran'},JSON.parse(localStorage.getItem('wmset')||'{}'));
+ const m=document.createElement('div');m.className='modal';
+ m.innerHTML=`<div class="glass xl"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><b style="font-size:16px">Filigran ekle</b><span class="mut">${rows.length} görsel · orijinal dosyalara dokunulmaz, kopya aynı klasöre kaydedilir</span></div>
+ <div class="wmg"><div class="wmprev"><canvas id="wmc" width="520" height="340"></canvas><div class="wmmsg mut" id="wmmsg">Önizleme yükleniyor…</div></div>
+ <div class="wmctl"><div class="mut">Filigran (şeffaf PNG)</div><div style="display:flex;gap:6px"><select id="wmsel" style="flex:1;min-width:0;margin:0"></select><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm danger" id="wmdel" title="Seçili filigranı kitaplıktan kaldır">Kaldır</button></div>
+ <div class="mut">Konum</div><div class="wmpos" id="wmpos">${[0,1,2,3,4,5,6,7,8].map(i=>`<b data-p="${i}"></b>`).join('')}</div>
+ <label class="mut">Boyut <span id="wmv1"></span></label><input type="range" id="wms" min="5" max="80" step="1">
+ <label class="mut">Saydamlık <span id="wmv2"></span></label><input type="range" id="wmo" min="10" max="100" step="1">
+ <label class="mut">Kenar boşluğu <span id="wmv3"></span></label><input type="range" id="wmm" min="0" max="12" step="1">
+ <div class="mut">Kopya dosya adı eki</div><input id="wmsuf" style="margin:0" placeholder="-filigran"></div></div>
+ <div class="acts" style="margin-top:14px;justify-content:flex-end"><span class="mut" id="wmst" style="margin-right:auto"></span><button class="btn" id="wmcancel">Vazgeç</button><button class="btn pri" id="wmgo">Kopya oluştur</button></div></div>`;
+ document.body.appendChild(m);const q=i=>m.querySelector('#'+i);
+ let base=null,wmimg=null,list=[];
+ const draw=()=>{const c=q('wmc'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);if(!base){return}
+  const r=Math.min(c.width/base.width,c.height/base.height),bw=base.width*r,bh=base.height*r,ox=(c.width-bw)/2,oy=(c.height-bh)/2;x.drawImage(base,ox,oy,bw,bh);
+  if(!wmimg)return;const tw=Math.max(8,bw*S.scale),th=wmimg.height*tw/wmimg.width,mg=bw*S.mg,col=S.pos%3,row=Math.floor(S.pos/3);
+  const px=ox+(col==0?mg:col==1?(bw-tw)/2:bw-tw-mg),py=oy+(row==0?mg:row==1?(bh-th)/2:bh-th-mg);x.globalAlpha=S.op;x.drawImage(wmimg,px,py,tw,th);x.globalAlpha=1};
+ const ui=()=>{q('wms').value=Math.round(S.scale*100);q('wmo').value=Math.round(S.op*100);q('wmm').value=Math.round(S.mg*100);q('wmv1').textContent='%'+Math.round(S.scale*100);q('wmv2').textContent='%'+Math.round(S.op*100);q('wmv3').textContent='%'+Math.round(S.mg*100);q('wmsuf').value=S.suf;
+  m.querySelectorAll('#wmpos b').forEach(b=>b.classList.toggle('on',+b.dataset.p==S.pos));draw()};
+ const loadWm=async()=>{wmimg=null;if(!S.id){draw();return}try{const u=await invoke('wm_data',{id:S.id});const im=new Image();im.onload=()=>{wmimg=im;draw()};im.src=u}catch(e){}};
+ const loadList=async()=>{try{list=await invoke('wm_list')}catch(e){list=[]}if(!list.some(w=>w.id==S.id))S.id=list.length?list[list.length-1].id:'';
+  q('wmsel').innerHTML=list.length?list.map(w=>`<option value="${esc(w.id)}">${esc(w.name)}</option>`).join(''):'<option value="">Henüz filigran yok — “PNG ekle…”</option>';q('wmsel').value=S.id;await loadWm()};
+ const close=()=>{m.remove()};
+ q('wmcancel').onclick=close;m.addEventListener('mousedown',e=>{if(e.target==m)m._dn=1;else m._dn=0});m.addEventListener('click',e=>{if(e.target==m&&m._dn)close()});
+ q('wmsel').onchange=()=>{S.id=q('wmsel').value;loadWm()};
+ q('wmadd').onclick=async()=>{try{const w=await invoke('wm_pick');if(w){S.id=w.id;await loadList()}}catch(e){toast(String(e),true)}};
+ q('wmdel').onclick=async()=>{if(!S.id)return;if(!await confirmBox('Filigranı kaldır','Bu filigran uygulamanın kitaplığından silinecek (cihazdaki orijinal PNG dosyan durur).','Kaldır'))return;try{await invoke('wm_remove',{id:S.id});S.id='';await loadList()}catch(e){toast(String(e),true)}};
+ q('wmpos').onclick=e=>{const b=e.target.closest('[data-p]');if(!b)return;S.pos=+b.dataset.p;ui()};
+ q('wms').oninput=()=>{S.scale=q('wms').value/100;ui()};q('wmo').oninput=()=>{S.op=q('wmo').value/100;ui()};q('wmm').oninput=()=>{S.mg=q('wmm').value/100;ui()};q('wmsuf').oninput=()=>{S.suf=q('wmsuf').value};
+ q('wmgo').onclick=async()=>{if(!S.id){toast('Önce bir filigran PNG’si ekle',true);return}
+  localStorage.setItem('wmset',JSON.stringify(S));q('wmgo').disabled=true;const ids=rows.map(r=>r.dataset.id);close();
+  opStatus(`Filigran uygulanıyor (${ids.length} görsel)…`);
+  try{const r=await invoke('wm_apply',{email:sel,ids,wm:S.id,pos:S.pos,scale:S.scale,opacity:S.op,margin:S.mg,suffix:S.suf});
+   opStatus(`${r.done} kopya oluşturuldu`+(r.failed.length?` · ${r.failed.length} başarısız`:''),r.done?'ok':'bad');if(r.failed.length)toast(r.failed.join(' · '),true);loadFiles()}catch(e){opStatus(String(e),'bad')}};
+ ui();await loadList();
+ try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmmsg').textContent='Önizleme yüklenemedi: '+e}}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){
