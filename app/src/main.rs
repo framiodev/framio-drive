@@ -858,8 +858,15 @@ fn app_version(app: tauri::AppHandle) -> String { app.package_info().version.to_
 #[tauri::command]
 async fn check_update(app: tauri::AppHandle) -> Result<Option<String>, String> {
     use tauri_plugin_updater::UpdaterExt;
-    let u = app.updater().map_err(|e| e.to_string())?.check().await.map_err(|e| e.to_string())?;
-    Ok(u.map(|u| u.version))
+    let up = app.updater().map_err(|e| e.to_string())?;
+    let mut last = String::new();
+    for i in 0..3u64 {
+        match up.check().await {
+            Ok(u) => return Ok(u.map(|u| u.version)),
+            Err(e) => { last = e.to_string(); tokio::time::sleep(std::time::Duration::from_secs(2 + i * 2)).await; }
+        }
+    }
+    Err(format!("Güncelleme sunucusuna ulaşılamadı (3 deneme). İnternet bağlantını, VPN/vekil sunucuyu ya da güvenlik duvarını kontrol et; github.com erişilebilir olmalı. Ayrıntı: {last}"))
 }
 
 #[tauri::command]
