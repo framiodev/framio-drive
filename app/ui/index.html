@@ -241,7 +241,7 @@ select option{background:#222;color:#fff}
 .modal .glass.wide{width:520px}
 .modal .glass.xl{width:min(900px,94vw);max-height:92vh;overflow:auto}
 .wmg{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:16px}
-.wmprev{position:relative;border-radius:14px;background:repeating-conic-gradient(var(--track) 0 25%,transparent 0 50%) 0 0/16px 16px;overflow:hidden;display:grid;place-items:center;min-height:240px}
+.wmprev{position:relative;border-radius:0;background:rgba(255,255,255,.04);overflow:hidden;display:grid;place-items:center;min-height:240px}
 .wmprev canvas{width:100%;height:auto;display:block}.wmprev.ld{min-height:280px}.wmprev.ld::before{content:'';position:absolute;inset:0;background:linear-gradient(100deg,transparent 30%,color-mix(in srgb,var(--acc) 14%,transparent) 50%,transparent 70%);background-size:220% 100%;animation:wsh 1.4s linear infinite}@keyframes wsh{from{background-position:120% 0}to{background-position:-120% 0}}
 .wml{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative}.wml small{font-size:11.5px;opacity:.8}
 .wsp{width:34px;height:34px;border-radius:50%;border:3.5px solid var(--track);border-top-color:var(--acc);animation:spin .85s linear infinite}
@@ -254,6 +254,15 @@ select option{background:#222;color:#fff}
 .wmddl{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);max-height:260px;overflow:auto;border-radius:12px;border:1px solid var(--stroke);background:var(--bg2,#1a1d26);box-shadow:0 12px 30px rgba(0,0,0,.45);padding:4px}.wmddl[hidden]{display:none}
 .wrow{display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:9px;cursor:pointer}.wrow:hover{background:var(--track)}.wrow.on{background:color-mix(in srgb,var(--acc) 16%,transparent)}.wrow .wcard{width:64px;flex:none;padding:0;border:0;display:block}.wrow .wcard:hover{transform:none;background:none}.wrow .im{height:38px}.wrow .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wrow small{opacity:.6}.wrow .rm{font-weight:500;opacity:.55;padding:4px 8px;border-radius:8px}.wrow .rm:hover{opacity:1;background:rgba(255,80,80,.25)}
 .nl{display:flex;align-items:center;gap:8px}.nl input[type=number]{margin:0 0 0 auto;width:84px;padding:4px 8px;text-align:right}.nl2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nl2 .nl{flex-direction:column;align-items:stretch;gap:4px}.nl2 input{width:auto;margin:0;text-align:left}
+.wmrow{display:flex;align-items:center;justify-content:space-between}
+.wmpos{width:100%!important;grid-template-columns:repeat(3,1fr)}.wmpos b{height:28px!important;display:grid;place-items:center}.wmpos b i{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.45}.wmpos b.on i{opacity:1;background:#fff}
+.wmctl input[type=number]{-moz-appearance:textfield;appearance:textfield}.wmctl input[type=number]::-webkit-inner-spin-button,.wmctl input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.nl input[type=number]{width:72px!important}.nl2 .nl input[type=number]{width:100%!important;text-align:left!important;margin:0!important}
+.wmddb .nm,.wrow .nm{white-space:normal!important;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wmddb .im{background:#596072}.wcard .im{background:#596072}.wcard .im[data-bg=dk]{background:#1c2230}.wcard .im[data-bg=lt]{background:#e9edf4}
+.wmfoot{position:sticky;bottom:-1px;margin:14px -4px -4px!important;padding:12px 4px 4px;justify-content:flex-end;background:linear-gradient(transparent,rgba(18,20,28,.96) 35%);z-index:5}
+.glass.xl{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--acc) 55%,transparent) transparent}
+.glass.xl::-webkit-scrollbar{width:8px}.glass.xl::-webkit-scrollbar-track{background:transparent;margin:18px 0}.glass.xl::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--acc) 55%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}.glass.xl::-webkit-scrollbar-thumb:hover{background:var(--acc);background-clip:padding-box}
 .wmfo{display:flex;flex-wrap:wrap;gap:5px}.wmfo b{font-weight:500;font-size:12px;padding:4px 10px;border-radius:9px;background:var(--track);cursor:pointer}.wmfo b.on{background:var(--acc);color:#fff}
 .mgg{display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;min-height:360px}.mgf{display:flex;flex-direction:column;gap:3px;max-height:420px;overflow:auto}
 .mf{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .2s}.mf:hover{background:var(--track)}.mf.on{background:color-mix(in srgb,var(--acc) 16%,transparent);font-weight:600}.mf .fn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mf small{margin-left:auto;color:var(--mut)}.mf i{font-style:normal;opacity:0;font-size:12px;padding:0 3px}.mf:hover i{opacity:.7}.mf i:hover{opacity:1}
@@ -668,7 +677,7 @@ const isImg=r=>r.dataset.f=='0'&&fcat({name:r.dataset.n,mime:r.dataset.m})=='img
 $('fwm').onclick=()=>{const im=selRows().filter(isImg);if(im.length)wmOpen(im)};
 const wmLib=async()=>{try{return await invoke('wm_list')}catch(e){return{items:[],folders:[]}}};
 const wmCache={};const wmUrl=async id=>wmCache[id]||(wmCache[id]=await invoke('wm_data',{id}));
-function wmBg(img,el){try{const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(img,0,0,24,24);const d=x.getImageData(0,0,24,24).data;let l=0,a=0;for(let i=0;i<d.length;i+=4){const al=d[i+3]/255;if(al<.1)continue;l+=(.299*d[i]+.587*d[i+1]+.114*d[i+2])/255*al;a+=al}el.dataset.bg=a&&l/a>.6?'dk':'lt'}catch(e){}}
+function wmBg(img,el){try{const c=document.createElement('canvas');c.width=c.height=24;const x=c.getContext('2d');x.drawImage(img,0,0,24,24);const d=x.getImageData(0,0,24,24).data;let l=0,a=0;for(let i=0;i<d.length;i+=4){const al=d[i+3]/255;if(al<.1)continue;l+=(.299*d[i]+.587*d[i+1]+.114*d[i+2])/255*al;a+=al}el.dataset.bg=a&&l/a>.5?'dk':'lt'}catch(e){}}
 const wmCard=(w,extra)=>`<div class="wcard${extra||''}" data-id="${esc(w.id)}" title="${esc(w.name)}"><div class="im" data-bg="lt"><img alt=""></div><span>${esc(w.name)}</span></div>`;
 function wmFill(box){box.querySelectorAll('.wcard').forEach(c=>{const im=c.querySelector('img');if(im.src)return;wmUrl(c.dataset.id).then(u=>{im.onload=()=>wmBg(im,c.querySelector('.im'));im.src=u}).catch(()=>{})})}
 async function wmManage(done){let lib=await wmLib(),fol='*',selI=new Set();
@@ -705,26 +714,28 @@ async function wmOpen(rows){if(!rows.length)return;
  <div class="mut" style="margin-top:8px;font-size:12px">Sürükle: taşı · Köşe: boyutlandır · Üstteki nokta: döndür · Tekerlek: boyut · Ok tuşları: ince ayar · Çift tık: ortala</div></div>
  <div class="wmctl"><div style="display:flex;align-items:center;gap:6px"><b>İmza</b><span class="mut" style="margin-left:auto"></span><button class="btn sm" id="wmadd">PNG ekle…</button><button class="btn sm" id="wmmg">Yönet…</button></div>
  <div class="wmfo" id="wmfo"></div><div class="wmdd" id="wmdd"><button class="wmddb" id="wmddb" type="button"></button><div class="wmddl" id="wmth" hidden></div></div>
- <div class="mut">Hızlı konum</div><div class="wmpos" id="wmpos">${[0,1,2,3,4,5,6,7,8].map(i=>`<b data-p="${i}"></b>`).join('')}</div>
- <label class="mut nl">Boyut (%) <input type="number" id="wmn1" min="1" max="2000" step="1"></label><input type="range" id="wms" min="1" max="300" step="1">
+ <div class="wmrow"><span class="mut">Hızlı konum</span><button class="btn sm" id="wmreset" type="button" title="Boyut, konum, döndürme ve saydamlığı varsayılana döndür">Sıfırla</button></div><div class="wmpos" id="wmpos">${['Sol üst','Üst orta','Sağ üst','Sol orta','Orta','Sağ orta','Sol alt','Alt orta','Sağ alt'].map((t,i)=>`<b data-p="${i}" title="${t}"><i></i></b>`).join('')}</div>
+ <label class="mut nl">Boyut (%) <input type="number" id="wmn1" min="1" max="2000" step="1"></label><input type="range" id="wms" min="1" max="400" step="1" title="Kaydırıcı 400’e kadar; daha büyük değeri kutuya yazabilirsin">
  <label class="mut nl">Döndürme (°) <input type="number" id="wmn4" min="-360" max="360" step="1"></label><input type="range" id="wmr" min="-180" max="180" step="1">
  <label class="mut nl">Saydamlık (%) <input type="number" id="wmn2" min="5" max="100" step="1"></label><input type="range" id="wmo" min="5" max="100" step="1">
  <div class="nl2"><label class="mut nl">Yatay konum (%) <input type="number" id="wmnx" min="0" max="100" step="1"></label><label class="mut nl">Dikey konum (%) <input type="number" id="wmny" min="0" max="100" step="1"></label></div><div class="mut">Kopya dosya adı eki</div><input id="wmsuf" style="margin:0" placeholder="-filigran"></div></div>
- <div class="acts" style="margin-top:14px;justify-content:flex-end"><span class="mut" id="wmst" style="margin-right:auto"></span><button class="btn" id="wmcancel">Vazgeç</button><button class="btn pri" id="wmgo">Kopya oluştur</button></div></div>`;
+ <div class="acts wmfoot"><span class="mut" id="wmst" style="margin-right:auto"></span><button class="btn" id="wmcancel">Vazgeç</button><button class="btn pri" id="wmgo">Kopya oluştur</button></div></div>`;
  document.body.appendChild(m);const q=i=>m.querySelector('#'+i);
  let base=null,wmimg=null,lib={items:[],folders:[]};const ACC=getComputedStyle(document.documentElement).getPropertyValue('--acc').trim()||'#b3122b';
- const geo=()=>{if(!base)return null;const c=q('wmc'),r=Math.min(c.width/base.width,c.height/base.height),bw=base.width*r,bh=base.height*r;return{ox:(c.width-bw)/2,oy:(c.height-bh)/2,bw,bh}};
+ const PAD=34;const geo=()=>{if(!base)return null;const c=q('wmc');return{ox:PAD,oy:PAD,bw:c.width-2*PAD,bh:c.height-2*PAD}};
  const box=g=>{const tw=Math.max(10,g.bw*S.scale),th=wmimg?wmimg.height*tw/wmimg.width:tw/2;return{x:g.ox+S.cx*g.bw,y:g.oy+S.cy*g.bh,tw,th,a:S.rot*Math.PI/180}};
- let dragging=false;
- const draw=()=>{const c=q('wmc'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);const g=geo();if(!g)return;x.drawImage(base,g.ox,g.oy,g.bw,g.bh);if(!wmimg)return;const b=box(g);
+ let dragging=false,gd={};
+ const draw=()=>{const c=q('wmc'),x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);const g=geo();if(!g)return;x.drawImage(base,g.ox,g.oy,g.bw,g.bh);x.strokeStyle='rgba(255,255,255,.18)';x.lineWidth=1;x.strokeRect(g.ox-.5,g.oy-.5,g.bw+1,g.bh+1);if(!wmimg)return;const b=box(g);
   x.save();x.translate(b.x,b.y);x.rotate(b.a);x.globalAlpha=S.op;x.drawImage(wmimg,-b.tw/2,-b.th/2,b.tw,b.th);x.globalAlpha=1;
   x.strokeStyle=ACC;x.lineWidth=1.6;x.setLineDash([6,4]);x.strokeRect(-b.tw/2,-b.th/2,b.tw,b.th);x.setLineDash([]);
   for(const[hx,hy]of[[-1,-1],[1,-1],[1,1],[-1,1]]){x.fillStyle='#fff';x.fillRect(hx*b.tw/2-5,hy*b.th/2-5,10,10);x.strokeRect(hx*b.tw/2-5,hy*b.th/2-5,10,10)}
   x.beginPath();x.moveTo(0,-b.th/2);x.lineTo(0,-b.th/2-26);x.stroke();x.beginPath();x.arc(0,-b.th/2-26,6.5,0,7);x.fillStyle='#fff';x.fill();x.stroke();x.restore();
-  if(dragging){x.save();x.strokeStyle=ACC;x.globalAlpha=.7;x.lineWidth=1;x.setLineDash([4,4]);if(Math.abs(S.cx-.5)<.0005){x.beginPath();x.moveTo(g.ox+g.bw/2,g.oy);x.lineTo(g.ox+g.bw/2,g.oy+g.bh);x.stroke()}if(Math.abs(S.cy-.5)<.0005){x.beginPath();x.moveTo(g.ox,g.oy+g.bh/2);x.lineTo(g.ox+g.bw,g.oy+g.bh/2);x.stroke()}x.restore()}};
+  if(dragging){x.save();x.strokeStyle=ACC;x.globalAlpha=.8;x.lineWidth=1;x.setLineDash([4,4]);const L=(x1,y1,x2,y2)=>{x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke()},m=.03;
+   if(gd.vc)L(g.ox+g.bw/2,g.oy,g.ox+g.bw/2,g.oy+g.bh);if(gd.hc)L(g.ox,g.oy+g.bh/2,g.ox+g.bw,g.oy+g.bh/2);
+   if(gd.vl)L(g.ox+g.bw*m,g.oy,g.ox+g.bw*m,g.oy+g.bh);if(gd.vr)L(g.ox+g.bw*(1-m),g.oy,g.ox+g.bw*(1-m),g.oy+g.bh);if(gd.ht)L(g.ox,g.oy+g.bh*m,g.ox+g.bw,g.oy+g.bh*m);if(gd.hb)L(g.ox,g.oy+g.bh*(1-m),g.ox+g.bw,g.oy+g.bh*(1-m));x.restore()}};
  const setN=(id,v)=>{const e=q(id);if(document.activeElement!==e)e.value=v};
  const syncUi=()=>{q('wms').value=Math.round(S.scale*100);q('wmr').value=Math.round(S.rot);q('wmo').value=Math.round(S.op*100);setN('wmn1',Math.round(S.scale*100));setN('wmn4',Math.round(S.rot));setN('wmn2',Math.round(S.op*100));setN('wmnx',Math.round(S.cx*100));setN('wmny',Math.round(S.cy*100));if(document.activeElement!==q('wmsuf'))q('wmsuf').value=S.suf};
- const upd=()=>{syncUi();draw()};
+ var markPos;const upd=()=>{syncUi();draw();markPos&&markPos()};
  const pt=e=>{const c=q('wmc'),r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*c.width/r.width,y:(e.clientY-r.top)*c.height/r.height}};
  const loc=(p,b)=>{const dx=p.x-b.x,dy=p.y-b.y,ca=Math.cos(-b.a),sa=Math.sin(-b.a);return{x:dx*ca-dy*sa,y:dx*sa+dy*ca}};
  const hit=p=>{const g=geo();if(!g||!wmimg)return null;const b=box(g),l=loc(p,b);if(Math.hypot(l.x,l.y+b.th/2+26)<=11)return'rot';
@@ -734,17 +745,22 @@ async function wmOpen(rows){if(!rows.length)return;
  cv.onpointerdown=e=>{const p=pt(e),h=hit(p);if(!h)return;const g=geo(),b=box(g);dr={h,p0:p,cx:S.cx,cy:S.cy,sc:S.scale,d0:Math.hypot(p.x-b.x,p.y-b.y)||1};dragging=true;cv.setPointerCapture(e.pointerId);e.preventDefault()};
  cv.onpointermove=e=>{const p=pt(e);if(!dr){const h=hit(p);cv.style.cursor=h=='mv'?'move':h=='sc'?'nwse-resize':h=='rot'?'grab':'default';return}
   const g=geo(),b=box(g);
-  if(dr.h=='mv'){S.cx=clamp(dr.cx+(p.x-dr.p0.x)/g.bw);S.cy=clamp(dr.cy+(p.y-dr.p0.y)/g.bh);if(Math.abs(S.cx-.5)<.012)S.cx=.5;if(Math.abs(S.cy-.5)<.012)S.cy=.5}
+  if(dr.h=='mv'){S.cx=clamp(dr.cx+(p.x-dr.p0.x)/g.bw);S.cy=clamp(dr.cy+(p.y-dr.p0.y)/g.bh);const tw=S.scale,th=wmimg?wmimg.height*(g.bw*S.scale)/wmimg.width/g.bh:tw/2,mg=.03;gd={};for(const[v,k]of[[.5,'c']]){}
+  if(Math.abs(S.cx-.5)<.012){S.cx=.5;gd.vc=1}if(Math.abs(S.cy-.5)<.012){S.cy=.5;gd.hc=1}
+  if(Math.abs(S.cx-tw/2-mg)<.012){S.cx=tw/2+mg;gd.vl=1}if(Math.abs(S.cx+tw/2-(1-mg))<.012){S.cx=1-mg-tw/2;gd.vr=1}if(Math.abs(S.cy-th/2-mg)<.012){S.cy=th/2+mg;gd.ht=1}if(Math.abs(S.cy+th/2-(1-mg))<.012){S.cy=1-mg-th/2;gd.hb=1}}
   else if(dr.h=='sc'){S.scale=clS(dr.sc*Math.hypot(p.x-b.x,p.y-b.y)/dr.d0)}
   else{let a=Math.atan2(p.y-b.y,p.x-b.x)*180/Math.PI+90;a=((a+180)%360+360)%360-180;for(const k of[0,90,-90,180,-180])if(Math.abs(a-k)<3)a=k;S.rot=Math.round(a)}
   upd()};
- cv.onpointerup=cv.onpointercancel=()=>{dr=null;dragging=false;draw()};
+ cv.onpointerup=cv.onpointercancel=()=>{dr=null;dragging=false;gd={};draw()};
  cv.onwheel=e=>{e.preventDefault();S.scale=clS(S.scale*(e.deltaY<0?1.06:1/1.06));upd()};
  cv.ondblclick=e=>{const h=hit(pt(e));if(h){S.cx=.5;S.cy=.5;upd()}};
  const key=e=>{if(!m.isConnected){document.removeEventListener('keydown',key);return}if(e.target.closest&&e.target.closest('input,textarea,select'))return;
   const st=e.shiftKey?.01:.002;const mvk={ArrowLeft:[-st,0],ArrowRight:[st,0],ArrowUp:[0,-st],ArrowDown:[0,st]}[e.key];if(mvk){e.preventDefault();S.cx=clamp(S.cx+mvk[0]);S.cy=clamp(S.cy+mvk[1]);upd()}else if(e.key=='Escape'){close()}};
  document.addEventListener('keydown',key);
- const place=i=>{const g=geo(),mg=.03,col=i%3,row=Math.floor(i/3),tw=S.scale,thf=g&&wmimg?wmimg.height*(g.bw*S.scale)/wmimg.width/g.bh:tw/2;S.rot=0;S.cx=col==0?mg+tw/2:col==1?.5:1-mg-tw/2;S.cy=row==0?mg+thf/2:row==1?.5:1-mg-thf/2;upd()};
+ const posOf=i=>{const g=geo(),mg=.03,col=i%3,row=Math.floor(i/3),tw=S.scale,thf=g&&wmimg?wmimg.height*(g.bw*S.scale)/wmimg.width/g.bh:tw/2;return{cx:col==0?mg+tw/2:col==1?.5:1-mg-tw/2,cy:row==0?mg+thf/2:row==1?.5:1-mg-thf/2}};
+ const place=i=>{const p=posOf(i);S.rot=0;S.cx=p.cx;S.cy=p.cy;upd()};
+ markPos=()=>{q('wmpos').querySelectorAll('b').forEach((b,i)=>{const p=posOf(i);b.classList.toggle('on',S.rot==0&&Math.abs(p.cx-S.cx)<.004&&Math.abs(p.cy-S.cy)<.004)})};
+ const resetAll=()=>{S.scale=.22;S.rot=0;S.op=.85;place(8)};
  const loadWm=async()=>{wmimg=null;if(!S.id){draw();return}try{const u=await wmUrl(S.id);const im=new Image();im.onload=()=>{wmimg=im;draw()};im.src=u}catch(e){}};
  const renderLib=async()=>{lib=await wmLib();if(!lib.items.some(w=>w.id==S.id))S.id=lib.items.length?lib.items[0].id:'';if(S.fol!='*'&&S.fol!='.'&&!lib.folders.includes(S.fol))S.fol='*';
   q('wmfo').innerHTML=lib.folders.length||lib.items.some(w=>w.folder)?[['*','Tümü'],['.','Genel']].concat(lib.folders.map(f=>[f,f])).map(f=>`<b data-f="${esc(f[0])}" class="${S.fol==f[0]?'on':''}">${esc(f[1])}</b>`).join(''):'';
@@ -760,6 +776,7 @@ async function wmOpen(rows){if(!rows.length)return;
  q('wmfo').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;S.fol=b.dataset.f;renderLib()};
  q('wmadd').onclick=async()=>{try{const a=await invoke('wm_pick_many',{folder:S.fol=='*'||S.fol=='.'?'':S.fol});if(a.length){S.id=a[0];S.fol=S.fol=='*'?'*':S.fol;toast(a.length+' imza eklendi')}await renderLib()}catch(x){toast(String(x),true)}};
  q('wmmg').onclick=()=>wmManage(renderLib);
+ q('wmreset').onclick=resetAll;
  q('wmpos').onclick=e=>{const b=e.target.closest('[data-p]');if(b)place(+b.dataset.p)};
  q('wms').oninput=()=>{S.scale=q('wms').value/100;upd()};q('wmr').oninput=()=>{S.rot=+q('wmr').value;upd()};q('wmo').oninput=()=>{S.op=q('wmo').value/100;upd()};const nin=(id,f)=>{q(id).oninput=()=>{const v=parseFloat(q(id).value);if(isNaN(v))return;f(v);draw();q('wms').value=Math.round(S.scale*100);q('wmr').value=Math.round(S.rot);q('wmo').value=Math.round(S.op*100)}};
  nin('wmn1',v=>S.scale=Math.min(20,Math.max(.01,v/100)));nin('wmn4',v=>S.rot=Math.max(-360,Math.min(360,v)));nin('wmn2',v=>S.op=Math.min(1,Math.max(.05,v/100)));nin('wmnx',v=>S.cx=clamp(v/100));nin('wmny',v=>S.cy=clamp(v/100));
@@ -770,7 +787,7 @@ async function wmOpen(rows){if(!rows.length)return;
   try{const r=await invoke('wm_apply',{email:sel,ids,wm:S.id,cx:S.cx,cy:S.cy,scale:S.scale,angle:S.rot,opacity:S.op,suffix:S.suf});
    opStatus(`${r.done} kopya oluşturuldu`+(r.failed.length?` · ${r.failed.length} başarısız`:''),r.done?'ok':'bad');if(r.failed.length)toast(r.failed.join(' · '),true);loadFiles()}catch(e){opStatus(String(e),'bad')}};
  syncUi();await renderLib();
- try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;q('wmprev').classList.remove('ld');q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmprev').classList.remove('ld');q('wmmsg').querySelector('.wsp').style.display='none';q('wmtx').textContent='Önizleme yüklenemedi: '+e;q('wmmsg').querySelector('small').style.display='none'}}
+ try{const u=await invoke('wm_preview',{email:sel,id:rows[0].dataset.id});const im=new Image();im.onload=()=>{base=im;const c=q('wmc'),W=Math.min(1100,im.width);c.width=W+2*PAD;c.height=Math.round(W*im.height/im.width)+2*PAD;q('wmprev').classList.remove('ld');q('wmmsg').style.display='none';draw()};im.src=u}catch(e){q('wmprev').classList.remove('ld');q('wmmsg').querySelector('.wsp').style.display='none';q('wmtx').textContent='Önizleme yüklenemedi: '+e;q('wmmsg').querySelector('small').style.display='none'}}
 function openRow(r){if(r.dataset.f=='1'){if(fSearch){fSearch='';$('fq').value='';fPath=[{id:'root',name:'Drive'}]}fPath.push({id:r.dataset.id,name:r.dataset.n});loadFiles();return}
  openWith(r,String(r.dataset.m).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:sel,id:r.dataset.id,name:r.dataset.n,mime:r.dataset.m})}
 async function doAct(a,r){
