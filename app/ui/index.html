@@ -841,26 +841,46 @@ const asCss=document.createElement('style');asCss.textContent=`
 .asConf{border:1px solid color-mix(in srgb,var(--acc) 40%,var(--stroke));background:color-mix(in srgb,var(--acc) 8%,transparent);border-radius:14px;padding:10px 12px;animation:pop .35s var(--ease) both}.asConf div{font-size:13.5px;line-height:1.45;margin-bottom:8px}.asBt{display:flex;gap:8px}
 .asIn{display:flex;gap:8px}.asIn input{flex:1;margin:0!important}
 .asMeter{height:8px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:10px;max-width:320px}.asMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--acc));transition:width .08s linear}
-/* ---- Jarvis katmanı ---- */
-.asst{inset:0;right:0;top:0;width:auto;max-width:none;max-height:none;border-radius:0;padding:0;z-index:90;align-items:center;justify-content:center;gap:0;border:0;overflow:hidden;
- background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--acc) 18%,rgba(4,8,18,.78)),rgba(3,6,14,.93) 72%);backdrop-filter:blur(24px) saturate(1.35);transition:opacity .35s,transform .45s var(--ease),border-radius .35s}
-.asst::before,.asst::after{content:"";position:absolute;width:64px;height:64px;border:2px solid color-mix(in srgb,var(--acc) 70%,transparent);pointer-events:none;opacity:.7}
-.asst::before{left:28px;top:28px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}.asst::after{right:28px;bottom:28px;border-left:0;border-top:0;border-radius:0 0 14px 0}
-.asst .asH{flex-direction:column;gap:6px;text-align:center;margin-bottom:10px}.asst .asT b{font-size:22px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}.asst .asT small{font-size:13px;white-space:normal;max-width:70vw;margin:0 auto}
-.asst .orb{width:min(30vh,230px);height:min(30vh,230px);transition:width .4s var(--ease),height .4s var(--ease)}
-.asst .orb::before{inset:22%}.asst .orb i{inset:8%;border-width:2px}
-.asst .orb::after{content:"";position:absolute;inset:-6%;border-radius:50%;border:1px dashed color-mix(in srgb,var(--acc) 45%,transparent);animation:asspin 24s linear infinite}
-.asst .orb i:nth-child(3){opacity:.35;inset:-2%;border-style:dotted;animation:asspin 40s linear infinite reverse}
-.asst .asH>.upB{position:absolute;right:26px;top:22px;font-size:18px}
-.asBtns{position:absolute;right:70px;top:22px;display:flex;gap:8px}
-.asst .asLog{width:min(680px,90vw);max-height:30vh;padding:4px 6px;mask-image:linear-gradient(transparent,#000 14px)}
-.asst .asM{max-width:80%;font-size:14.5px;backdrop-filter:blur(6px)}
-.asst .asConf{width:min(520px,90vw);text-align:center;margin-top:8px}
-.asst .asIn{width:min(680px,90vw);margin-top:14px}.asst .asIn input{border-radius:999px;padding-left:18px}
-.asst.mini{inset:auto 22px 22px auto;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 22%,rgba(4,8,18,.85)),rgba(4,8,18,.6));box-shadow:0 8px 30px rgba(0,0,0,.4);cursor:pointer;backdrop-filter:blur(14px)}
-.asst.mini::before,.asst.mini::after,.asst.mini .asT,.asst.mini .asLog,.asst.mini .asConf,.asst.mini .asIn,.asst.mini .asH>.upB,.asst.mini .asBtns{display:none}
-.asst.mini .asH{margin:0}.asst.mini .orb{width:64px;height:64px}
-@media(max-height:560px){.asst .orb{width:110px;height:110px}.asst .asLog{max-height:22vh}}`;document.head.appendChild(asCss);
+/* ---- Jarvis yan paneli (ana görünümün üstüne binmez, yanında durur) ---- */
+#asst{--hud:#52e1ff;position:relative;inset:auto;right:auto;top:auto;width:352px;max-width:none;max-height:none;height:100%;flex:none;z-index:5;padding:16px 16px 16px;border-radius:22px;gap:0;align-items:stretch;overflow:hidden;color:#eaf6ff;
+ background:radial-gradient(ellipse at 50% 18%,rgba(40,120,170,.38),rgba(5,12,26,.96) 62%),linear-gradient(#050c1a,#050c1a);border:1px solid rgba(82,225,255,.38);box-shadow:0 0 0 1px rgba(0,0,0,.5),0 0 34px rgba(82,225,255,.14),inset 0 0 60px rgba(82,225,255,.05);backdrop-filter:none;transition:opacity .3s}
+#asst::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(82,225,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(82,225,255,.055) 1px,transparent 1px);background-size:26px 26px;mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 80%);-webkit-mask-image:radial-gradient(ellipse at 50% 30%,#000,transparent 80%);border:0;width:auto;height:auto;opacity:1}
+#asst::after{content:"";position:absolute;left:0;right:0;height:90px;top:-90px;pointer-events:none;background:linear-gradient(transparent,rgba(82,225,255,.09),transparent);animation:assweep 6s linear infinite;border:0;width:auto;opacity:1}
+@keyframes assweep{to{transform:translateY(calc(100vh + 90px))}}
+#asst>*{position:relative;z-index:1}
+#asst .asH{flex-direction:column;align-items:center;gap:8px;text-align:center;margin:6px 0 8px}
+#asst .asT b{font:600 14px ui-monospace,Consolas,monospace;letter-spacing:.26em;color:var(--hud);text-transform:uppercase;text-shadow:0 0 12px var(--hud)}
+#asst .asT small{font:12px ui-monospace,Consolas,monospace;color:rgba(190,230,245,.62);white-space:normal;margin-top:3px}
+#asst .orb{--hud:inherit;width:min(26vh,196px);height:min(26vh,196px);margin:10px 0 2px}
+#asst .orb::before{inset:34%;border-radius:50%;background:radial-gradient(circle,#fff 0,#d6f8ff 16%,var(--hud) 46%,#0b6f9a 100%);box-shadow:0 0 26px var(--hud),0 0 72px color-mix(in srgb,var(--hud) 55%,transparent);transform:scale(calc(1 + var(--lvl)*.4));animation:asbreath 3.2s ease-in-out infinite}
+#asst .orb::after{content:"";position:absolute;inset:-3%;border-radius:50%;border:1px dashed color-mix(in srgb,var(--hud) 50%,transparent);animation:asspin 40s linear infinite}
+#asst .orb i{position:absolute;border:0;border-radius:50%;opacity:1;animation:asspin 20s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));filter:drop-shadow(0 0 5px var(--hud))}
+#asst .orb i:nth-child(1){inset:4%;background:repeating-conic-gradient(var(--hud) 0 15deg,transparent 15deg 24deg)}
+#asst .orb i:nth-child(2){inset:15%;background:repeating-conic-gradient(var(--hud) 0 5deg,transparent 5deg 9deg);animation-duration:14s;animation-direction:reverse;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+#asst .orb i:nth-child(3){inset:25%;background:conic-gradient(var(--hud) 0 110deg,transparent 110deg 170deg,var(--hud) 170deg 290deg,transparent 290deg);animation-duration:7s;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3px))}
+#asst .orb.s-listen{filter:drop-shadow(0 0 16px color-mix(in srgb,var(--hud) 70%,transparent))}
+#asst .orb.s-listen i:nth-child(1){animation:asspin 9s linear infinite;opacity:1}#asst .orb.s-listen i:nth-child(2){animation:asspin 6s linear infinite reverse;opacity:1}
+#asst .orb.s-think::before{animation:asspin 1s linear infinite;transform:none}
+#asst .orb.s-think i:nth-child(1){animation:asspin 2.2s linear infinite;opacity:1;border:0}#asst .orb.s-think i:nth-child(2){animation:asspin 1.6s linear infinite reverse;opacity:1}#asst .orb.s-think i:nth-child(3){animation:asspin 1s linear infinite;opacity:1}
+#asst .orb.s-speak::before{animation:asbreath .9s ease-in-out infinite;transform:none}
+#asst .orb.s-confirm{--hud:#ffb347}#asst .orb.s-confirm::before{animation:asbreath 1.4s ease-in-out infinite;transform:none}
+#asst .orb.s-err{--hud:#ff5d5d}#asst .orb.s-err::before{background:radial-gradient(circle,#fff,#ff5d5d 50%,#7a1010);box-shadow:0 0 30px #ff5d5d;transform:none}
+#asst .asH>.upB,#asst .asBtns .upB{position:absolute;top:0;color:rgba(190,230,245,.75);background:transparent;border:1px solid rgba(82,225,255,.25);border-radius:8px;width:28px;height:28px;line-height:1;font-size:14px;padding:0}
+#asst .asH>.upB{right:0}#asst .asBtns{position:absolute;right:34px;top:0;display:flex;gap:6px}
+#asst .asLog{flex:1;min-height:0;max-height:none;overflow:auto;padding:4px 2px;margin-top:6px;border-top:1px solid rgba(82,225,255,.16)}
+#asst .asLog:empty{display:block;border-top:0}
+#asst .asM{max-width:94%;font-size:13.5px;color:#eaf6ff;backdrop-filter:none;border-radius:10px}
+#asst .asM.me{align-self:flex-end;background:rgba(82,225,255,.13);border:1px solid rgba(82,225,255,.34)}
+#asst .asM.ai{align-self:flex-start;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-left:2px solid var(--hud)}
+#asst .asM.err{color:#ffd6d6}
+#asst .asS{font:11.5px ui-monospace,Consolas,monospace;color:rgba(150,215,235,.66)}#asst .asS::before{background:var(--hud);box-shadow:0 0 8px var(--hud);border-radius:1px}
+#asst .asPick .btn{background:rgba(82,225,255,.1)!important;color:#eaf6ff!important;border:1px solid rgba(82,225,255,.35)!important}
+#asst .asConf{margin-top:8px;background:rgba(255,179,71,.1);border-color:rgba(255,179,71,.5);color:#ffe9c9;text-align:center}
+#asst .asIn{margin-top:10px}#asst .asIn input{background:rgba(255,255,255,.06)!important;border:1px solid rgba(82,225,255,.32)!important;color:#eaf6ff!important;border-radius:12px}#asst .asIn input::placeholder{color:rgba(190,230,245,.45)}
+#asst.mini{position:fixed;right:22px;bottom:22px;left:auto;top:auto;width:84px;height:84px;padding:0;border-radius:50%;cursor:pointer;z-index:90;align-items:center;justify-content:center;box-shadow:0 8px 34px rgba(0,0,0,.45),0 0 24px rgba(82,225,255,.3)}
+#asst.mini::before,#asst.mini::after,#asst.mini .asT,#asst.mini .asLog,#asst.mini .asConf,#asst.mini .asIn,#asst.mini .asH>.upB,#asst.mini .asBtns{display:none}
+#asst.mini .asH{margin:0}#asst.mini .orb{width:78px;height:78px;margin:0}
+@media(max-width:1020px){#asst:not(.mini){position:fixed;right:14px;top:14px;bottom:14px;z-index:90;height:auto}}`;document.head.appendChild(asCss);
 const AS={state:'idle',tok:0,hist:[],seen:{},cfg:Object.assign({speak:true,voice:'',mic:'',mode:'live',liveVoice:'Kore'},JSON.parse(localStorage.getItem('asst')||'{}')),stopRec:null,conf:null,onLvl:null};
 const MICI='<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
 const asCfgSave=()=>localStorage.setItem('asst',JSON.stringify(AS.cfg));
@@ -873,7 +893,8 @@ function asstOpen(){$('asst').classList.remove('hide','mini');asstWarm();asIdleA
 let asIdleT=0;function asIdleArm(){try{asIdleArm_()}catch(e){}}
 function asIdleArm_(){clearTimeout(asIdleT);if(AS.state=='idle'&&!LIVE.on&&!$('asst').classList.contains('hide')&&!$('asst').classList.contains('mini')&&!$('asIn').value)asIdleT=setTimeout(()=>{if(AS.state=='idle'&&!LIVE.on&&document.activeElement!==$('asIn'))$('asst').classList.add('mini')},20000)}
 $('asMin').onclick=()=>$('asst').classList.add('mini');
-$('asst').addEventListener('click',e=>{const a=$('asst');if(a.classList.contains('mini')){a.classList.remove('mini');asIdleArm()}else if(e.target===a)a.classList.add('mini')});
+document.querySelector('.app').appendChild($('asst'));
+$('asst').addEventListener('click',e=>{const a=$('asst');if(a.classList.contains('mini')){a.classList.remove('mini');asIdleArm()}});
 function asstCancel(){AS.tok++;try{speechSynthesis.cancel()}catch(e){}if(AS.conf)AS.conf.fin(false);if(AS.stopRec)AS.stopRec()}
 function asstClose(){liveStop('');asstCancel();$('asst').classList.add('hide');asstState('idle')}
 function asstToggle(){if($('asst').classList.contains('hide'))asstOpen();
@@ -1011,7 +1032,7 @@ async function asResolve(a,step){let x=null;
  else if(AS.focus)x=AS.focus;else return{sonuc:{hata:'Hangi dosya? Henüz bir dosya konuşulmadı'}};
  return{x}}
 const asShort=y=>{const p=String(y.loose||y.path||y.dir||'').split('/').filter(Boolean);return p.slice(-3).join(' / ')||'(yol yok)'};
-function asChoices(L){const d=document.createElement('div');d.className='asM ai';d.textContent='Birden çok eşleşme var, hangisi?';L.forEach((y,i)=>{const b=document.createElement('button');b.className='btn';b.style.cssText='display:block;margin:4px 0;text-align:left;width:100%';b.textContent=(i+1)+'. '+y.name+' — '+asShort(y)+(y.modified?' · '+y.modified.slice(0,10):'');b.onclick=async()=>{try{const o=await asPick(i+1);asstSay('ai',(o&&(o.soyle||o.tamam))||'Tamam.')}catch(e){asstSay('ai','Hata: '+(e.message||e))}};d.appendChild(b)});$('asLog').appendChild(d);$('asLog').scrollTop=1e9}
+function asChoices(L){const d=document.createElement('div');d.className='asM ai asPick';d.textContent='Birden çok eşleşme var, hangisi?';L.forEach((y,i)=>{const b=document.createElement('button');b.className='btn';b.style.cssText='display:block;margin:4px 0;text-align:left;width:100%';b.textContent=(i+1)+'. '+y.name+' — '+asShort(y)+(y.modified?' · '+y.modified.slice(0,10):'');b.onclick=async()=>{try{const o=await asPick(i+1);asstSay('ai',(o&&(o.soyle||o.tamam))||'Tamam.')}catch(e){asstSay('ai','Hata: '+(e.message||e))}};d.appendChild(b)});$('asLog').appendChild(d);$('asLog').scrollTop=1e9}
 async function asPick(no){const p=AS.pend;if(!p)return{hata:'Bekleyen seçim yok'};const y=p.list[no-1];if(!y)return{hata:'Geçersiz numara, 1-'+p.list.length};const a=Object.assign({},p.args,{id:y.id});delete a.sorgu;const n=p.name;return await asstExec(n,a,AS.tok)}
 const asNm=id=>(AS.seen[id]&&AS.seen[id].name)||id;
 async function asstOnay(msg,tok,a){if(!LIVE.on){return await asstConfirm(msg,tok)?true:{iptal:'Kullanıcı onaylamadı'}}
