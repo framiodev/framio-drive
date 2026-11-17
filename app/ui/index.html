@@ -471,7 +471,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="asSpeak" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Yanıtları sesli oku</label>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><select id="asMode" style="flex:1;min-width:180px"><option value="live">Canlı konuşma (karşılıklı, önerilen)</option><option value="ptt">Bas-konuş</option></select><select id="asLiveVoice" style="flex:1;min-width:180px"></select></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><select id="asVoice" style="flex:1;min-width:180px"></select><select id="asMicSel" style="flex:1;min-width:180px"></select></div>
-        <div class="acts"><button class="btn pri" id="asOpen">Asistanı aç</button><button class="btn" id="asTest">Mikrofonu dene</button></div>
+        <div class="acts"><button class="btn pri" id="asOpen">Asistanı aç</button><button class="btn" id="asTest">Mikrofonu dene</button><button class="btn" id="asDiag">Bağlantıyı test et</button></div>
         <div class="asMeter hide"><i id="asMeter"></i></div>
         <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.25)"><b>Uyandırma kelimesi</b>
           <div class="mut" id="awSt" style="margin:6px 0;line-height:1.5"></div>
@@ -909,10 +909,11 @@ const ASTOOLS=[
  {name:'eklenti_ac_kapat',description:'Bir eklentiyi adıyla açar ya da kapatır.',parameters:{type:'OBJECT',properties:{ad:sv_('Eklenti adı'),ac:{type:'BOOLEAN'}},required:['ad','ac']}}];
 function asstSys(){const s=selRows().slice(0,8).map(r=>r.dataset.n).join(', ');
  return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Dosya adı geçen her komutta önce dosya_ac / gezginde_goster gibi tek adımda işi yapan aracı dene; dosya_bul bulanık aramadır (yazım ve boşluk farkını tolere eder). "Onu", "aynı dosya", "bulunduğu dizin" gibi göndermeler odaktaki dosyayı kasteder, bu durumda sorgu verme. Birleşik komutları ("bul, dizinini aç, dosyayı seç") sırayla araç çağırarak tamamla. Yalnızca drive_ara'yı içerik/ad parçası için yedek olarak kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yapamayacağını dürüstçe söyle, bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: odak dosya ${AS.focus?AS.focus.name+' ('+(AS.focus.path||'yol bilinmiyor')+')':'yok'}; sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.`}
-const asGen=(contents,tools)=>invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})});
+const asTimeout=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('Gemini '+ms/1000+' sn içinde yanıt vermedi. İnternet/VPN/güvenlik duvarını kontrol et ya da Ayarlar > Sesli asistan > “Bağlantıyı test et”i çalıştır.')),ms))]);
+const asGen=(contents,tools)=>asTimeout(invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})}),70000);
 async function asstTurn(inp){const tok=AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());asstState('think');
  const user={role:'user',parts:inp.audio?[{text:'(Sesli komut)'},{inline_data:{mime_type:'audio/wav',data:inp.audio}}]:[{text:inp.text}]};
- const contents=[...AS.hist,user];let heard=inp.text||'';if(inp.text)asstSay('me',inp.text);
+ const contents=[...AS.hist,user];let heard=inp.text||'';if(inp.text&&!inp.noEcho)asstSay('me',inp.text);
  for(let round=0;round<6;round++){let r;try{r=await asGen(contents,true)}catch(e){return asstFail(e)}
   if(tok!==AS.tok)return;
   const parts=(r.candidates&&r.candidates[0]&&r.candidates[0].content&&r.candidates[0].content.parts)||[];
@@ -993,7 +994,7 @@ case'dosya_bul':{need();step('Aranıyor: '+(a.sorgu||a.uzanti||'son değişenler
 
 /* ===== Canlı (karşılıklı) konuşma: Gemini Live, WebSocket ===== */
 const LV_VOICES=['Kore','Puck','Charon','Fenrir','Aoede','Leda','Orus','Zephyr','Callirrhoe','Autonoe','Enceladus','Iapetus','Umbriel','Algieba','Despina','Erinome','Algenib','Rasalgethi','Laomedeia','Achernar','Alnilam','Schedar','Gacrux','Pulcherrima','Achird','Zubenelgenubi','Vindemiatrix','Sadachbia','Sadaltager','Sulafat'];
-const LIVE={on:false,ready:false,ws:null,stream:null,ctxIn:null,ctxOut:null,pr:null,src:null,next:0,srcs:new Set(),curUser:'',curAi:'',bMe:null,bAi:null,lastUser:{text:'',t:0},handle:null,layout:0,idle:null,model:'',cfg:null,retried:false};
+const LIVE={on:false,ready:false,ws:null,stream:null,ctxIn:null,ctxOut:null,pr:null,src:null,next:0,srcs:new Set(),curUser:'',curAi:'',bMe:null,bAi:null,lastUser:{text:'',t:0},handle:null,layout:+(localStorage.getItem('asLiveLayout')||1),idle:null,model:'',cfg:null,tries:0};
 const b64u8=u=>{let b='';for(let i=0;i<u.length;i+=32768)b+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(b)};
 function liveTools(){const ob={onay:{type:'BOOLEAN',description:'Kullanıcı bu işlemi sesle açıkça onayladıysa true'}};
  const t=ASTOOLS.filter(x=>x.name!='duyulan').map(x=>{if(['cope_at','copten_geri_yukle','dosya_yukle'].includes(x.name)){const pr=x.parameters||{type:'OBJECT',properties:{}};return Object.assign({},x,{parameters:{type:'OBJECT',properties:Object.assign({},pr.properties,ob),required:pr.required||[]}})}return x});
@@ -1011,18 +1012,19 @@ function liveSetup(){const gc={responseModalities:['AUDIO'],speechConfig:{voiceC
  const st={model:'models/'+LIVE.model,systemInstruction:{parts:[{text:liveSys()}]},tools:[{functionDeclarations:liveTools()}],inputAudioTranscription:{},outputAudioTranscription:{},contextWindowCompression:{slidingWindow:{}},sessionResumption:LIVE.handle?{handle:LIVE.handle}:{}};
  if(LIVE.layout==0)st.generationConfig=gc;else{st.responseModalities=gc.responseModalities;st.speechConfig=gc.speechConfig}
  return{setup:st}}
-async function liveStart(){if(LIVE.on)return;LIVE.on=true;LIVE.ready=false;LIVE.retried=false;AS.tok++;asstState('think','Bağlanıyorum…');
+async function liveStart(){if(LIVE.on)return;LIVE.on=true;LIVE.ready=false;LIVE.tries=0;AS.tok++;asstState('think','Bağlanıyorum…');
  try{LIVE.cfg=await invoke('assistant_live_cfg');LIVE.model=LIVE.cfg.model}catch(e){LIVE.on=false;return asstFail(e)}
  liveConnect()}
 function liveConnect(){const ws=new WebSocket(LIVE.cfg.url);LIVE.ws=ws;let opened=false;
  ws.onopen=()=>{opened=true;ws.send(JSON.stringify(liveSetup()))};
  ws.onmessage=async ev=>{try{const txt=typeof ev.data=='string'?ev.data:await ev.data.text();liveMsg(JSON.parse(txt))}catch(e){console.error(e)}};
  ws.onerror=()=>{};
- ws.onclose=ev=>{if(LIVE.ws!==ws)return;
-  if(!LIVE.ready){const r=String(ev.reason||'');if(!LIVE.retried&&LIVE.layout==0&&/responseModalities|speechConfig|Unknown name|Invalid JSON|generation/i.test(r)){LIVE.retried=true;LIVE.layout=1;return liveConnect()}
-   LIVE.on=false;liveCleanup();return asstFail(new Error('Canlı bağlantı kurulamadı'+(opened?` (kod ${ev.code}${r?': '+r:''})`:' (ağ ya da güvenlik duvarı engelliyor olabilir)')+'. Ayarlardan "Bas-konuş" kipine geçebilirsin.'))}
-  if(LIVE.on&&LIVE.handle&&ev.code!=1000){asstSay('step','Bağlantı yenileniyor…');LIVE.ready=false;return liveConnect()}
-  liveStop(ev.reason?String(ev.reason):'')}}
+ ws.onclose=ev=>{if(LIVE.ws!==ws)return;const r=String(ev.reason||'');
+  if(!LIVE.ready){asstSay('step',`Canlı bağlantı yanıtı: kod ${ev.code}${r?' – '+r:''}`);
+   if(LIVE.on&&LIVE.tries<3&&opened){LIVE.tries++;const dup=/already connected/i.test(r);if(!dup)LIVE.layout=LIVE.layout?0:1;LIVE.ws=null;return setTimeout(()=>{if(LIVE.on)liveConnect()},dup?3500:1500)}
+   LIVE.on=false;liveCleanup();return asstFail(new Error('Canlı bağlantı kurulamadı'+(opened?` (kod ${ev.code}${r?': '+r:''})`:' (ağ ya da güvenlik duvarı engelliyor olabilir)')+'. Ayarlardan “Bas-konuş” kipine geçebilir ya da “Bağlantıyı test et”i çalıştırabilirsin.'))}
+  if(LIVE.on&&LIVE.handle&&ev.code!=1000){asstSay('step','Bağlantı yenileniyor…');LIVE.ready=false;return setTimeout(()=>{if(LIVE.on)liveConnect()},2500)}
+  liveStop(r)}}
 async function liveMic(){if(LIVE.stream)return;
  const stream=await navigator.mediaDevices.getUserMedia({audio:Object.assign({echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},AS.cfg.mic?{deviceId:{exact:AS.cfg.mic}}:{})});
  const AC=window.AudioContext||window.webkitAudioContext,ctx=new AC({sampleRate:16000}),src=ctx.createMediaStreamSource(stream),pr=ctx.createScriptProcessor(2048,1,1);
@@ -1038,7 +1040,7 @@ function livePlay(b,rate){if(!LIVE.ctxOut)LIVE.ctxOut=new(window.AudioContext||w
  const t=Math.max(c.currentTime+.03,LIVE.next);s.start(t);LIVE.next=t+ab.duration;LIVE.srcs.add(s);s.onended=()=>{LIVE.srcs.delete(s);liveSpeakDone()};asstState('speak','Konuşuyorum — araya girebilirsin')}
 function liveInterrupt(){LIVE.srcs.forEach(s=>{try{s.onended=null;s.stop()}catch(e){}});LIVE.srcs.clear();LIVE.next=0;if(LIVE.on&&AS.state=='speak')asstState('listen','Seni dinliyorum, konuşabilirsin')}
 async function liveMsg(m){
- if(m.setupComplete!==undefined){LIVE.ready=true;try{await liveMic()}catch(e){LIVE.on=false;liveCleanup();return asstFail(new Error('Mikrofon açılamadı: '+(e&&e.name=='NotAllowedError'?'izin verilmedi (Windows Gizlilik > Mikrofon)':(e&&e.message||e))))}
+ if(m.setupComplete!==undefined){LIVE.ready=true;localStorage.setItem('asLiveLayout',String(LIVE.layout));try{await liveMic()}catch(e){LIVE.on=false;liveCleanup();return asstFail(new Error('Mikrofon açılamadı: '+(e&&e.name=='NotAllowedError'?'izin verilmedi (Windows Gizlilik > Mikrofon)':(e&&e.message||e))))}
   asstState('listen','Seni dinliyorum, konuşabilirsin');liveTouch();return}
  if(m.sessionResumptionUpdate&&m.sessionResumptionUpdate.newHandle)LIVE.handle=m.sessionResumptionUpdate.newHandle;
  if(m.goAway){if(LIVE.handle){try{LIVE.ws.close()}catch(e){}}}
@@ -1079,8 +1081,19 @@ window.__TAURI__.event.listen('assistant-wake',()=>{if(EXT.assistant&&AS.cfg.wak
 awRefresh();
 (()=>{const sv=$('asLiveVoice');sv.innerHTML=LV_VOICES.map(v=>`<option value="${v}"${v==AS.cfg.liveVoice?' selected':''}>Ses: ${v}</option>`).join('');sv.onchange=()=>{AS.cfg.liveVoice=sv.value;asCfgSave();if(LIVE.on)toast('Yeni ses bir sonraki konuşmada geçerli olur')};
  const sm=$('asMode');sm.value=AS.cfg.mode||'live';sm.onchange=()=>{AS.cfg.mode=sm.value;asCfgSave();liveStop('')}})();
+$('asDiag').onclick=async()=>{const b=$('asDiag');b.disabled=true;asstOpen();liveStop('');const say=t=>asstSay('step',t);say('Bağlantı testi başlıyor…');
+ try{const r=await invoke('assistant_diag');say('Model: '+r.model);(r.adimlar||[]).forEach(a=>say((a.ok?'✓ ':'✗ ')+a.ad+' — '+a.ms+' ms'+(a.durum?' ('+a.durum+')':'')+(a.mesaj?': '+a.mesaj:'')))}catch(e){say('✗ REST testi: '+e)}
+ try{const cfg=await invoke('assistant_live_cfg');say('Canlı model: '+cfg.model);
+  for(const lay of[LIVE.layout?1:0,LIVE.layout?0:1]){const res=await new Promise(done=>{const t0=performance.now();let opened=false,fin=false;const ws=new WebSocket(cfg.url),end=o=>{if(fin)return;fin=true;try{ws.close(1000)}catch(e){}done(Object.assign({ms:Math.round(performance.now()-t0)},o))};
+    const gc={responseModalities:['AUDIO']};const st={model:'models/'+cfg.model,inputAudioTranscription:{},outputAudioTranscription:{}};if(lay==0)st.generationConfig=gc;else st.responseModalities=gc.responseModalities;
+    ws.onopen=()=>{opened=true;ws.send(JSON.stringify({setup:st}))};ws.onmessage=async ev=>{try{const m=JSON.parse(typeof ev.data=='string'?ev.data:await ev.data.text());if(m.setupComplete!==undefined)end({ok:true})}catch(e){}};
+    ws.onclose=ev=>end({ok:false,code:ev.code,reason:ev.reason,opened});setTimeout(()=>end({ok:false,reason:'10 sn içinde yanıt yok',opened}),10000)});
+   say((res.ok?'✓ ':'✗ ')+'Canlı bağlantı, düzen '+(lay?'B (düz)':'A (generationConfig)')+' — '+res.ms+' ms'+(res.ok?'':` (kod ${res.code||'-'}${res.reason?': '+res.reason:''}${res.opened?'':', bağlantı açılamadı'})`));
+   if(res.ok){LIVE.layout=lay;localStorage.setItem('asLiveLayout',String(lay));break}await new Promise(r=>setTimeout(r,3500))}}
+ catch(e){say('✗ Canlı test: '+e)}
+ say('Test bitti.');b.disabled=false};
 $('asX').onclick=asstClose;$('asGo').onclick=asstToggle;$('asstBtn').onclick=asstToggle;
-function asLocal(t){const x=t.toLocaleLowerCase('tr').replace(/[.!?]+$/,'').trim();let m;
+function asLocal(t){let x=t.toLocaleLowerCase('tr').replace(/[.!?]+$/,'').trim();x=x.replace(/\s+(?:bul(?:up)?(?:\s+ve)?|ara(?:yıp)?(?:\s+ve)?)\s+(aç|göster)$/,' $1');if(/\s(ve|sonra|ardından|ayrıca)\s/.test(x))return null;let m;
  if(/^çöp kutusunu? (aç|göster)$/.test(x))return['cop_kutusunu_goster',{}];
  if((m=x.match(/^(?:(.+?)\s+)?(?:dosya\w*\s+)?(?:bulunduğu|olduğu)\s+(?:dizin|klasör)\w*\s+(?:gezgin\w*\s+)?(?:aç|göster)$/)))return['gezginde_goster',Object.assign({mod:'dizin'},m[1]&&!/^(onun|bunun|şu|bu|o)$/.test(m[1])?{sorgu:m[1]}:{})];
  if((m=x.match(/^(?:(?:aynı|o|bu)\s+)?(?:dosya\w*\s+)?gezgin\w*\s+(?:üzerinden|yoluyla|ile)?\s*(?:aç)$/)))return['gezginde_goster',{mod:'dosyayi_ac'}];
@@ -1088,7 +1101,7 @@ function asLocal(t){const x=t.toLocaleLowerCase('tr').replace(/[.!?]+$/,'').trim
  return null}
 async function asstLocal(t,r){const tok=AS.tok;asstSay('me',t);asstState('think');let o;try{o=await asstExec(r[0],r[1],tok)}catch(e){o={hata:String(e&&e.message||e)}}
  if(tok!==AS.tok)return;if(o&&o.soyle&&!o.hata)return asstFinish(t,o.soyle,tok);return false}
-$('asIn').onkeydown=async e=>{if(e.key=='Enter'){const t=$('asIn').value.trim();if(!t)return;$('asIn').value='';if(LIVE.on&&LIVE.ready){liveSendText(t);return}asstCancel();AS.tok++;const r=EXT.assistant&&sel?asLocal(t):null;if(r){const ok=await asstLocal(t,r);if(ok!==false)return;AS.tok++}asstTurn({text:t})}};
+$('asIn').onkeydown=async e=>{if(e.key=='Enter'){const t=$('asIn').value.trim();if(!t)return;$('asIn').value='';if(LIVE.on&&LIVE.ready){liveSendText(t);return}asstCancel();AS.tok++;const r=EXT.assistant&&sel?asLocal(t):null;let echo=false;if(r){const ok=await asstLocal(t,r);if(ok!==false)return;AS.tok++;echo=true}asstTurn({text:t,noEcho:echo})}};
 $('asYes').onclick=()=>AS.conf&&AS.conf.fin(true);$('asNo').onclick=()=>AS.conf&&AS.conf.fin(false);
 window.__TAURI__.event.listen('assistant-toggle',()=>{if(EXT.assistant)asstToggle()});
 function asVoices(){const vs=(window.speechSynthesis?speechSynthesis.getVoices():[]),tr=vs.filter(v=>(v.lang||'').toLowerCase().startsWith('tr')),l=tr.length?tr:vs;

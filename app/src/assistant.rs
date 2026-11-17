@@ -10,6 +10,14 @@ pub async fn assistant_gen(body: Value) -> Result<Value, String> {
     drivenet::gemini::generate(&key, &model, &body).await
 }
 
+/// Bağlantı tanısı (Ayarlar > Sesli asistan > Bağlantıyı test et).
+#[tauri::command]
+pub async fn assistant_diag() -> Result<Value, String> {
+    let key = drivenet::gemini::load_key().ok_or_else(|| "Gemini anahtarı yok".to_string())?;
+    let model = crate::org::ai_model().await;
+    Ok(drivenet::gemini::diag(&key, &model).await)
+}
+
 /// Canlı konuşma için WebSocket adresi ve model. Anahtar yalnızca oturum süresince arayüz belleğinde tutulur.
 #[tauri::command]
 pub async fn assistant_live_cfg() -> Result<Value, String> {
