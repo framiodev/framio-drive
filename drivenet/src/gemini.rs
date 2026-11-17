@@ -39,3 +39,22 @@ pub async fn analyze(key: &str, model: &str, prompt: &str, fields: &[(String, St
     }
     Err("Gemini kotası doldu (429); birkaç dakika sonra tekrar dene".into())
 }
+
+
+/// Ham generateContent çağrısı (sesli asistan): gövdeyi olduğu gibi gönderir, tüm yanıtı döndürür.
+/// 429/503 yanıtlarında bekleyip yeniden dener.
+pub async fn generate(key: &str, model: &str, body: &Value) -> Result<Value, String> {
+    let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent");
+    let client = reqwest::Client::builder().timeout(Duration::from_secs(60)).build().map_err(|e| e.to_string())?;
+    let mut last = String::new();
+    for i in 0..3u64 {
+        let r = client.post(&url).header("x-goog-api-key", key).json(body).send().await.map_err(|e| format!("Gemini'ye bağlanılamadı: {e}"))?;
+        let st = r.status().as_u16();
+        let v: Value = r.json().await.map_err(|e| e.to_string())?;
+        if (200..300).contains(&st) { return Ok(v); }
+        last = format!("Gemini hatası {st}: {}", v["error"]["message"].as_str().unwrap_or(""));
+        if (st == 429 || st == 503) && i < 2 { tokio::time::sleep(Duration::from_secs(2 + i * 2)).await; continue; }
+        return Err(last);
+    }
+    Err(last)
+}

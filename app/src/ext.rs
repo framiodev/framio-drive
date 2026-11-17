@@ -36,6 +36,16 @@ pub const BUILTIN: &[B] = &[
         perms: &["Meta hesap belirteçleri (Windows Kimlik Bilgisi Yöneticisi'nde tutulur)", "Meta Graph API'ye internet erişimi"],
         tab: "meta",
     },
+    B {
+        id: "assistant",
+        name: "Sesli asistan",
+        desc: "Kısayolla (Ctrl+Alt+Boşluk) konuş: Drive'da ara, dosya aç, çöpe at/geri yükle, yükle, filigran ve uygulama komutları. Gemini ile çalışır, sözlü yanıt verir.",
+        audience: "Gemini API anahtarı gerekir (Ayarlar > Yapay zekâ, ücretsiz alınabilir)",
+        def: false,
+        cat: "Yapay zekâ",
+        perms: &["Mikrofon: yalnızca sen kısayola basınca dinler", "Ses kaydı yalnızca o sırada Gemini API'ye gönderilir, saklanmaz", "Drive dosyalarında arama ve açma", "Silme, geri yükleme ve yükleme için her seferinde onay ister", "Uygulama sekmelerini ve eklenti ayarlarını değiştirebilir"],
+        tab: "set",
+    },
 ];
 
 pub fn builtin_default(id: &str) -> bool {
