@@ -1,0 +1,37 @@
+name: Forum eklentisi esitleme
+
+# Forum depolarindaki yukleme/ortak paylasim eklentisi degisince uygulamadaki kopyayi gunceller ve PR acar.
+# Gerekli gizli anahtar: FORUM_REPOS_TOKEN (framiodev/forum-ulasimarsiv ve forum-spottersturkey icin salt-okunur "Contents" izni olan ince ayarli PAT).
+on:
+  schedule:
+    - cron: '17 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: sync
+        env:
+          FORUM_REPOS_TOKEN: ${{ secrets.FORUM_REPOS_TOKEN }}
+        run: cd forum-port && node sync.mjs
+      - name: Degisiklik varsa PR ac
+        if: steps.sync.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "forum-sync"; git config user.email "forum-sync@users.noreply.github.com"
+          b="forum-sync-$(date +%Y%m%d)"
+          git checkout -q -b "$b"
+          git add forum-port/vendor
+          git commit -q -m "forum-port: forum eklentisi kaynaklari esitlendi"
+          git push -q -f origin "$b"
+          gh pr create --base main --head "$b" --title "Forum eklentisi kaynaklari esitlendi" --body-file /tmp/forum-sync-report.md || true

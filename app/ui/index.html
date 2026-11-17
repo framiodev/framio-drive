@@ -414,7 +414,11 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
       <div class="glass panel shr-fo hide"><h2>Yanıt <span>Fotoğraflar forumun kendi yükleme penceresiyle eklenir; künye, imza, bilgi ve ortak paylaşım orada seçilir</span></h2>
         <div style="border:1px solid var(--stroke);border-radius:14px;background:var(--track);overflow:hidden">
           <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--stroke)"><span id="frUp" class="fl-scope" style="background:transparent;display:inline-block;min-width:36px;min-height:32px"></span><span class="mut" id="frHint"></span></div>
+          <div id="frTools" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px 8px;border-bottom:1px solid var(--stroke)"><button class="btn sm" data-fm="b" title="Kalın"><b>B</b></button><button class="btn sm" data-fm="i" title="İtalik"><i>I</i></button><button class="btn sm" data-fm="s" title="Üstü çizili"><s>S</s></button><button class="btn sm" data-fm="q" title="Alıntı">❝</button><button class="btn sm" data-fm="c" title="Kod">&lt;/&gt;</button><button class="btn sm" data-fm="l" title="Bağlantı">🔗</button><button class="btn sm" data-fm="e" title="Emoji">😊</button><span class="mut" style="align-self:center;margin-left:6px">@ yazarak üye anabilirsin</span></div>
+          <div id="frEmo" class="hide" style="padding:6px 8px;border-bottom:1px solid var(--stroke);font-size:20px;line-height:1.7"></div>
           <div class="mcomp"><textarea id="frText" rows="8" placeholder="Yanıtını yaz… Fotoğraf Yükle ile eklenen fotoğrafların künye kodları buraya yerleşir"></textarea></div></div></div>
+      <div class="glass panel shr-fo hide"><h2>Önizleme <span>Yaklaşık görünüm: sitedeki çizimle küçük farklar olabilir</span></h2>
+        <div id="frPrev" style="padding:12px 14px;border:1px solid var(--stroke);border-radius:12px;background:var(--track);min-height:48px;line-height:1.55;overflow-wrap:anywhere"></div></div>
       <div class="glass panel shr-fo hide"><h2>Zamanlama <span>Hemen yayınla, planla ya da taslak olarak kaydet</span></h2>
         <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option><option value="draft">Taslak olarak kaydet</option></select><input id="shrAt" type="datetime-local" class="hide"></div></div>
       <div class="glass panel shr-fo hide"><h2>Gönder</h2>
@@ -2322,9 +2326,44 @@ async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id)return;
  catch(e){$('frHint').textContent='Forum hazırlanamadı: '+(e&&e.message||e)}}
 function frInsert(t){const a=$('frText'),s=a.selectionStart==null?a.value.length:a.selectionStart,e=a.selectionEnd==null?s:a.selectionEnd,pre=a.value.slice(0,s),post=a.value.slice(e);
  const ins=(pre&&!pre.endsWith('\n')?'\n':'')+t+(post&&!post.startsWith('\n')?'\n':'');a.value=pre+ins+post;const c=pre.length+ins.length;a.setSelectionRange(c,c);a.focus()}
+
+/* ---- Yanıt düzenleyici: araç çubuğu, emoji, @anma, yaklaşık önizleme ---- */
+const FR_EMO=['😊','😀','😂','😍','👍','🙏','🔥','👏','😎','🤔','😮','😢','❤️','🚌','🚍','🚎','📷','✅'];
+$('frEmo').innerHTML=FR_EMO.map(e=>`<span data-emo="${e}" style="cursor:pointer;padding:0 3px">${e}</span>`).join('');
+function frWrap(a,b,ph){const t=$('frText'),s=t.selectionStart,e=t.selectionEnd,sel=t.value.slice(s,e)||ph;t.value=t.value.slice(0,s)+a+sel+b+t.value.slice(e);t.focus();t.setSelectionRange(s+a.length,s+a.length+sel.length);frPrevUp()}
+$('frTools').onclick=e=>{const b=e.target.closest('[data-fm]');if(!b)return;const k=b.dataset.fm;
+ if(k=='b')frWrap('**','**','kalın');else if(k=='i')frWrap('*','*','italik');else if(k=='s')frWrap('~~','~~','metin');else if(k=='c')frWrap('`','`','kod');
+ else if(k=='q'){const t=$('frText'),s=t.selectionStart,ls=t.value.lastIndexOf('\n',s-1)+1;t.value=t.value.slice(0,ls)+'> '+t.value.slice(ls);t.focus();frPrevUp()}
+ else if(k=='l'){const t=$('frText'),sel=t.value.slice(t.selectionStart,t.selectionEnd)||'bağlantı';frWrap('[','](https://)',sel)}
+ else if(k=='e')$('frEmo').classList.toggle('hide')};
+$('frEmo').onclick=e=>{const x=e.target.dataset.emo;if(!x)return;const t=$('frText'),s=t.selectionStart;t.value=t.value.slice(0,s)+x+t.value.slice(t.selectionEnd);t.focus();t.setSelectionRange(s+x.length,s+x.length);frPrevUp()};
+/* @anma: forumdaki üye araması */
+let frMenu=null,frMq=0;
+function frMenuClose(){if(frMenu){frMenu.remove();frMenu=null}}
+$('frText').addEventListener('input',()=>{frPrevUp();clearTimeout(frMq);const t=$('frText'),pre=t.value.slice(0,t.selectionStart),m=pre.match(/(?:^|\s)@([\p{L}\p{N}_.-]{1,30})$/u);
+ if(!m||!frFid){frMenuClose();return}
+ frMq=setTimeout(async()=>{try{const us=await FramioForumPort.request({method:'GET',url:FramioForumPort.apiUrl()+'/users?filter[q]='+encodeURIComponent(m[1])+'&page[limit]=6',background:true});
+  const l=(us&&us.data)||[];if(!l.length){frMenuClose();return}frMenuClose();frMenu=document.createElement('div');
+  const r=t.getBoundingClientRect();frMenu.style.cssText=`position:fixed;left:${r.left+12}px;top:${r.bottom-8}px;z-index:9999;background:var(--glass2,#fff);backdrop-filter:blur(12px);border:1px solid var(--stroke);border-radius:12px;box-shadow:var(--shadow);padding:4px;min-width:200px`;
+  frMenu.innerHTML=l.map(u=>`<div data-u="${esc(u.attributes.username)}" style="padding:6px 10px;border-radius:8px;cursor:pointer">${esc(u.attributes.displayName||u.attributes.username)} <span class="mut">@${esc(u.attributes.username)}</span></div>`).join('');
+  frMenu.onmousedown=ev=>{const d=ev.target.closest('[data-u]');if(!d)return;ev.preventDefault();const v=t.value,s=t.selectionStart,at=v.slice(0,s).lastIndexOf('@');t.value=v.slice(0,at)+'@'+d.dataset.u+' '+v.slice(s);const c=at+d.dataset.u.length+2;t.setSelectionRange(c,c);frMenuClose();t.focus();frPrevUp()};
+  document.body.appendChild(frMenu)}catch(er){}},250)});
+$('frText').addEventListener('blur',()=>setTimeout(frMenuClose,150));
+/* Yaklaşık önizleme: künye kutusu, görsel etiketleri ve biçimlendirme */
+function frPrevHtml(t){let h=esc(t);
+ h=h.replace(/\[framio-kunye[^\]]*\]([\s\S]*?)\[\/framio-kunye\]/g,(_,b)=>`<div style="border:1px solid var(--stroke);border-left:3px solid var(--acc);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--glass)">${b.trim().replace(/\n/g,'<br>')}</div>`);
+ h=h.replace(/\[[^\]\s]+\s[^\]]*?url=(?:&quot;|")?([^\s"\]&]+)(?:&quot;|")?[^\]]*\]/g,(_,u)=>/^https?:/.test(u)?`<img src="${u}" style="max-width:100%;max-height:320px;border-radius:10px;display:block;margin:6px 0">`:'<span class="mut">[görsel]</span>');
+ h=h.replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<i>$2</i>').replace(/~~(.+?)~~/g,'<s>$1</s>').replace(/`([^`\n]+)`/g,'<code>$1</code>')
+  .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g,'<a>$1</a>').replace(/@([\p{L}\p{N}_.-]+)/gu,'<b style="color:var(--acc)">@$1</b>')
+  .replace(/^&gt; ?(.*)$/gm,'<div style="border-left:3px solid var(--stroke);padding-left:10px;opacity:.85">$1</div>');
+ return h.replace(/\n/g,'<br>')}
+function frPrevUp(){const t=$('frText').value;$('frPrev').innerHTML=t.trim()?frPrevHtml(t):'<span class="mut">Yanıt yazınca ya da fotoğraf eklenince burada görünür.</span>'}
+frPrevUp();
 /* Listedeki (Drive/yerel) dosyalar: baytları Rust'tan alınıp File yapılır, forumun kendi İmza penceresi açılır */
 let frFlushing=false;
-async function frFlush(){if(frFlushing||!shrIt.length||shrDest!='forum'||!frFid)return;frFlushing=true;try{
+let frFlT=0;
+function frFlush(){clearTimeout(frFlT);frFlT=setTimeout(frFlushNow,1500)}
+async function frFlushNow(){if(frFlushing||!shrIt.length||shrDest!='forum'||!frFid)return;frFlushing=true;try{
   const files=[];for(const x of shrIt){const b=await invoke('forum_file_bytes',{src:x.src,name:x.name});const ext=(x.name.split('.').pop()||'jpg').toLowerCase();files.push(new File([b],x.name,{type:ext=='png'?'image/png':ext=='webp'?'image/webp':'image/jpeg'}))}
   shrIt=[];shrRender();FramioForumPort.addFiles(files)}catch(e){toast(String(e&&e.message||e),true)}frFlushing=false}
 /* Başlık seçimi: forumun yükleme akışında İmza'dan sonra (Künye'den önce) açılan pencere; kancalar forum-port'a verilir */
@@ -2350,7 +2389,7 @@ $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo(),t=shrTopic,text=
    const r=await P.request({method:'POST',url:P.apiUrl()+'/posts',body:{data:{type:'posts',attributes:attrs,relationships:rel}}});
    const n=r&&r.data&&r.data.attributes&&r.data.attributes.number;shrUrl=m_url(t,n);P.clearPostAs();await P.applyCrosspost(r);
    $('shrMsg').textContent='Paylaşıldı ✓';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
-  $('shrBar').style.width='100%';$('frText').value='';shrTopic=null;$('shrSel').textContent='Henüz başlık seçilmedi.';frFid='';frConfigure()}
+  $('shrBar').style.width='100%';$('frText').value='';frPrevUp();shrTopic=null;$('shrSel').textContent='Henüz başlık seçilmedi.';frFid='';frConfigure()}
  catch(e){$('shrBar').style.width='0';$('shrMsg').textContent='';toast(e&&e.response?'Gönderilemedi (HTTP '+e.status+')':String(e&&e.message||e),true)}
  shrBusy=false;$('shrGo').disabled=false};
 const m_url=(t,n)=>(shrM().base||'')+'/d/'+t.discussion_id+(n?'/'+n:'');
