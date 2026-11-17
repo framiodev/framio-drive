@@ -450,8 +450,8 @@ select option{background:#222;color:#fff}
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive’ı arka planda başlat (sürücü otomatik bağlanır)</label>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
-      <div class="glass panel"><h2>Eklentiler <span>İsteğe bağlı özellikler; ihtiyacın olanı aç, olmayanı kapalı bırak</span></h2>
-        <div id="extList"></div><div class="mut" style="margin-top:8px">Üçüncü taraf eklentileri ekleme desteği sonraki sürümlerde gelecek.</div></div>
+      <div class="glass panel"><h2>Eklentiler <span>İsteğe bağlı özellikler; kendi eklentini de ekleyebilirsin</span></h2>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="mut" id="extSum"></span><button class="btn pri" id="extMg">Eklentileri yönet</button><button class="btn" id="extDir">Eklenti klasörünü aç</button></div></div>
       <div class="glass panel"><h2>Bilgi kartları <span>Her sekmenin üstünde ne işe yaradığını gösteren küçük kartlar</span></h2>
         <div class="acts" style="margin-top:0"><button class="btn" id="infoReset">Kartları yeniden göster</button></div></div>
     </div>
@@ -678,11 +678,101 @@ function infoShow(t){const box=$('t_'+t);if(!box||!INFO[t])return;let c=box.quer
  show();clearInterval(infoTm[t]);infoTm[t]=setInterval(()=>{if(!c.isConnected){clearInterval(infoTm[t]);return}if(!document.hidden)show()},5500);
  c.querySelector('.cl').onclick=()=>{infoOff[t]=1;localStorage.setItem('infoOff',JSON.stringify(infoOff));clearInterval(infoTm[t]);c.style.transition='opacity .3s,transform .3s';c.style.opacity=0;c.style.transform='scale(.96)';setTimeout(()=>c.remove(),300)}}
 let EXT={};
-const extCss=document.createElement('style');extCss.textContent='.ext{display:flex;gap:14px;align-items:center;padding:12px 4px;border-top:1px solid var(--stroke)}.ext:first-child{border-top:0}.ext .tx{flex:1;min-width:0}.ext small{color:var(--mut);display:block}.ext .tg{width:44px;height:26px;border-radius:14px;background:var(--track);position:relative;cursor:pointer;flex:none;transition:background .3s}.ext .tg::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}.ext .tg.on{background:var(--acc)}.ext .tg.on::after{transform:translateX(18px)}';document.head.appendChild(extCss);
+const extCss=document.createElement('style');extCss.textContent=`
+.xmmodal{display:flex!important;flex-direction:column;overflow:hidden!important;padding:0!important;height:min(700px,92vh)}
+.xm-h{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:20px 22px 12px}.xm-h h3{margin:0;font-size:18px;font-weight:700}.xm-h small{color:var(--mut)}
+.xm-r{display:flex;align-items:center;gap:8px}.xm-q{width:220px;margin:0!important}
+.xm-x{padding:8px 12px}
+.xm-t{display:flex;gap:6px;padding:0 22px 12px;flex-wrap:wrap}
+.xm-t a{padding:6px 13px;border-radius:999px;border:1px solid var(--stroke);cursor:pointer;font-size:13px;color:var(--mut);transition:all .25s var(--ease)}.xm-t a b{font-weight:600;margin-left:4px;opacity:.7}
+.xm-t a:hover{background:var(--glass2);color:var(--text)}.xm-t a.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.xm-b{flex:1;overflow:auto;padding:2px 22px 22px;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--acc) 55%,transparent) transparent}
+.xm-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.xm-c{border:1px solid var(--stroke);background:var(--glass);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:9px;cursor:pointer;transition:transform .3s var(--ease),background .3s,border-color .3s;animation:in .45s var(--ease) both}
+.xm-c:hover{background:var(--glass2);transform:translateY(-2px);border-color:color-mix(in srgb,var(--acc) 40%,var(--stroke))}.xm-c.off{opacity:.78}
+.xm-top{display:flex;align-items:center;gap:12px}.xm-n{flex:1;min-width:0}.xm-n b{display:block;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xm-n small{color:var(--mut);font-size:12px}
+.xm-i{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc);font-weight:750;font-size:17px}.xm-i.big{width:56px;height:56px;border-radius:17px;font-size:22px}
+.xm-c p{margin:0;color:var(--mut);font-size:13px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.xm-f{display:flex;gap:6px;flex-wrap:wrap}.xm-bd{font-size:11.5px;padding:3px 9px;border-radius:999px;background:var(--track);color:var(--mut)}.xm-bd.k{background:color-mix(in srgb,var(--acc) 16%,transparent);color:var(--acc)}
+.xtg{width:44px;height:26px;border-radius:14px;background:var(--track);position:relative;cursor:pointer;flex:none;transition:background .3s;display:block}.xtg::after{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .3s var(--ease)}.xtg.on{background:var(--acc)}.xtg.on::after{transform:translateX(18px)}
+.xm-back{display:inline-flex;gap:6px;align-items:center;color:var(--mut);cursor:pointer;margin:2px 0 14px;font-size:13px}.xm-back:hover{color:var(--text)}
+.xm-dh{display:flex;align-items:center;gap:16px;margin-bottom:18px}.xm-dh h2{margin:0;font-size:20px}.xm-dh small{color:var(--mut)}
+.xm-s{border-top:1px solid var(--stroke);padding:14px 0}.xm-s h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:1.1px;color:var(--mut);font-weight:600}.xm-s p{margin:0 0 6px;line-height:1.55}
+.xm-s ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:7px}.xm-s li{display:flex;gap:9px;align-items:flex-start;line-height:1.45}.xm-s li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--acc);margin-top:7px}
+.xm-s code{font-size:12px;background:var(--track);padding:2px 6px;border-radius:6px;word-break:break-all}
+.xm-e{text-align:center;padding:46px 20px;color:var(--mut)}.xm-e b{display:block;color:var(--text);font-size:15px;margin-bottom:6px}.xm-e pre{display:inline-block;text-align:left;background:var(--track);padding:12px 14px;border-radius:12px;font-size:12px;margin:14px 0 0;color:var(--text)}
+.xm-note{font-size:12.5px;color:var(--mut);background:color-mix(in srgb,var(--acc) 9%,transparent);border-radius:12px;padding:10px 12px;margin-top:14px;line-height:1.5}`;document.head.appendChild(extCss);
+let XL=[],XF='all',XQ='',XD=null;
+const XIC={forum:'<path d="M4 5h16v11H9l-5 4z"/>',meta:'<path d="M3 12c0-3 2-6 4-6 3 0 5 12 8 12 2 0 4-3 4-6s-2-6-4-6c-3 0-5 12-8 12-2 0-4-3-4-6z"/>'};
+const xIc=x=>x.builtin&&XIC[x.id]?`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${XIC[x.id]}</svg>`:esc((x.name||'?').trim().charAt(0).toUpperCase());
 async function loadExt(){let l=[];try{l=await invoke('ext_list')}catch(e){}EXT={};l.forEach(x=>EXT[x.id]=x.enabled);
  $('forumPanel').classList.toggle('hide',!EXT.forum);
- $('extList').innerHTML=l.map(x=>`<div class="ext"><div class="tx"><b>${esc(x.name)}</b><small>${esc(x.desc)}</small><small>${esc(x.audience)}</small></div><div class="tg${x.enabled?' on':''}" data-id="${esc(x.id)}" data-on="${x.enabled?1:0}" role="switch"></div></div>`).join('')}
-$('extList').onclick=async e=>{const g=e.target.closest('.tg');if(!g)return;const on=g.dataset.on!='1';try{await invoke('ext_set',{id:g.dataset.id,on});await loadExt();toast(on?'Eklenti açıldı':'Eklenti kapatıldı');if(tab=='shr')shrInit()}catch(x){toast(String(x),true)}};
+ const mt=document.querySelector('#tabs a[data-t=meta]');if(mt){mt.classList.toggle('hide',!EXT.meta);if(!EXT.meta&&tab=='meta')setTab('files')}
+ const on=l.filter(x=>x.enabled).length,tp=l.filter(x=>!x.builtin).length;
+ $('extSum').textContent=`${l.length} eklenti · ${on} etkin`+(tp?` · ${tp} üçüncü taraf`:'')}
+function extManage(){
+ if(document.getElementById('xmRoot'))return;XF='all';XQ='';XD=null;
+ const m=document.createElement('div');m.className='modal';m.id='xmRoot';
+ m.innerHTML=`<div class="glass xl xmmodal"><div class="xm-h"><div><h3>Eklentiler</h3><small id="xmSub"></small></div><div class="xm-r"><input id="xmQ" class="xm-q" placeholder="Eklenti ara"><button class="btn pri" id="xmAdd">+ Ekle</button><button class="btn xm-x" id="xmX" aria-label="Kapat">✕</button></div></div><div class="xm-t" id="xmTabs"></div><div class="xm-b" id="xmBody"></div></div>`;
+ document.body.appendChild(m);
+ const kd=e=>{if(e.key=='Escape'){if(document.getElementById('ctxm')||document.querySelectorAll('.modal').length>1)return;if(XD){XD=null;render()}else close()}};
+ const close=()=>{m.remove();document.removeEventListener('keydown',kd);loadExt()};
+ document.addEventListener('keydown',kd);
+ m.addEventListener('mousedown',e=>{if(e.target===m)close()});
+ const it=id=>XL.find(x=>x.id==id);
+ async function load(){try{XL=await invoke('ext_list')}catch(e){XL=[];toast(String(e),true)}render()}
+ async function toggle(id){const x=it(id);if(!x)return;try{await invoke('ext_set',{id,on:!x.enabled});x.enabled=!x.enabled;toast(x.enabled?x.name+' açıldı':x.name+' kapatıldı');render();loadExt();if(tab=='shr')shrInit()}catch(e){toast(String(e),true)}}
+ function list(){
+  const q=XQ.trim().toLowerCase();
+  const all=XL,cnt={all:all.length,on:all.filter(x=>x.enabled).length,off:all.filter(x=>!x.enabled).length,tp:all.filter(x=>!x.builtin).length};
+  $('xmTabs').innerHTML=[['all','Tümü'],['on','Etkin'],['off','Kapalı'],['tp','Üçüncü taraf']].map(([k,t])=>`<a data-f="${k}" class="${XF==k?'on':''}">${t}<b>${cnt[k]}</b></a>`).join('');
+  let v=all.filter(x=>XF=='all'||(XF=='on'&&x.enabled)||(XF=='off'&&!x.enabled)||(XF=='tp'&&!x.builtin));
+  if(q)v=v.filter(x=>(x.name+' '+x.desc+' '+x.cat+' '+x.author).toLowerCase().includes(q));
+  if(!v.length){
+   $('xmBody').innerHTML=XF=='tp'&&!q?`<div class="xm-e"><b>Henüz üçüncü taraf eklenti yok</b>Bir klasörden, zip dosyasından ya da GitHub adresinden eklenti kurabilirsin. Eklentinin kök klasöründe şu dosya bulunmalı:<br><pre>framio-plugin.json
+{
+  "id": "ornek-eklenti",
+  "name": "Örnek eklenti",
+  "version": "1.0.0",
+  "author": "Adın",
+  "description": "Ne işe yaradığı",
+  "permissions": ["Drive dosyalarını okur"]
+}</pre></div>`:`<div class="xm-e"><b>Sonuç yok</b>Aramaya uyan eklenti bulunamadı.</div>`;return}
+  $('xmBody').innerHTML=`<div class="xm-g">${v.map((x,i)=>`<div class="xm-c${x.enabled?'':' off'}" data-id="${esc(x.id)}" style="animation-delay:${i*40}ms"><div class="xm-top"><div class="xm-i">${xIc(x)}</div><div class="xm-n"><b>${esc(x.name)}</b><small>v${esc(x.version||'—')}${x.author?' · '+esc(x.author):''}</small></div><u class="xtg${x.enabled?' on':''}" data-tg="${esc(x.id)}" role="switch"></u></div><p>${esc(x.desc||'Açıklama yok')}</p><div class="xm-f"><span class="xm-bd${x.builtin?' k':''}">${x.builtin?'Yerleşik':'Üçüncü taraf'}</span><span class="xm-bd">${esc(x.cat||'Diğer')}</span></div></div>`).join('')}</div>`}
+ function detail(){
+  const x=it(XD);if(!x){XD=null;return list()}
+  $('xmTabs').innerHTML='';
+  $('xmBody').innerHTML=`<div class="xm-back" id="xmBk">‹ Tüm eklentiler</div>
+  <div class="xm-dh"><div class="xm-i big">${xIc(x)}</div><div class="xm-n"><h2>${esc(x.name)}</h2><small>Sürüm ${esc(x.version||'—')}${x.author?' · '+esc(x.author):''} · ${esc(x.cat||'Diğer')} · ${x.builtin?'Yerleşik':'Üçüncü taraf'}</small></div><u class="xtg${x.enabled?' on':''}" data-tg="${esc(x.id)}" role="switch"></u></div>
+  <div class="xm-s"><h4>Açıklama</h4><p>${esc(x.desc||'Açıklama yok')}</p>${x.audience?`<small class="mut">${esc(x.audience)}</small>`:''}</div>
+  <div class="xm-s"><h4>İzinler</h4>${x.perms&&x.perms.length?`<ul>${x.perms.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`:'<p class="mut">Bu eklenti özel bir izin istemiyor.</p>'}</div>
+  ${x.tools&&x.tools.length?`<div class="xm-s"><h4>Araçlar</h4><ul>${x.tools.map(t=>`<li><span><b>${esc(t.name)}</b>${t.desc?' — '+esc(t.desc):''}</span></li>`).join('')}</ul></div>`:''}
+  ${x.builtin?'':`<div class="xm-s"><h4>Konum</h4><p><code>${esc(x.path)}</code></p>${x.homepage?`<p><a href="#" id="xmHome">${esc(x.homepage)}</a></p>`:''}<div class="xm-note">Üçüncü taraf eklentiler bu sürümde yalnızca kaydedilir ve yönetilir; Framio Drive onların kodunu çalıştırmaz. Çalıştırma desteği geldiğinde izinleri burada görüp onaylarsın.</div></div>`}
+  <div class="acts" style="margin-top:6px">${x.builtin&&x.tab&&x.enabled?`<button class="btn pri" id="xmSet">Ayarlarını aç</button>`:''}${x.builtin?'':`<button class="btn danger" id="xmDel">Kaldır</button>`}</div>`}
+ function render(){const n=XL.length;$('xmSub').textContent=n?`${XL.filter(x=>x.enabled).length}/${n} eklenti etkin`:'';XD?detail():list()}
+ async function install(kind){
+  try{let src;
+   if(kind=='url'){src=await ask('GitHub adresi (örn. github.com/sahip/depo)');if(!src||!src.trim())return}
+   else{src=await invoke('ext_pick',{kind});if(!src)return}
+   toast('Eklenti kuruluyor…');
+   const r=await invoke('ext_install',{kind,src});
+   toast((r.updated?'Eklenti güncellendi: ':'Eklenti kuruldu: ')+r.plugin.name);
+   XF='all';XD=r.plugin.id;await load();loadExt()
+  }catch(e){toast(String(e),true)}}
+ $('xmX').onclick=close;
+ $('xmQ').oninput=e=>{XQ=e.target.value;if(XD)XD=null;render()};
+ $('xmAdd').onclick=e=>{const r=e.currentTarget.getBoundingClientRect();showMenu([{t:'Klasörden kur…',f:()=>install('dir')},{t:'Zip dosyasından kur…',f:()=>install('zip')},{t:'GitHub adresinden kur…',f:()=>install('url')},'-',{t:'Eklenti klasörünü aç',f:()=>invoke('ext_open_dir').catch(x=>toast(String(x),true))}],r.left,r.bottom+6)};
+ m.addEventListener('click',async e=>{
+  const tg=e.target.closest('[data-tg]');if(tg){e.stopPropagation();toggle(tg.dataset.tg);return}
+  const f=e.target.closest('#xmTabs a');if(f){XF=f.dataset.f;render();return}
+  const c=e.target.closest('.xm-c');if(c){XD=c.dataset.id;render();$('xmBody').scrollTop=0;return}
+  if(e.target.closest('#xmBk')){XD=null;render();return}
+  if(e.target.closest('#xmHome')){e.preventDefault();const x=it(XD);if(x&&x.homepage)invoke('open_url',{url:x.homepage}).catch(z=>toast(String(z),true));return}
+  if(e.target.closest('#xmSet')){const x=it(XD);if(x&&x.tab){close();setTab(x.tab)}return}
+  if(e.target.closest('#xmDel')){const x=it(XD);if(!x)return;if(!await confirmBox('Eklenti kaldırılsın mı?',`“${x.name}” ve klasörü silinecek.`,'Kaldır'))return;try{await invoke('ext_remove',{id:x.id});toast('Eklenti kaldırıldı');XD=null;await load();loadExt()}catch(z){toast(String(z),true)}}
+ });
+ load()}
+$('extMg').onclick=extManage;$('extDir').onclick=()=>invoke('ext_open_dir').catch(e=>toast(String(e),true));
 loadExt();
 $('wmMg').onclick=()=>wmManage();$('wmDirOpen').onclick=()=>invoke('wm_open_dir').catch(e=>toast(String(e),true));
 $('infoReset').onclick=()=>{infoOff={};localStorage.removeItem('infoOff');toast('Bilgi kartları yeniden gösterilecek')};
