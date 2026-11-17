@@ -575,23 +575,50 @@ async fn fs_trash(email: String, id: String) -> Result<(), String> {
     drv(&email).await?.trash(&id).await.map_err(de)
 }
 
-async fn put_file(d: &drivenet::Drive, path: &Path, name: &str, parent: &str) -> Result<(), String> {
+static UP_CANCEL: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[tauri::command]
+fn fs_upload_cancel() { UP_CANCEL.store(true, std::sync::atomic::Ordering::SeqCst); }
+
+async fn put_file(d: &drivenet::Drive, path: &Path, name: &str, parent: &str, on_progress: impl FnMut(u64)) -> Result<(), String> {
     let len = std::fs::metadata(path).map_err(|e| e.to_string())?.len();
     let sess = d.start_upload(name, parent, len).await.map_err(de)?;
-    d.upload_file(&sess, path, |_| {}).await.map_err(de)?;
+    d.upload_file_ex(&sess, path, on_progress, Some(&UP_CANCEL)).await.map_err(de)?;
     Ok(())
 }
 
-/// Dosya ve klasörleri (alt klasörleriyle) Drive'daki verilen klasöre yükler.
+fn is_junk(n: &str) -> bool { matches!(n.to_lowercase().as_str(), "thumbs.db" | "desktop.ini" | ".ds_store") }
+
+/// Yüklenecek dosya sayısı ve toplam boyut (klasörler içiyle birlikte).
+fn scan_upload(paths: &[String]) -> (u32, u64) {
+    let (mut n, mut bytes) = (0u32, 0u64);
+    let mut st: Vec<PathBuf> = paths.iter().map(PathBuf::from).collect();
+    while let Some(p) = st.pop() {
+        let Ok(m) = std::fs::metadata(&p) else { continue };
+        if m.is_dir() {
+            if let Ok(rd) = std::fs::read_dir(&p) { for e in rd.flatten() { st.push(e.path()); } }
+        } else if !is_junk(&p.file_name().map(|x| x.to_string_lossy().into_owned()).unwrap_or_default()) {
+            n += 1; bytes += m.len();
+        }
+    }
+    (n, bytes)
+}
+
+/// Dosya ve klasörleri (alt klasörleriyle) Drive'daki verilen klasöre yükler. İlerleme `up_prog` olaylarıyla bildirilir.
 #[tauri::command]
-async fn fs_upload(email: String, parent: String, paths: Vec<String>) -> Result<Value, String> {
+async fn fs_upload(app: tauri::AppHandle, email: String, parent: String, paths: Vec<String>) -> Result<Value, String> {
+    use tauri::Emitter;
+    use std::sync::atomic::Ordering::SeqCst;
+    UP_CANCEL.store(false, SeqCst);
     let d = drv(&email).await?;
-    let (mut sent, mut failed) = (0u32, vec![]);
+    let (nf, nb) = scan_upload(&paths);
+    let _ = app.emit("up_prog", json!({ "k": "start", "files": nf, "bytes": nb }));
+    let (mut sent, mut failed, mut cancelled, mut done_bytes) = (0u32, vec![], false, 0u64);
     let mut stack: Vec<(PathBuf, String)> = vec![];
-    let junk = |n: &str| matches!(n.to_lowercase().as_str(), "thumbs.db" | "desktop.ini" | ".ds_store");
     let mut items: Vec<(PathBuf, String)> = paths.into_iter().map(|p| (PathBuf::from(p), parent.clone())).collect();
     items.reverse();
     loop {
+        if UP_CANCEL.load(SeqCst) { cancelled = true; break; }
         let (path, par) = match items.pop() { Some(x) => x, None => match stack.pop() {
             Some((dir, pid)) => {
                 if let Ok(rd) = std::fs::read_dir(&dir) { for e in rd.flatten() { items.push((e.path(), pid.clone())); } }
@@ -603,12 +630,46 @@ async fn fs_upload(email: String, parent: String, paths: Vec<String>) -> Result<
         let Ok(meta) = std::fs::metadata(&path) else { failed.push(name); continue };
         if meta.is_dir() {
             match d.create_folder(&name, &par).await { Ok(id) => stack.push((path, id)), Err(e) => { drivefs::note_fail(&name, &format!("{e:?}")); failed.push(name) } }
-        } else if !junk(&name) {
-            match put_file(&d, &path, &name, &par).await { Ok(()) => { sent += 1; drivefs::note_ok(&name) } Err(e) => { drivefs::note_fail(&name, &e); failed.push(name) } }
+        } else if !is_junk(&name) {
+            let size = meta.len();
+            let _ = app.emit("up_prog", json!({ "k": "file", "name": name, "size": size }));
+            let base = done_bytes;
+            let mut last = std::time::Instant::now();
+            let r = put_file(&d, &path, &name, &par, |c| {
+                if last.elapsed().as_millis() >= 120 { last = std::time::Instant::now(); let _ = app.emit("up_prog", json!({ "k": "prog", "done": base + c, "cur": c })); }
+            }).await;
+            match r {
+                Ok(()) => { sent += 1; done_bytes += size; drivefs::note_ok(&name); let _ = app.emit("up_prog", json!({ "k": "fok", "name": name, "done": done_bytes })); }
+                Err(e) => {
+                    if UP_CANCEL.load(SeqCst) { cancelled = true; break; }
+                    done_bytes += size; drivefs::note_fail(&name, &e);
+                    let _ = app.emit("up_prog", json!({ "k": "fail", "name": name, "err": e, "done": done_bytes }));
+                    failed.push(name);
+                }
+            }
         }
     }
-    Ok(json!({ "sent": sent, "failed": failed }))
+    let _ = app.emit("up_prog", json!({ "k": "end", "sent": sent, "failed": failed.len(), "cancelled": cancelled }));
+    Ok(json!({ "sent": sent, "failed": failed, "cancelled": cancelled }))
 }
+
+#[tauri::command]
+async fn fs_trash_list(email: String) -> Result<Value, String> {
+    let v = drv(&email).await?.trashed().await.map_err(de)?;
+    Ok(json!(v.iter().map(|f| json!({
+        "id": f.id, "name": f.name, "folder": f.mime_type == "application/vnd.google-apps.folder",
+        "size": f.size.as_ref().and_then(|x| x.parse::<u64>().ok()), "modified": f.trashed_time.clone().or(f.modified_time.clone()), "mime": f.mime_type, "thumb": f.thumbnail_link
+    })).collect::<Vec<_>>()))
+}
+
+#[tauri::command]
+async fn fs_restore(email: String, id: String) -> Result<(), String> { drv(&email).await?.untrash(&id).await.map_err(de) }
+
+#[tauri::command]
+async fn fs_purge(email: String, id: String) -> Result<(), String> { drv(&email).await?.delete_forever(&id).await.map_err(de) }
+
+#[tauri::command]
+async fn fs_empty_trash(email: String) -> Result<(), String> { drv(&email).await?.empty_trash().await.map_err(de) }
 
 /// Sürücü bağlıysa Gezgin'de ilgili klasörü açar.
 #[tauri::command]
@@ -963,7 +1024,7 @@ fn main() {
             // Pencereyi kapatınca tepsiye küçül; programdan çıkmak için tepsi menüsündeki "Çık".
             if w.label() == "main" { if let WindowEvent::CloseRequested { api, .. } = ev { api.prevent_close(); let _ = w.hide(); } }
         })
-        .invoke_handler(tauri::generate_handler![wm::wm_list, wm::wm_pick_many, wm::wm_rename, wm::wm_move, wm::wm_delete, wm::wm_folder_new, wm::wm_folder_rename, wm::wm_folder_delete, wm::wm_open_dir, wm::wm_data, wm::wm_preview, wm::wm_apply, wm::wm_pick_dir, meta::meta_cfg_get, meta::meta_cfg_set, meta::meta_clear, meta::meta_test, meta::meta_refresh, meta::meta_exchange, meta::meta_ask, meta::meta_ask_web, meta::meta_fb_pages, meta::meta_fb_use, meta::meta_bulk_scan, meta::meta_bulk_add, meta::meta_pages_list, meta::meta_page_remove, meta::meta_pages_test, meta::meta_open, wm::pick_upload_files, wm::pick_upload_folder, ext::ext_list, ext::ext_set, ext::ext_remove, ext::ext_open_dir, ext::ext_pick, ext::ext_install, client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_reveal, fs_search, fs_recent, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
+        .invoke_handler(tauri::generate_handler![wm::wm_list, wm::wm_pick_many, wm::wm_rename, wm::wm_move, wm::wm_delete, wm::wm_folder_new, wm::wm_folder_rename, wm::wm_folder_delete, wm::wm_open_dir, wm::wm_data, wm::wm_preview, wm::wm_apply, wm::wm_pick_dir, meta::meta_cfg_get, meta::meta_cfg_set, meta::meta_clear, meta::meta_test, meta::meta_refresh, meta::meta_exchange, meta::meta_ask, meta::meta_ask_web, meta::meta_fb_pages, meta::meta_fb_use, meta::meta_bulk_scan, meta::meta_bulk_add, meta::meta_pages_list, meta::meta_page_remove, meta::meta_pages_test, meta::meta_open, wm::pick_upload_files, wm::pick_upload_folder, ext::ext_list, ext::ext_set, ext::ext_remove, ext::ext_open_dir, ext::ext_pick, ext::ext_install, client_status, save_client, accounts, add_account, rename_account, logs, take_pending, sign_out, set_accent, vdrive_info, set_vdrive, install_winfsp, app_version, check_update, install_update, fs_list, fs_usage, fs_mkdir, fs_rename, fs_trash, fs_upload, fs_upload_cancel, fs_trash_list, fs_restore, fs_purge, fs_empty_trash, fs_reveal, fs_search, fs_recent, fs_open, fs_download, fs_web, fs_new_doc, open_gemini, gemini_ask, autostart_get, autostart_set, gemini_ask_image, gemini_ask_local, take_askimg, first_account, classic_menu_get, classic_menu_set, take_askorg, org::org_profiles_get, org::org_profiles_save, org::ai_cfg_get, org::ai_cfg_set, org::ai_key_clear, org::open_url, org::org_scan, org::org_cancel, org::org_analyze, org::org_apply, org::org_has_journal, org::org_undo, forum::forum_list, forum::share_mail, forum::share_reveal, forum::forum_save, forum::forum_login, forum::forum_logout, forum::forum_meta, take_askshare, forum::forum_ai_fill, forum::forum_route, forum::forum_find_topic, forum::forum_share, forum::forum_thumb, forum::forum_nodes, forum::forum_context, forum::forum_topic_tags, forum::forum_get, forum::forum_upload_one])
         .run(tauri::generate_context!())
         .expect("uygulama başlatılamadı");
 }

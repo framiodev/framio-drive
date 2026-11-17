@@ -22,6 +22,7 @@ pub struct DriveFile {
     /// Drive'ın hazır küçük resmi (thumbnail sağlayıcısı için).
     #[serde(default)] pub thumbnail_link: Option<String>,
     #[serde(default)] pub parents: Vec<String>,
+    #[serde(default)] pub trashed_time: Option<String>,
     #[serde(default)] pub viewed_by_me_time: Option<String>,
 }
 
@@ -270,6 +271,47 @@ impl Drive {
         }
     }
 
+    /// Çöp kutusundaki (benim olan) en üst düzey öğeler; çöpe atılan klasörlerin içindekiler listelenmez.
+    pub async fn trashed(&self) -> Result<Vec<DriveFile>, Error> {
+        let mut out: Vec<DriveFile> = vec![]; let mut page: Option<String> = None;
+        loop {
+            let mut req = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
+                ("q", "trashed=true and 'me' in owners".to_string()),
+                ("orderBy", "modifiedTime desc".to_string()),
+                ("fields", "nextPageToken,files(id,name,mimeType,size,modifiedTime,thumbnailLink,parents,trashedTime)".to_string()),
+                ("pageSize", "500".to_string()),
+            ]);
+            if let Some(p) = &page { req = req.query(&[("pageToken", p)]); }
+            let r = req.send().await?;
+            if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+            let l: FileList = r.json().await?;
+            out.extend(l.files); page = l.next_page_token;
+            if page.is_none() || out.len() >= 2000 { break; }
+        }
+        let ids: std::collections::HashSet<String> = out.iter().map(|f| f.id.clone()).collect();
+        out.retain(|f| !f.parents.iter().any(|p| ids.contains(p)));
+        Ok(out)
+    }
+
+    /// Çöpten geri alır.
+    pub async fn untrash(&self, id: &str) -> Result<(), Error> {
+        let r = self.http.patch(format!("{API}/files/{id}")).bearer_auth(&self.token)
+            .json(&serde_json::json!({ "trashed": false })).send().await?;
+        if r.status().is_success() { Ok(()) } else { Err(Error::Status(r.status().as_u16(), r.text().await?)) }
+    }
+
+    /// Kalıcı siler (geri alınamaz). Zaten yoksa (404) başarı sayılır.
+    pub async fn delete_forever(&self, id: &str) -> Result<(), Error> {
+        let r = self.http.delete(format!("{API}/files/{id}")).bearer_auth(&self.token).send().await?;
+        match r.status().as_u16() { 200..=299 | 404 => Ok(()), s => Err(Error::Status(s, r.text().await?)) }
+    }
+
+    /// Çöp kutusunu boşaltır (geri alınamaz).
+    pub async fn empty_trash(&self) -> Result<(), Error> {
+        let r = self.http.delete(format!("{API}/files/trash")).bearer_auth(&self.token).send().await?;
+        if r.status().is_success() { Ok(()) } else { Err(Error::Status(r.status().as_u16(), r.text().await?)) }
+    }
+
     /// Adı değiştirir ve gerekirse başka klasöre taşır.
     pub async fn move_rename(&self, id: &str, new_name: &str, new_parent: &str) -> Result<(), Error> {
         let cur = self.file_meta(id).await?;
@@ -301,7 +343,12 @@ impl Drive {
     }
 
     /// Dosyayı kaldığı yerden parça parça yükler. `on_progress(onaylanan_bayt)` kuyruğa ilerleme bildirir.
-    pub async fn upload_file(&self, session: &str, path: &std::path::Path, mut on_progress: impl FnMut(u64)) -> Result<Option<String>, Error> {
+    pub async fn upload_file(&self, session: &str, path: &std::path::Path, on_progress: impl FnMut(u64)) -> Result<Option<String>, Error> {
+        self.upload_file_ex(session, path, on_progress, None).await
+    }
+
+    /// `upload_file` gibi; `cancel` doğru olunca parçalar arasında durur.
+    pub async fn upload_file_ex(&self, session: &str, path: &std::path::Path, mut on_progress: impl FnMut(u64), cancel: Option<&std::sync::atomic::AtomicBool>) -> Result<Option<String>, Error> {
         use tokio::io::{AsyncReadExt, AsyncSeekExt};
         let total = tokio::fs::metadata(path).await.map_err(|_| Error::Protocol("dosya yok"))?.len();
         let id_of = |v: &serde_json::Value| v["id"].as_str().map(String::from);
@@ -316,6 +363,7 @@ impl Drive {
         let mut f = tokio::fs::File::open(path).await.map_err(|_| Error::Protocol("açılamadı"))?;
         let mut file_id = None;
         while let Some(c) = next_chunk(total, confirmed, DEFAULT_CHUNK) {
+            if cancel.map(|c| c.load(std::sync::atomic::Ordering::SeqCst)).unwrap_or(false) { return Err(Error::Protocol("iptal edildi")); }
             f.seek(std::io::SeekFrom::Start(c.start)).await.map_err(|_| Error::Protocol("seek"))?;
             let mut buf = vec![0u8; c.len() as usize];
             f.read_exact(&mut buf).await.map_err(|_| Error::Protocol("okuma"))?;

@@ -312,7 +312,7 @@ pub async fn wm_apply(email: String, items: Vec<Value>, wm: String, suffix: Stri
             if let Err(e) = std::fs::copy(&dst, dd.join(&nm)) { failed.push(format!("{name}: cihaza kaydedilemedi ({e})")); ok = false; }
         }
         if ok && to_drive {
-            match put_file(&d, &dst, &out_name, &parent).await { Ok(()) => drivefs::note_ok(&out_name), Err(e) => { failed.push(format!("{name}: {e}")); ok = false } }
+            match put_file(&d, &dst, &out_name, &parent, |_| {}).await { Ok(()) => drivefs::note_ok(&out_name), Err(e) => { failed.push(format!("{name}: {e}")); ok = false } }
         }
         if ok { done += 1 }
         let _ = std::fs::remove_file(&dst);
