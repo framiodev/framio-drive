@@ -44,9 +44,39 @@ pub async fn exchange(p: &str, app_id: &str, secret: &str, short: &str) -> Resul
         _ => get("https://graph.instagram.com/access_token", &[("grant_type", "ig_exchange_token"), ("client_secret", secret), ("access_token", short)]).await,
     }
 }
-/// Kullanıcı belirteciyle yönetilen Facebook Sayfaları (her biri kendi Sayfa belirteciyle).
-pub async fn fb_pages(token: &str) -> Result<Value, String> {
-    get("https://graph.facebook.com/v21.0/me/accounts", &[("fields", "id,name,access_token"), ("limit", "50"), ("access_token", token)]).await
+/// Sayfalı Graph yanıtlarını (paging.next) sonuna kadar toplar (en fazla 20 sayfa).
+async fn get_all(url: &str, q: &[(&str, &str)]) -> Result<Vec<Value>, String> {
+    let mut out = vec![];
+    let mut v = get(url, q).await?;
+    for _ in 0..20 {
+        if let Some(a) = v["data"].as_array() { out.extend(a.iter().cloned()); }
+        let Some(next) = v["paging"]["next"].as_str().map(|x| x.to_string()) else { break };
+        let r = reqwest::Client::new().get(&next).send().await.map_err(|e| e.to_string())?;
+        v = r.json().await.map_err(|e| e.to_string())?;
+        if v.get("error").is_some() { break; }
+    }
+    Ok(out)
+}
+const PGF: &str = "id,name,access_token,tasks,instagram_business_account{id,username}";
+/// Kullanıcı belirtecinin doğrudan yönettiği Sayfalar (her biri kendi Sayfa belirteciyle).
+pub async fn fb_pages(token: &str) -> Result<Vec<Value>, String> {
+    get_all("https://graph.facebook.com/v21.0/me/accounts", &[("fields", PGF), ("limit", "100"), ("access_token", token)]).await
+}
+/// Kullanıcının erişebildiği işletme portföyleri.
+pub async fn fb_businesses(token: &str) -> Result<Vec<Value>, String> {
+    get_all("https://graph.facebook.com/v21.0/me/businesses", &[("fields", "id,name"), ("limit", "100"), ("access_token", token)]).await
+}
+/// Bir işletme portföyünün sahip olduğu ve (ajans olarak) eriştiği Sayfalar.
+pub async fn fb_biz_pages(token: &str, biz: &str) -> Vec<Value> {
+    let mut all = vec![];
+    for edge in ["owned_pages", "client_pages"] {
+        if let Ok(v) = get_all(&format!("https://graph.facebook.com/v21.0/{biz}/{edge}"), &[("fields", PGF), ("limit", "100"), ("access_token", token)]).await { all.extend(v); }
+    }
+    all
+}
+/// Bir Sayfayı kendi belirteciyle sınar.
+pub async fn fb_page_me(token: &str) -> Result<Value, String> {
+    get("https://graph.facebook.com/v21.0/me", &[("fields", "id,name,instagram_business_account{id,username}"), ("access_token", token)]).await
 }
 
 /// Gemini ile sohbet (rehber yardımcısı).

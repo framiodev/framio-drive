@@ -61,6 +61,7 @@ pub fn meta_cfg_set(platform: String, app_id: String, secret: String, token: Str
 pub fn meta_clear(platform: String) -> Result<(), String> {
     let p = pf(&platform)?;
     meta::clear(&acct(p, "secret")); meta::clear(&acct(p, "token"));
+    if p == "facebook" { meta::clear("meta-fb-user"); }
     put(p, |m| *m = json!({ "cleared": true }));
     Ok(())
 }
@@ -75,6 +76,7 @@ pub async fn meta_test(platform: String) -> Result<Value, String> {
     let name = v["username"].as_str().or(v["name"].as_str()).unwrap_or("").to_string();
     let is_page = p != "facebook" || v["category"].is_string();
     let kind = if p == "facebook" { if is_page { "Sayfa".to_string() } else { "Kullanıcı belirteci".to_string() } } else { v["account_type"].as_str().unwrap_or("").to_string() };
+    if p == "facebook" && !is_page { let _ = meta::save("meta-fb-user", &t); }
     put(p, |m| { m["username"] = json!(name); m["id"] = json!(idv); m["account_type"] = json!(kind); });
     Ok(json!({ "name": name, "id": idv, "kind": kind, "is_page": is_page, "media_count": v["media_count"] }))
 }
@@ -84,7 +86,7 @@ pub async fn meta_test(platform: String) -> Result<Value, String> {
 pub async fn meta_fb_pages() -> Result<Value, String> {
     let t = meta::load(&acct("facebook", "token")).ok_or("Önce kullanıcı belirtecini kaydet")?;
     let v = meta::fb_pages(&t).await?;
-    Ok(json!(v["data"].as_array().map(|a| a.iter().map(|x| json!({ "id": x["id"], "name": x["name"] })).collect::<Vec<_>>()).unwrap_or_default()))
+    Ok(json!(v.iter().map(|x| json!({ "id": x["id"], "name": x["name"] })).collect::<Vec<_>>()))
 }
 
 /// Facebook: seçilen Sayfanın belirtecini kaydeder (kullanıcı belirteci yerine).
@@ -92,7 +94,7 @@ pub async fn meta_fb_pages() -> Result<Value, String> {
 pub async fn meta_fb_use(page_id: String) -> Result<Value, String> {
     let t = meta::load(&acct("facebook", "token")).ok_or("Belirteç yok")?;
     let v = meta::fb_pages(&t).await?;
-    let pg = v["data"].as_array().and_then(|a| a.iter().find(|x| x["id"].as_str() == Some(page_id.as_str()))).ok_or("Sayfa bulunamadı")?;
+    let pg = v.iter().find(|x| x["id"].as_str() == Some(page_id.as_str())).ok_or("Sayfa bulunamadı")?;
     let pt = pg["access_token"].as_str().ok_or("Bu Sayfa için belirteç verilmedi (yönetici yetkin ve pages_show_list izni olmalı)")?;
     meta::save(&acct("facebook", "token"), pt)?;
     let name = pg["name"].as_str().unwrap_or("").to_string();
@@ -161,4 +163,91 @@ pub fn meta_open(url: String) -> Result<(), String> {
     let ok = ["https://developers.facebook.com/", "https://business.facebook.com/", "https://www.instagram.com/", "https://help.instagram.com/", "https://www.threads.net/", "https://www.facebook.com/"].iter().any(|b| url.starts_with(b));
     if !ok { return Err("izin verilmeyen adres".into()); }
     { use std::os::windows::process::CommandExt; std::process::Command::new("cmd").args(["/C", "start", "", &url]).creation_flags(0x0800_0000).spawn() }.map(|_| ()).map_err(|e| e.to_string())
+}
+
+// ---- Toplu ekleme: tek Facebook hesabındaki tüm Sayfalar ve bağlı Instagram hesapları ----
+
+fn user_tok() -> Result<String, String> {
+    meta::load("meta-fb-user").or_else(|| meta::load(&acct("facebook", "token"))).ok_or_else(|| "Önce Facebook sekmesinde kullanıcı belirtecini kaydet ve test et".to_string())
+}
+
+/// Kullanıcı belirtecinin eriştiği tüm Sayfalar (doğrudan + işletme portföyleri). Belirteçler döndürülmez.
+async fn scan_all(t: &str) -> Result<Vec<Value>, String> {
+    let mut by: std::collections::BTreeMap<String, Value> = Default::default();
+    for pg in meta::fb_pages(t).await? {
+        if let Some(id) = pg["id"].as_str() { let mut x = pg.clone(); x["business"] = json!("Doğrudan"); by.insert(id.into(), x); }
+    }
+    let mut biz_err = String::new();
+    match meta::fb_businesses(t).await {
+        Ok(bs) => for b in bs {
+            let (bid, bname) = (b["id"].as_str().unwrap_or("").to_string(), b["name"].as_str().unwrap_or("").to_string());
+            for pg in meta::fb_biz_pages(t, &bid).await {
+                let Some(id) = pg["id"].as_str().map(|x| x.to_string()) else { continue };
+                let mut x = pg.clone(); x["business"] = json!(bname);
+                let keep_old = by.get(&id).map(|o| o["access_token"].is_string()).unwrap_or(false) && !x["access_token"].is_string();
+                if keep_old { if let Some(o) = by.get_mut(&id) { o["business"] = json!(bname); } } else { by.insert(id, x); }
+            }
+        },
+        Err(e) => biz_err = e,
+    }
+    let _ = biz_err;
+    Ok(by.into_values().collect())
+}
+
+fn brief(x: &Value) -> Value {
+    json!({ "id": x["id"], "name": x["name"], "business": x["business"], "has_token": x["access_token"].is_string(),
+            "ig_id": x["instagram_business_account"]["id"], "ig_username": x["instagram_business_account"]["username"] })
+}
+
+#[tauri::command]
+pub async fn meta_bulk_scan() -> Result<Value, String> {
+    let t = user_tok()?;
+    let all = scan_all(&t).await?;
+    let added: Vec<String> = load_settings()["meta"]["pages"].as_array().map(|a| a.iter().filter_map(|x| x["id"].as_str().map(|s| s.to_string())).collect()).unwrap_or_default();
+    Ok(json!(all.iter().map(|x| { let mut b = brief(x); b["added"] = json!(added.contains(&x["id"].as_str().unwrap_or("").to_string())); b }).collect::<Vec<_>>()))
+}
+
+/// Seçilen Sayfaların belirteçlerini Kimlik Bilgisi Yöneticisi'ne kaydeder, listeyi ayarlara yazar.
+#[tauri::command]
+pub async fn meta_bulk_add(ids: Vec<String>) -> Result<Value, String> {
+    let t = user_tok()?;
+    let all = scan_all(&t).await?;
+    let mut s = load_settings();
+    let mut list: Vec<Value> = s["meta"]["pages"].as_array().cloned().unwrap_or_default();
+    let (mut n, mut skipped) = (0u32, vec![]);
+    for id in ids {
+        let Some(pg) = all.iter().find(|x| x["id"].as_str() == Some(id.as_str())) else { continue };
+        let Some(tok) = pg["access_token"].as_str() else { skipped.push(pg["name"].as_str().unwrap_or(&id).to_string()); continue };
+        meta::save(&format!("meta-pg-{id}"), tok)?;
+        let mut b = brief(pg); b["has_token"] = json!(true);
+        list.retain(|x| x["id"].as_str() != Some(id.as_str()));
+        list.push(b); n += 1;
+    }
+    s["meta"]["pages"] = json!(list);
+    save_settings(&s);
+    Ok(json!({ "added": n, "skipped": skipped }))
+}
+
+#[tauri::command]
+pub fn meta_pages_list() -> Value { let s = load_settings(); if s["meta"]["pages"].is_array() { s["meta"]["pages"].clone() } else { json!([]) } }
+
+#[tauri::command]
+pub fn meta_page_remove(id: String) {
+    meta::clear(&format!("meta-pg-{id}"));
+    let mut s = load_settings();
+    if let Some(a) = s["meta"]["pages"].as_array() { s["meta"]["pages"] = json!(a.iter().filter(|x| x["id"].as_str() != Some(id.as_str())).cloned().collect::<Vec<_>>()); }
+    save_settings(&s);
+}
+
+/// Kayıtlı tüm Sayfa belirteçlerini sınar.
+#[tauri::command]
+pub async fn meta_pages_test() -> Result<Value, String> {
+    let list: Vec<Value> = load_settings()["meta"]["pages"].as_array().cloned().unwrap_or_default();
+    let mut out = vec![];
+    for x in list {
+        let id = x["id"].as_str().unwrap_or("").to_string();
+        let ok = match meta::load(&format!("meta-pg-{id}")) { Some(t) => meta::fb_page_me(&t).await.map(|_| String::new()).unwrap_or_else(|e| e), None => "belirteç yok".to_string() };
+        out.push(json!({ "id": id, "ok": ok.is_empty(), "err": ok }));
+    }
+    Ok(json!(out))
 }
