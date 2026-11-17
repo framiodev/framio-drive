@@ -41,6 +41,12 @@ jobs:
         if: steps.chk.outputs.skip != 'true'
         shell: pwsh
         run: node .github/scripts/eval-commands.js
+      - name: Alan-özgü ifade ve bilgi (ⓘ) denetimi
+        if: steps.chk.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          node .github/scripts/check-domain.js
+          node .github/scripts/check-info.js
 
       - name: WinFsp kur (gelistirici dosyalariyla)
         if: steps.chk.outputs.skip != 'true'

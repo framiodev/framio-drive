@@ -247,7 +247,7 @@ pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Optio
     let now = now_secs();
     let usage = usage_map(&em);
     let konum_f = fold(&konum.unwrap_or_default());
-    // Sayı içeren sorgularda (06 VT 317) sayılar birebir aynı olmalı: 315/312 gibi benzerler elenir.
+    // Sayı içeren sorgularda (Rapor 317) sayılar birebir aynı olmalı: 315/312 gibi benzerler elenir.
     let qnums: Vec<String> = qt.iter().filter(|t| t.chars().any(|c| c.is_ascii_digit())).flat_map(|t| {
         let mut out = vec![]; let mut cur = String::new();
         for c in t.chars() { if c.is_ascii_digit() { cur.push(c); } else if !cur.is_empty() { out.push(std::mem::take(&mut cur)); } }
@@ -369,8 +369,8 @@ fn path_text(ix: &Index, i: usize, memo: &mut Vec<Option<String>>, depth: u8) ->
     t
 }
 
-/// Yol-farkında arama: her terim (örn. "2026", "Ankara", "Mercedes-Benz", "Yeni Kasa", "16") dosyanın adında
-/// ya da üst klasör zincirindeki herhangi bir adda geçmelidir. Betimleyici isteklerde ("2026 Ankara Turismo fotoğrafları") kullanılır.
+/// Yol-farkında arama: her terim (örn. "2026", "Antalya", "Tatil", "Plaj", "16") dosyanın adında
+/// ya da üst klasör zincirindeki herhangi bir adda geçmelidir. Betimleyici isteklerde ("2026 Antalya Tatil fotoğrafları") kullanılır.
 #[tauri::command]
 pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String>, ext: Option<String>, limit: Option<usize>, genis: Option<bool>) -> Result<Value, String> {
     let em = email.to_lowercase();
@@ -399,7 +399,7 @@ pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String
         hits.retain(|i| !ix.ents[*i].parents.first().and_then(|p| ix.pos.get(p)).map(|pi| set.contains(pi)).unwrap_or(false));
     }
     // Katman süzgeci: her terim için eldeki en iyi yol-parçası eşleşmesinden 1 puandan fazla düşük olanlar elenir
-    // (örn. "Ankara" tam klasör adıyken "Ankara - Antalya Yolu" içindeki geçiş elenir).
+    // (örn. "Antalya" tam klasör adıyken "Antalya - Kaş Gezisi" içindeki geçiş elenir).
     let mut elenen = 0usize; let mut ornek: Vec<String> = vec![];
     if !hits.is_empty() && !genis.unwrap_or(false) && tf.len() >= 1 {
         let terms_j: Vec<String> = tf.iter().map(|g| g.join(" ")).collect();

@@ -160,6 +160,8 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .tab:not(.hide){animation:tabin .38s var(--ease) both}
 .panel{transition:transform .3s var(--ease),box-shadow .3s}.panel:hover{transform:translateY(-2px)}
 .btn:active{transform:scale(.96)}.btn{transition:transform .2s var(--ease),background .25s,border-color .25s}
+.ib{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;margin-left:6px;border-radius:50%;border:1px solid var(--stroke);background:var(--glass2);color:var(--mut);font:700 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:middle;flex:none;transition:background .2s,color .2s,transform .2s}.ib:hover,.ib:focus{background:var(--acc);color:#fff;outline:none;transform:scale(1.12)}
+#hlpCard{position:fixed;z-index:2147483200;max-width:300px;padding:12px 14px;border-radius:14px;background:var(--glass2);backdrop-filter:blur(18px) saturate(1.4);border:1px solid var(--stroke);box-shadow:0 14px 40px rgba(0,0,0,.28);font-size:12.5px;line-height:1.5;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .18s,transform .18s}#hlpCard.on{opacity:1;transform:none}#hlpCard b{display:block;font-size:13px;margin-bottom:3px}#hlpCard .u{margin-top:6px;padding-top:6px;border-top:1px solid var(--stroke);color:var(--mut)}
 #frows.noan .fr{animation:none!important}.hand-hot{outline:2px solid var(--acc)!important;outline-offset:2px;box-shadow:0 0 14px color-mix(in srgb,var(--acc) 55%,transparent)!important}
 .fr{animation:in .35s var(--ease) both;animation-delay:calc(var(--i,0)*18ms)}
 .tabs a{position:relative}.tabs a.on{animation:pop .3s var(--ease) both}
@@ -992,7 +994,7 @@ ASTOOLS.push(
  {name:'paylasima_ekle',description:'Öğeleri Paylaş sekmesindeki listeye ekler ve sekmeyi açar.',parameters:{type:'OBJECT',properties:{sorgu:sv_('Öğe adı'),id:sv_('Kesin id'),idler:{type:'ARRAY',items:{type:'STRING'}}}}},
  {name:'geri_al',description:'Asistanın yaptığı son geri alınabilir işlemi (çöpe atma, taşıma, yeniden adlandırma, klasör oluşturma, kopyalama) geri alır.'},
  {name:'islem_gecmisi',description:'Geri alınabilir son işlemleri listeler.'},
- {name:'kapsamli_ara',description:"Betimleyici/çok parçalı isteklerde (yıl, şehir, marka, model, klasör adı gibi parçalar: '2026 Ankara Mercedes-Benz Turismo Yeni Kasa 16 araçların fotoğrafları') kullan. Her terim dosya adında YA DA üst klasör zincirinde geçmelidir; sonuçlar ekranda klasörlere göre gruplu açılır. Dosya adında olmayan bilgiyi de yoldan bulur.",parameters:{type:'OBJECT',properties:{terimler:{type:'ARRAY',items:{type:'STRING'},description:'Her biri ayrı kavram: ["2026","Ankara","Mercedes-Benz","Turismo","Yeni Kasa","16"]. Genel sözcükleri (fotoğraf, dosya, klasör, bütün, araç) ekleme.'},tur:{type:'STRING',enum:['dosya','klasor','hepsi']},gorsel:{type:'BOOLEAN',description:'Fotoğraf/görsel/resim isteniyorsa true'},genis:{type:'BOOLEAN',description:'true: terim başka klasör adlarının içinde geçse de (örn. "Ankara - Antalya Yolu") hepsini kapsa. Varsayılan: yalnız tam/en iyi klasör eşleşmeleri.'},uzanti:sv_('Virgüllü uzantılar')},required:['terimler']}},
+ {name:'kapsamli_ara',description:"Betimleyici/çok parçalı isteklerde (yıl, yer, konu, ad, klasör adı gibi parçalar: '2026 Antalya Tatil Plaj 16 fotoğrafları') kullan. Her terim dosya adında YA DA üst klasör zincirinde geçmelidir; sonuçlar ekranda klasörlere göre gruplu açılır. Dosya adında olmayan bilgiyi de yoldan bulur.",parameters:{type:'OBJECT',properties:{terimler:{type:'ARRAY',items:{type:'STRING'},description:'Her biri ayrı kavram: ["2026","Antalya","Tatil","Plaj","16"]. Genel sözcükleri (fotoğraf, dosya, klasör, bütün) ekleme.'},tur:{type:'STRING',enum:['dosya','klasor','hepsi']},gorsel:{type:'BOOLEAN',description:'Fotoğraf/görsel/resim isteniyorsa true'},genis:{type:'BOOLEAN',description:'true: terim başka klasör adlarının içinde geçse de (örn. "Antalya - Kaş Gezisi") hepsini kapsa. Varsayılan: yalnız tam/en iyi klasör eşleşmeleri.'},uzanti:sv_('Virgüllü uzantılar')},required:['terimler']}},
  {name:'sonuc_filtrele',description:'Ekrandaki sonuç listesini daraltır/gruplar: tur (gorsel|klasor|belge|hepsi), yil (örn. 2026; boş=tümü), uzanti, grupla (klasörlere göre).',parameters:{type:'OBJECT',properties:{tur:{type:'STRING',enum:['gorsel','klasor','belge','hepsi']},yil:sv_('Yıl'),uzanti:sv_('Uzantı'),grupla:{type:'BOOLEAN'}}}},
  {name:'sonuclari_kapat',description:'Sonuç listesi görünümünü kapatır.'},
  {name:'secenek_sec',description:'Birden çok eşleşme çıktığında kullanıcının söylediği numaralı adayı seçip asıl işi yapar.',parameters:{type:'OBJECT',properties:{no:{type:'INTEGER',description:'Aday numarası (1\'den başlar)'}},required:['no']}},
@@ -1026,7 +1028,7 @@ function asKey(a){const raw=String(a.tus||'Enter'),ctrl=/ctrl\+/i.test(raw),k=ra
  const t=document.activeElement&&document.activeElement!=document.body?document.activeElement:document;for(const n of['keydown','keyup'])t.dispatchEvent(new KeyboardEvent(n,{key,ctrlKey:ctrl,bubbles:true,cancelable:true}));return{tamam:true}}
 function asScroll(a){const c=$('frows')?$('frows').parentElement:document.scrollingElement;const el=[c,$('frows'),document.scrollingElement].find(x=>x&&x.scrollHeight>x.clientHeight)||document.scrollingElement;const y={asagi:el.scrollTop+el.clientHeight*.8,yukari:el.scrollTop-el.clientHeight*.8,basa:0,sona:el.scrollHeight}[a.yon];el.scrollTo({top:y});return{tamam:true}}
 function asstSys(){const s=selRows().slice(0,8).map(r=>r.dataset.n).join(', ');
- return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Kullanıcı bir yeri/özelliği tarif ediyorsa (yıl, şehir, marka, model, klasör adı gibi birden çok parça; ör. '2026 Ankara Mercedes-Benz Turismo Yeni Kasa 16 araçların fotoğrafları') bunları ayrı terimlere bölüp kapsamli_ara çağır; bilgi dosya adında değil klasör yolunda olabilir. dosya_bul yalnız tek bir ad/kod içindir. Sonuç bulunamazsa asla 'daha genel arayalım' diye vazgeçme: hangi terim eşleşmedi söyle ve düzeltip hemen tekrar dene. 10'dan fazla sonuç çıkınca dosya_bul listeyi ekranda otomatik açar; sonuçları tek tek sayma, kısa özet söyle (toplam, görsel/klasör sayısı, yıllar) ve sonuc_filtrele ile daraltmayı öner. Dosya adı geçen her komutta önce dosya_ac / gezginde_goster gibi tek adımda işi yapan aracı dene; dosya_bul bulanık aramadır (yazım ve boşluk farkını tolere eder). "Onu", "aynı dosya", "bulunduğu dizin" gibi göndermeler odaktaki dosyayı kasteder, bu durumda sorgu verme. Birleşik komutları ("bul, dizinini aç, dosyayı seç") sırayla araç çağırarak tamamla. Yalnızca drive_ara'yı içerik/ad parçası için yedek olarak kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle, tasi ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yeniden adlandırma, klasör oluşturma ve kopyalama onay istemez ama geri alınabilir; kullanıcı 'geri al' derse geri_al çağır. Kalıcı silme gibi geri dönüşsüz işlemleri asla kendi başına yapma. Kullanıcının fare ve klavyeyle uygulamada yapabildiği HER şeyi sen de yapabilirsin: özel aracı olmayan işlerde ekrani_oku ile görünen öğeleri al, tikla/yaz/tusa_bas/kaydir ile kullanıcı gibi uygula, sonucu ekrani_oku ile doğrula. "Yapamam" deme; yalnızca uygulama dışı işletim sistemi pencereleri (Windows izin kutuları gibi) ya da gerçekten ekranda olmayan şeyler için dürüstçe sınırı söyle. Aynı adlı birden çok dosya/klasör çıkarsa asla kendin seçme: adayları kısa yollarıyla sayıp hangisi olduğunu sor, cevaba göre secenek_sec çağır. Dosyayı bilgisayardan yüklemek için bilgisayarda_ara ile yolu bul. Bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: odak dosya ${AS.focus?AS.focus.name+' ('+(AS.focus.path||'yol bilinmiyor')+')':'yok'}; sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.${asMemTxt()}`}
+ return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Kullanıcı bir yeri/özelliği tarif ediyorsa (yıl, şehir, marka, model, klasör adı gibi birden çok parça; ör. '2026 Antalya Tatil Plaj 16 fotoğrafları') bunları ayrı terimlere bölüp kapsamli_ara çağır; bilgi dosya adında değil klasör yolunda olabilir. dosya_bul yalnız tek bir ad/kod içindir. Sonuç bulunamazsa asla 'daha genel arayalım' diye vazgeçme: hangi terim eşleşmedi söyle ve düzeltip hemen tekrar dene. 10'dan fazla sonuç çıkınca dosya_bul listeyi ekranda otomatik açar; sonuçları tek tek sayma, kısa özet söyle (toplam, görsel/klasör sayısı, yıllar) ve sonuc_filtrele ile daraltmayı öner. Dosya adı geçen her komutta önce dosya_ac / gezginde_goster gibi tek adımda işi yapan aracı dene; dosya_bul bulanık aramadır (yazım ve boşluk farkını tolere eder). "Onu", "aynı dosya", "bulunduğu dizin" gibi göndermeler odaktaki dosyayı kasteder, bu durumda sorgu verme. Birleşik komutları ("bul, dizinini aç, dosyayı seç") sırayla araç çağırarak tamamla. Yalnızca drive_ara'yı içerik/ad parçası için yedek olarak kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle, tasi ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yeniden adlandırma, klasör oluşturma ve kopyalama onay istemez ama geri alınabilir; kullanıcı 'geri al' derse geri_al çağır. Kalıcı silme gibi geri dönüşsüz işlemleri asla kendi başına yapma. Kullanıcının fare ve klavyeyle uygulamada yapabildiği HER şeyi sen de yapabilirsin: özel aracı olmayan işlerde ekrani_oku ile görünen öğeleri al, tikla/yaz/tusa_bas/kaydir ile kullanıcı gibi uygula, sonucu ekrani_oku ile doğrula. "Yapamam" deme; yalnızca uygulama dışı işletim sistemi pencereleri (Windows izin kutuları gibi) ya da gerçekten ekranda olmayan şeyler için dürüstçe sınırı söyle. Aynı adlı birden çok dosya/klasör çıkarsa asla kendin seçme: adayları kısa yollarıyla sayıp hangisi olduğunu sor, cevaba göre secenek_sec çağır. Dosyayı bilgisayardan yüklemek için bilgisayarda_ara ile yolu bul. Bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: odak dosya ${AS.focus?AS.focus.name+' ('+(AS.focus.path||'yol bilinmiyor')+')':'yok'}; sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.${asMemTxt()}`}
 const asTimeout=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('Gemini '+ms/1000+' sn içinde yanıt vermedi. İnternet/VPN/güvenlik duvarını kontrol et ya da Ayarlar > Sesli asistan > “Bağlantıyı test et”i çalıştır.')),ms))]);
 const asGen=(contents,tools)=>asTimeout(invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})}),70000);
 async function asstTurn(inp){const tok=AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());asstState('think');
@@ -1239,6 +1241,108 @@ $('hdGo').onclick=()=>HAND.on?handStop():handStart();
 $('hdPause').onclick=()=>{if(!HAND.on)return;HAND.paused=!HAND.paused;handRelease();hdUI()};
 window.__TAURI__.event.listen('hand-toggle',()=>{HAND.on?handStop():handStart()});
 hdUI();hdCams();
+
+/* ===== Bilgi (ⓘ) sistemi: her denetimde "ne işe yarar / nasıl kullanılır" ===== */
+const HLP={
+ add:['Google hesabı ekle','Drive hesabını uygulamaya bağlar.','Tıkla, açılan tarayıcıda Google ile giriş yap. Birden çok hesap ekleyip soldan geçiş yapabilirsin.'],
+ cid:['Google Client ID','Kendi Google API kimliğini kullanmak istersen girilir.','Boş bırakırsan uygulamanın varsayılanı kullanılır. Yalnızca kendi Google Cloud projen varsa doldur.'],
+ savec:['Kaydet ve devam et','Girdiğin kimlik bilgilerini saklayıp girişe geçer.','Alanları doldurduktan sonra tıkla.'],
+ asstBtn:['Sesli asistan','Konuşarak ya da yazarak dosya işlemlerini yaptırır.','Tıkla ya da Ctrl+Alt+Boşluk. “Rapor klasörünü aç” gibi doğal cümleler kur.'],
+ gem:['Gemini','Gemini sitesini kendi hesabınla açar.','Fotoğraf ve belge sorularını orada sorabilirsin; giriş senin hesabınla yapılır.'],
+ hex:['Vurgu rengi','Arayüzün vurgu rengini belirler.','#e11d2e gibi bir renk kodu yaz; Sıfırla ile varsayılana dön.'],
+ rst:['Sıfırla','Rengi varsayılana döndürür.','Tek tık yeterli.'],
+ fq:['Ara','Dosya adı ve klasör yolunda arar.','Birkaç kelime yaz (“2026 Antalya Tatil”); Enter ile ara, Esc ile temizle.'],
+ frecent:['Son kullanılanlar','Yakın zamanda açtığın/değiştirdiğin dosyaları listeler.','Tekrar tıklayınca normal görünüme döner.'],
+ ftrash:['Çöp kutusu','Silinen öğeleri gösterir (30 gün geri alınabilir).','Öğeyi seçip Geri yükle ya da Kalıcı sil’i kullan.'],
+ frest:['Geri yükle','Seçili öğeleri çöp kutusundan geri alır.','Önce öğeleri işaretle, sonra tıkla.'],
+ fpurge:['Kalıcı sil','Seçili öğeleri geri alınamaz biçimde siler.','Dikkat: bu işlem geri alınamaz; onay ister.'],
+ fclr:['Seçimi bırak','Tüm işaretleri kaldırır.','Ctrl+A ile tümünü seçip bununla temizleyebilirsin.'],
+ fwm:['Filigran ekle','Seçili görsellere imza/filigran basar.','Görselleri seç, tıkla, imzayı ve konumu belirle; özgün dosya korunur.'],
+ fdelsel:['Seçilileri sil','Seçili öğeleri çöp kutusuna taşır.','Öğeleri işaretle ve tıkla; çöpten geri alınabilir.'],
+ fplus:['Yükle ve oluştur','Dosya yükler ya da yeni klasör oluşturur.','Dosyaları pencereye sürükleyip bırakarak da yükleyebilirsin.'],
+ fmore:['Diğer işlemler','Ek araçların menüsünü açar.','Tümünü seç, yenile, akıllı düzenle gibi komutlar burada.'],
+ fresback:['Sonuçlara dön','Önceki arama sonuçlarına geri götürür.','Bir sonuç klasörüne girdikten sonra kullan.'],
+ vletter:['Sürücü harfi','Sanal sürücünün Gezgin’deki harfi.','Boş bir harf seç (ör. G:), sonra Bağla’ya bas.'],
+ von:['Bağla / Ayır','Drive’ı Gezgin’de sürücü gibi bağlar.','Bağlayınca dosyalara normal klasör gibi her programdan erişirsin; Ayır ile kaldır.'],
+ vinst:['WinFsp’yi yükle','Sanal sürücü için gereken bileşeni kurar.','Bir kez kurulur; sonra Bağla çalışır.'],
+ orgProf:['Düzenleme profili','Dosyaların nasıl sınıflandırılacağını belirler.','Bir profil seç; yenisini profil yöneticisinden oluştur.'],
+ orgPath:['Kaynak klasör','Analiz edilecek klasör.','Boşsa Dosyalar sekmesindeki klasör; bilgisayar klasörü de yazabilirsin.'],
+ orgEng:['Analiz motoru','Görselleri hangi yapay zekâ ile analiz edeceğini seçer.','Anahtarın varsa Gemini; yoksa bağlı bir eklenti motoru.'],
+ orgGo:['Analiz et','Görselleri okuyup önerilen adlandırma/klasörleri çıkarır.','Önce önizlemeyi incele; hiçbir şey sen onaylamadan değişmez.'],
+ orgApply:['Uygula','Önerilen düzenlemeyi dosyalara uygular.','Uyguladıktan sonra “Son düzenlemeyi geri al” ile geri dönebilirsin.'],
+ orgUndo:['Son düzenlemeyi geri al','En son toplu düzenlemeyi eski haline döndürür.','Uygulamadan hemen sonra kullan.'],
+ aiKey:['Gemini API anahtarı','Asistan ve görsel analiz için gereken anahtar.','Ücretsiz anahtarı Google AI Studio’dan alıp buraya yapıştır; Windows kasasında saklanır.'],
+ aiModel:['Model','Kullanılacak Gemini modeli.','Boş bırakırsan en yeni hızlı model seçilir.'],
+ aiDelay:['İstekler arası bekleme','Ücretsiz kota dolmasın diye istekler arasına bekleme koyar.','Hata alıyorsan artır.'],
+ aiSave:['Kaydet','Anahtar ve model ayarını kaydeder.','Kaydedince bağlantı otomatik denenir.'],
+ aiOpen:['Ücretsiz anahtar al','Google AI Studio sayfasını açar.','Giriş yap, “Create API key” de ve anahtarı kopyala.'],
+ aiClear:['Anahtarı sil','Kayıtlı anahtarı kaldırır.','Yapay zekâ özellikleri yeniden anahtar girilene dek çalışmaz.'],
+ asSpeak:['Yanıtları sesli oku','Asistan cevaplarını sesli söyler.','Kapalıysa yalnız yazılı cevap verir.'],
+ asMode:['Canlı konuşma','Karşılıklı, kesintisiz sesli sohbet kipi.','Açıkken mikrofon sürekli dinler; kapalıyken Bas-konuş kullanılır.'],
+ asLiveVoice:['Canlı ses','Canlı kipte asistanın sesi.','Dinleyip beğendiğini seç.'],
+ asVoice:['Ses','Bas-konuş kipinde okuma sesi.','Listeden Türkçe bir ses seç.'],
+ asMicSel:['Mikrofon','Asistanın dinleyeceği mikrofon.','Birden çok mikrofonun varsa doğrusunu seç.'],
+ asOpen:['Asistanı aç','Asistan panelini açar.','Ayrıca Ctrl+Alt+Boşluk.'],
+ asTest:['Mikrofonu dene','Mikrofonun sesi alıp almadığını sınar.','Tıkla ve birkaç saniye konuş.'],
+ asDiag:['Bağlantıyı test et','Yapay zekâ ve canlı bağlantıyı adım adım sınar.','Asistan çalışmıyorsa önce bunu dene.'],
+ asFull:['Tam sınama','Ses, bağlantı, dizin ve uyandırma kelimesini tek seferde sınar.','Sonuçları asistan panelinde görürsün.'],
+ awName:['Uyandırma kelimesi','Asistanı çağırmak için söyleyeceğin kelime.','Kısa ve belirgin bir kelime seç (ör. “Hey Framio”).'],
+ awRec:['Örnek kaydet','Kelimeyi kendi sesinle kaydeder.','Sessiz ortamda 3-5 kez söyle.'],
+ awBuild:['Kelimeyi oluştur','Kayıtlardan kişisel uyandırma modelini üretir.','En az birkaç örnek kaydettikten sonra aktif olur.'],
+ awReset:['Örnekleri sıfırla','Kayıtlı örnekleri siler.','Kötü kayıt yaptıysan baştan başla.'],
+ awOn:['Uyandırma kelimesiyle dinle','Sürekli dinleyip kelimeni duyunca asistanı açar.','Mikrofonu sürekli kullanır; istemezsen kapalı tut.'],
+ awDev:['Dinleme mikrofonu','Uyandırma kelimesini dinleyen mikrofon.','Doğru cihazı seç.'],
+ awSens:['Duyarlılık','Kelimenin ne kadar kolay algılanacağı.','Yanlış uyanma varsa düşür, algılamıyorsa artır.'],
+ awDel:['Kelimeyi sil','Kayıtlı uyandırma modelini kaldırır.','Sonra yeni kelime kaydedebilirsin.'],
+ asMemIn:['Asistan notu','Asistanın hep hatırlayacağı kısa bilgi.','Örn. “Fotoğraflarım D: sürücüsünde”; Ekle’ye bas.'],
+ asMemAdd:['Ekle','Notu asistan hafızasına ekler.','Yazdıktan sonra tıkla.'],
+ csec:['Client Secret','Kendi Google API gizli anahtarın (isteğe bağlı).','Yalnızca kendi Google Cloud projen varsa doldur; bilgisayarında saklanır.'],
+ vlabel:['Sürücü adı','Sanal sürücünün Gezgin’de görünen adı.','İstediğin bir ad yaz.'],
+ voff:['Ayır','Sanal sürücü bağlantısını kaldırır.','Dosyalar Drive’da kalır.'],
+ orgStop:['Durdur','Çalışan analizi durdurur.','Zaten işlenen kısım korunur.'],
+ updGo:['Güncelle','Yeni sürümü indirip kurar.','Uygulama yeniden başlar.'],
+ asGo:['Gönder','Yazdığın komutu asistana gönderir.','Enter ile de gönderebilirsin.'],
+ asMemClr:['Hafızayı temizle','Tüm asistan notlarını siler.','Geri alınamaz.'],
+ hdMode:['Kontrol alanı','Elin hangi alanı kontrol edeceği.','“Yalnız uygulama” güvenlidir; “Tüm masaüstü” gerçek fareyi sürer (Ctrl+Alt+H ile aç/kapat).'],
+ hdCam:['Kamera','El takibi için kullanılacak kamera.','Doğru kamerayı seç.'],
+ hdSens:['Hassasiyet','Elinin ekranı ne kadar az hareketle kat edeceği.','Yüksek = az hareket; imleç yetişmiyorsa artır.'],
+ hdSmooth:['Yumuşatma','İmlecin titremesini azaltır.','Yüksek = daha akıcı ama biraz gecikmeli.'],
+ hdAnchor:['İmleç noktası','İmlecin elinin hangi noktasını izleyeceği.','Eklemler tıklarken sabit kalır; uç daha doğal ama oynaktır.'],
+ hdMag:['Düğmelere yapışma','İmleci tıklanabilir öğelere hafifçe çeker.','Küçük düğmeleri vurmak kolaylaşır.'],
+ hdPip:['Kamera önizlemesi','Ekranda küçük kamera/el iskeleti gösterir.','Elin algılandığını görmek için açık tut.'],
+ hdGo:['Başlat / Durdur','El hareketiyle fareyi açar ya da kapatır.','İlk açılışta kamera izni ve model indirmesi gerekir.'],
+ hdPause:['Duraklat','El kontrolünü geçici durdurur.','Yumruğu 1 sn tutmak da aynı işi yapar.'],
+ hdHelp:['Görsel rehber','Hareketleri çizimlerle gösterir.','Tıklama, kaydırma ve duraklatma jestlerini öğren.'],
+ wmMg:['İmza yöneticisi','Filigran/imza şablonlarını düzenler.','Yeni imza ekle, konum ve saydamlık ayarla.'],
+ wmDirOpen:['Klasörü aç','İmzaların saklandığı klasörü Gezgin’de açar.','Kendi imza görsellerini buraya kopyalayabilirsin.'],
+ rename:['Adı değiştir','Hesap görünen adını değiştirir.','Birden çok hesap kullanıyorsan ayırt etmek için.'],
+ signout:['Çıkış yap','Bu hesabın uygulamadan bağlantısını keser.','Dosyaların silinmez; istediğin zaman yeniden ekleyebilirsin.'],
+ chkupd:['Güncelleme ara','Yeni sürüm olup olmadığını kontrol eder.','Varsa indirip kurar; uygulama yeniden başlar.'],
+ autos:['Windows ile başlat','Bilgisayar açılınca uygulamayı arka planda başlatır.','Sesli asistan ve uyandırma kelimesi için gerekli.'],
+ classic:['Sağ tık menüsü','Gezgin’de Framio komutlarını hemen gösterir.','Windows 11’de “daha fazla seçenek” adımını atlatır.'],
+ extMg:['Eklentileri yönet','İsteğe bağlı eklentileri açıp kapatır.','İhtiyacın olmayanları kapalı tut.'],
+ extDir:['Eklenti klasörü','Eklenti dosyalarının klasörünü açar.','Gelişmiş kullanım içindir.'],
+ infoReset:['Kartları yeniden göster','Kapattığın ipucu kartlarını geri getirir.','İpuçlarını tekrar görmek istediğinde tıkla.'],
+ mbScan:['Sayfaları tara','Hesabına bağlı sayfaları listeler.','Giriş bilgilerini kaydettikten sonra kullan.'],
+ mbAll:['Tümünü seç','Listedeki tüm sayfaları seçer.','Sonra “Seçilenleri ekle”.'],
+ mbAdd:['Seçilenleri ekle','Seçili sayfaları uygulamaya ekler.','Önce sayfaları işaretle.'],
+ shrCopy:['Künyeyi uygula','Seçili görselin bilgilerini diğerlerine kopyalar.','Aynı seriden fotoğraflarda zaman kazandırır.'],
+ shrQ:['Başlık ara','Öneri uygun değilse başlığı elle arar.','Birkaç kelime yaz ve Ara’ya bas.']
+};
+const HLP_SKIP=new Set(['asYes','asNo','asIn','asMin','asX','hdGuideX','hdGuideGo','upd','vsl','mAppId','mSecret','mToken','mSave','mLong','mRef','mClr','mQ','mAsk','mWeb','pfSel','pfNew','pfDup','pfDel','pfName','pfPrompt','pfAddF','pfFile','pfFolder','pfReq','pfUnk','pfUnkV','pfSave','fall','forg','fdoc','fnew','freload','freveal','ftempty','shrForum','shrPath','shrAdd','shrGenGo','shrSug','shrRoute','shrFind','shrAi','shrWhen','shrAt','shrGo','shrOpen']);
+let hlpEl=null,hlpT=0;
+function hlpShow(el,id){const d=HLP[id];if(!d)return;if(!hlpEl){hlpEl=document.createElement('div');hlpEl.id='hlpCard';document.body.appendChild(hlpEl)}
+ hlpEl.innerHTML=`<b>${esc(d[0])}</b>${esc(d[1])}${d[2]?`<div class="u">${esc(d[2])}</div>`:''}`;const r=el.getBoundingClientRect();hlpEl.style.left='0px';hlpEl.style.top='0px';hlpEl.classList.add('on');
+ const w=hlpEl.offsetWidth,h=hlpEl.offsetHeight;let x=Math.min(innerWidth-w-12,Math.max(12,r.left+r.width/2-w/2)),y=r.bottom+10;if(y+h>innerHeight-12)y=Math.max(12,r.top-h-10);hlpEl.style.left=x+'px';hlpEl.style.top=y+'px'}
+function hlpHide(){clearTimeout(hlpT);if(hlpEl)hlpEl.classList.remove('on')}
+function hlpInit(){for(const id of Object.keys(HLP)){const el=document.getElementById(id);if(!el||el.dataset.inf)continue;el.dataset.inf=1;
+  const isIcon=!!el.closest('.panel');let tg=el;
+  if(isIcon){const ib=document.createElement('i');ib.className='ib';ib.textContent='i';ib.tabIndex=0;ib.setAttribute('role','img');ib.setAttribute('aria-label',HLP[id][0]+' hakkında bilgi');const lab=el.closest('label');(lab||el).insertAdjacentElement('afterend',ib);tg=ib;
+   ib.onfocus=()=>hlpShow(ib,id);ib.onblur=hlpHide}
+  tg.addEventListener('mouseenter',()=>{clearTimeout(hlpT);hlpT=setTimeout(()=>hlpShow(tg,id),isIcon?120:650)});tg.addEventListener('mouseleave',hlpHide);el.addEventListener('mousedown',hlpHide)}}
+document.addEventListener('scroll',hlpHide,true);
+window.HLP_IDS=()=>Object.keys(HLP);
+hlpInit();setTimeout(hlpInit,1500);
 
 /* ===== El rehberi (görsel) ===== */
 function hdHandSVG(f,pinch,arrow,label){const A='var(--acc)',D='color-mix(in srgb,currentColor 55%,transparent)';let o='';const xs=[48,70,92,112];
@@ -1841,18 +1945,20 @@ try{window.__TAURI__.webview.getCurrentWebview().onDragDropEvent(ev=>{const t=ev
  if(tab!='files')return;if(t=='enter'||t=='over'){$('fdrop').classList.add('drag');$('dropmsg').classList.remove('hide')}
  else{$('fdrop').classList.remove('drag');$('dropmsg').classList.add('hide');if(t=='drop')upFiles(ev.payload.paths||[])}})}catch(e){console.error(e)}
 
-const PRESETS={bus:'Bu fotoğraftaki otobüsü incele ve şunları ver:\n1) Marka ve model\n2) İşletme / firma (kaporta giydirmesi ve logolardan)\n3) Plaka (okunabiliyorsa; okunamıyorsa belirt)\n4) Fotoğrafın çekildiği konum (arka plan, tabela, yapı ve yol ipuçlarından tahmin)\nHer madde için güvenini (yüksek / orta / düşük) ve gerekçeni kısaca yaz; emin olmadığın yerde tahmin etme, belirt.',
- desc:'Bu fotoğrafı ayrıntılı açıkla: ne görünüyor, ortam, dikkat çeken ayrıntılar.',
- veh:'Bu fotoğraftaki taşıtı incele: tür, marka, model, üretim yılı aralığı, renk/giydirme, plaka (okunabiliyorsa) ve çekim yeri ipuçları. Her madde için güven düzeyini belirt; emin değilsen tahmin etme.',
+const PRESETS={desc:'Bu fotoğrafı ayrıntılı açıkla: ne görünüyor, ortam, dikkat çeken ayrıntılar.',
+ obj:'Bu fotoğraftaki ana nesne ve kişileri/öğeleri listele; her biri için ne olduğunu, durumunu ve dikkat çeken özelliklerini yaz. Emin olmadığın yerleri belirt, tahmin etme.',
+ txt:'Bu fotoğraftaki tüm yazıları (tabela, etiket, belge, ekran) olduğu gibi oku ve listele; okunamayanları belirt.',
+ qual:'Bu fotoğrafın teknik kalitesini değerlendir: netlik, pozlama, kompozisyon, gürültü, renk. Kısa iyileştirme önerileri ver.',
+ tag:'Bu fotoğraf için kısa bir başlık, 5-10 arama etiketi ve tek cümlelik açıklama öner.',
  food:'Bu yemeği tanı: adı, muhtemel içindekiler, hangi mutfağa ait olduğu, tahmini porsiyon ve kalori. Emin olmadığın yerleri belirt.',
  free:''};
 function askImage(o){const m=document.createElement('div');m.className='modal';
  m.innerHTML=`<div class="glass wide"><div style="font-weight:650;font-size:16px;margin-bottom:8px;word-break:break-all">Gemini’ye sor: ${esc(o.name)}</div>
- <select id="gp"><option value="bus">Otobüs tanı (marka, model, firma, plaka, konum)</option><option value="veh">Taşıt tanı (araba, kamyon, tren…)</option><option value="food">Yemeği tanı</option><option value="desc">Fotoğrafı açıkla</option><option value="free">Kendi sorum</option></select>
+ <select id="gp"><option value="desc">Fotoğrafı açıkla</option><option value="obj">Nesneleri tanı</option><option value="txt">Yazıları oku</option><option value="qual">Teknik kalite değerlendirmesi</option><option value="tag">Başlık ve etiket öner</option><option value="food">Yemeği tanı</option><option value="free">Kendi sorum</option></select>
  <textarea id="gt" rows="8" style="width:100%;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;margin:6px 0 10px;resize:vertical"></textarea>
  <div class="mut" style="margin-bottom:10px">Büyük fotoğraflar otomatik küçültülür. Görsel ve soru Gemini penceresine yazılır; sen Enter’a basarak gönderirsin.</div>
  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn sm" id="gno">Vazgeç</button><button class="btn sm pri" id="gok">Gemini’ye gönder</button></div></div>`;
- document.body.appendChild(m);const gt=m.querySelector('#gt'),gp=m.querySelector('#gp');gt.value=PRESETS.bus;
+ document.body.appendChild(m);const gt=m.querySelector('#gt'),gp=m.querySelector('#gp');gt.value=PRESETS.desc;
  gp.onchange=()=>{gt.value=PRESETS[gp.value];gt.focus()};m.querySelector('#gno').onclick=()=>m.remove();
  m.querySelector('#gok').onclick=async()=>{const p=gt.value.trim();if(!p){toast('Soru boş olamaz',true);return}m.remove();toast('Görsel hazırlanıyor, Gemini açılıyor…');
   try{if(o.path)await invoke('gemini_ask_local',{email:o.email||await invoke('first_account'),path:o.path,prompt:p});else await invoke('gemini_ask_image',{email:sel,id:o.id,name:o.name,mime:o.mime||'image/jpeg',prompt:p})}catch(x){toast(String(x),true)}}}

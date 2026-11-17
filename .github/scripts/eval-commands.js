@@ -12,8 +12,8 @@ const asLocal = new Function(script.slice(a, b) + '; return asLocal;')();
 const R = (t, tool, args) => { const r = asLocal(t); const same = tool === null ? r === null : (r && r[0] === tool && Object.entries(args || {}).every(([k, v]) => r[1][k] === v)); ok(same, `"${t}" → beklenen ${tool} ${JSON.stringify(args || '')}, gelen ${JSON.stringify(r)}`); };
 // açma
 R('IMG_001 dosyasını aç', 'dosya_ac', { sorgu: 'img_001', tur: 'dosya' });
-R('06 VT 317 klasörünü aç', 'dosya_ac', { sorgu: '06 vt 317', tur: 'klasor' });
-R('06 vt 317 klasörünü açar mısın', 'dosya_ac', { sorgu: '06 vt 317', tur: 'klasor' });
+R('Rapor 317 klasörünü aç', 'dosya_ac', { sorgu: 'rapor 317', tur: 'klasor' });
+R('rapor 317 klasörünü açar mısın', 'dosya_ac', { sorgu: 'rapor 317', tur: 'klasor' });
 R('Fatura klasörü aç', 'dosya_ac', { sorgu: 'fatura', tur: 'klasor' });
 R('rapor.pdf dosyasını aç', 'dosya_ac', { sorgu: 'rapor.pdf' });
 R('onu aç', 'dosya_ac', {});
@@ -24,9 +24,9 @@ R('Sözleşme aç', 'dosya_ac', { sorgu: 'sözleşme' });
 R('06 vt 201 bul', 'dosya_bul', { sorgu: '06 vt 201' });
 R('IMG_0042 bul', 'dosya_bul', { sorgu: 'img_0042' });
 R('bana fatura bul', 'dosya_bul', { sorgu: 'fatura' });
-R('lütfen 06 vt 317 bulur musun', 'dosya_bul', { sorgu: '06 vt 317' });
+R('lütfen rapor 317 bulur musun', 'dosya_bul', { sorgu: 'rapor 317' });
 R('proje sunumu dosyasını bul', 'dosya_bul', { sorgu: 'proje sunumu' });
-R('06 vt 317 bul ve aç', 'dosya_ac', { sorgu: '06 vt 317' });
+R('rapor 317 bul ve aç', 'dosya_ac', { sorgu: 'rapor 317' });
 R('IMG_001 bulup aç', 'dosya_ac', { sorgu: 'img_001' });
 // dizin / gezgin
 R('bulunduğu dizini aç', 'gezginde_goster', { mod: 'dizin' });
@@ -42,7 +42,7 @@ R('güncelleme var mı', 'guncelleme_ara');
 R('son dosyalar', 'son_dosyalar');
 R('son açılan dosyaları göster', 'son_dosyalar');
 // Gemini'ye bırakılması gerekenler (birleşik / betimleyici / belirsiz)
-R('2026 yılından Ankara’daki bütün Mercedes-Benz Turismo yeni kasa 16 araçların fotoğrafını açar mısın', null);
+R('2026 yılından Antalya’daki bütün tatil plaj 16 fotoğrafları açar mısın', null);
 R('bul, dizinini aç ve dosyayı seç', null);
 R('bu dosyayı sil', null);
 R('dosyaları taşı', null);
@@ -50,7 +50,7 @@ R('merhaba nasılsın', null);
 R('bugün hava nasıl', null);
 R('fatura klasörünü aç ve içindekileri listele', null);
 R('önce bul sonra aç', null);
-R('2026 Ankara Turismo fotoğrafları bul', null);
+R('2026 Antalya Tatil fotoğrafları bul', null);
 
 // 2) Araç tanımları ↔ işleyiciler
 const A = script.indexOf('const ASTOOLS=['), B = script.indexOf('function asstSys(');
