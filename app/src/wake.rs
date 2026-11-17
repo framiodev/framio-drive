@@ -16,9 +16,26 @@ fn wake_dir() -> PathBuf { data_dir().join("wake") }
 fn word_path() -> PathBuf { wake_dir().join("word.rpw") }
 
 /// Varsayılan mikrofonu açar; ses 16 kHz mono f32 parçalar hâlinde `sink`e akar.
+static DEV: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None);
+
+/// Uyandırma dinlemesi için kullanılabilir mikrofonlar.
+#[tauri::command]
+pub fn wake_devices() -> Value {
+    let host = cpal::default_host();
+    let def = host.default_input_device().and_then(|d| d.name().ok());
+    let names: Vec<String> = host.input_devices().map(|it| it.filter_map(|d| d.name().ok()).collect()).unwrap_or_default();
+    json!({ "devices": names, "default": def })
+}
+
+/// Dinleme/kayıt için mikrofonu seçer (boş = varsayılan). Çalışan dinleme yeniden başlatılınca geçerli olur.
+#[tauri::command]
+pub fn wake_set_device(name: Option<String>) { *DEV.lock().unwrap() = name.filter(|n| !n.is_empty()); }
+
 fn open_stream(mut sink: impl FnMut(Vec<f32>) + Send + 'static) -> Result<cpal::Stream, String> {
     let host = cpal::default_host();
-    let dev = host.default_input_device().ok_or("Mikrofon bulunamadı")?;
+    let want = DEV.lock().unwrap().clone();
+    let dev = want.and_then(|w| host.input_devices().ok().and_then(|mut it| it.find(|d| d.name().ok().as_deref() == Some(w.as_str()))))
+        .or_else(|| host.default_input_device()).ok_or("Mikrofon bulunamadı")?;
     let cfg = dev.default_input_config().map_err(|e| format!("Mikrofon ayarı okunamadı: {e}"))?;
     let ch = cfg.channels() as usize;
     let ratio = cfg.sample_rate().0 as f32 / 16000.0;
