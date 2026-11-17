@@ -120,6 +120,14 @@ impl Drive {
         }
     }
 
+    /// Tek dosyanın hazır küçük resim adresi (yoksa None).
+    pub async fn thumb_of(&self, id: &str) -> Result<Option<String>, Error> {
+        let r = self.http.get(format!("{API}/files/{id}")).bearer_auth(&self.token).query(&[("fields", "thumbnailLink"), ("supportsAllDrives", "true")]).send().await?;
+        if !r.status().is_success() { return Ok(None); }
+        let v: serde_json::Value = r.json().await?;
+        Ok(v["thumbnailLink"].as_str().map(String::from))
+    }
+
     /// "Drive'ım" kök klasörünün id'si.
     pub async fn root_id(&self) -> Result<String, Error> {
         let r = self.http.get(format!("{API}/files/root")).bearer_auth(&self.token).query(&[("fields", "id")]).send().await?;
