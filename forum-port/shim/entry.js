@@ -55,3 +55,25 @@ export const getCrosspostIntent = () => window.__framioCrosspostIntent || null;
 export const request = (o) => app.request(o);
 export const apiUrl = () => app.forum.attribute('apiUrl');
 export { FDiscussion };
+
+/** Yayimlanan yanita ortak paylasim niyetini uygular (forumdaki crosspostOnPublish.apply ile ayni mantik). */
+export function applyCrosspost(res) {
+  const d = res && res.data;
+  const intent = window.__framioCrosspostIntent;
+  if (!d || !intent || intent.mode !== 'payload' || !intent.payload || Date.now() - intent.at > 2 * 60 * 60 * 1000) return Promise.resolve(false);
+  const html = (d.attributes && d.attributes.contentHtml) || '';
+  if (intent.imageIds.length && !intent.imageIds.some((id) => html.includes(`data-id="${id}"`) || html.includes(`id=${id}`))) return Promise.resolve(false);
+  window.__framioCrosspostIntent = null;
+  const payload = { ...intent.payload };
+  if (payload.excluded_image_indexes) {
+    const byIndex = intent.imageIdsByIndex || [];
+    payload.excluded_image_ids = payload.excluded_image_indexes.map((i) => byIndex[i]).filter(Boolean).map(Number);
+    delete payload.excluded_image_indexes;
+  }
+  return app.request({ method: 'POST', url: app.forum.attribute('apiUrl') + '/framio/crosspost/outbound', body: { ...payload, post_id: d.id } }).then((r) => {
+    const failed = ((r && r.results) || []).filter((x) => !x.success);
+    if (failed.length) app.alerts.show({ type: 'error' }, 'Ortak paylaşım kısmen başarısız: ' + failed.map((x) => `${x.node}: ${x.error || 'hata'}`).join(' · '));
+    else app.alerts.show({ type: 'success' }, 'Gönderi ortak paylaşımla diğer sitelere de aktarıldı.');
+    return true;
+  }).catch(() => { app.alerts.show({ type: 'error' }, 'Gönderi yayımlandı ama diğer sitelere aktarılamadı.'); return false; });
+}
