@@ -44,7 +44,8 @@ const res = await less.render(entry, { paths: [path.join(here, 'vendor/flarum-co
 let css = res.css
   .replace(/\.fl-scope\s+:root/g, '.fl-scope')
   .replace(/\.fl-scope\s+(html|body)\b/g, '.fl-scope')
-  .replace(/\.fl-scope\s+\.fl-scope/g, '.fl-scope');
+  .replace(/\.fl-scope\s+\.fl-scope/g, '.fl-scope')
+  .replace(/\.fl-scope\s+\[data-theme/g, '.fl-scope[data-theme');
 // Simge yazi tipleri CSS icine gomulur (uygulama cevrimdisi da dogru gorunsun); ttf yedekleri atilir
 css = css.replace(/,\s*url\((['"]?)\.\.\/webfonts\/[^)]*\.ttf\1\)\s*format\((['"]?)truetype\2\)/g, '');
 css = css.replace(/url\((['"]?)\.\.\/webfonts\/([^)'"]*\.woff2)\1\)/g, (_, q, f) => 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(fa, 'webfonts', f)).toString('base64') + ')');

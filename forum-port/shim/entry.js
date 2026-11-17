@@ -13,6 +13,8 @@ function ensureRoot() {
   root.className = 'fl-scope App';
   root.id = 'fl-root';
   root.style.display = 'contents';
+  const th = () => root.setAttribute('data-theme', document.documentElement.dataset.theme || 'dark');
+  th(); new MutationObserver(th).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   document.body.appendChild(root);
   const mm = document.createElement('div'); mm.id = 'modal'; root.appendChild(mm);
   const al = document.createElement('div'); al.id = 'alerts'; root.appendChild(al);
