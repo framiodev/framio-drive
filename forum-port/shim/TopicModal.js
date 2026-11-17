@@ -39,13 +39,13 @@ export default class TopicModal extends Modal {
     return m('div', { className: 'Modal-body' }, [
       m('p', { className: 'helpText' }, 'Fotoğraf yapay zekâyla okundu; uygun başlıklar önerildi. İstersen değiştirebilir ya da arayabilirsin. Künye alanları başlığın türüne göre gelir.'),
       m('div', { className: 'Form-group', style: 'display:flex;gap:8px' }, [
-        m('input', { className: 'FormControl', placeholder: 'Başlık ara ya da forum bağlantısını yapıştır', value: this.q, oninput: (e) => { this.q = e.target.value; }, onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.search(); } } }),
-        m(Button, { className: 'Button', onclick: () => this.search() }, 'Ara'),
+        m('input', { className: 'FormControl', style: 'flex:1;min-width:0', placeholder: 'Başlık ara ya da forum bağlantısını yapıştır', value: this.q, oninput: (e) => { this.q = e.target.value; }, onkeydown: (e) => { if (e.key === 'Enter') { e.preventDefault(); this.search(); } } }),
+        m(Button, { className: 'Button', style: 'flex:none;background:var(--control-bg);color:var(--control-color)', onclick: () => this.search() }, 'Ara'),
       ]),
       this.err ? m('div', { className: 'Alert Alert--error', style: 'margin-bottom:10px' }, this.err) : null,
       this.loading ? m('div', { style: 'padding:14px;text-align:center' }, [m(LoadingIndicator, { display: 'inline' }), m('div', { className: 'helpText' }, 'Başlıklar aranıyor…')])
         : this.items.length ? m('div', { className: 'Form-group' }, this.items.map((it) => m('button', {
-          type: 'button', className: 'Button Button--block' + (this.sel === it ? ' Button--primary' : ''), style: 'display:block;width:100%;text-align:left;margin-bottom:6px;white-space:normal',
+          type: 'button', className: 'Button Button--block' + (this.sel === it ? ' Button--primary' : ''), style: 'display:block;width:100%;text-align:left;margin-bottom:6px;white-space:normal;' + (this.sel === it ? '' : 'background:var(--control-bg);color:var(--text-color)'),
           onclick: () => { this.sel = it; },
         }, it.title)))
         : m('div', { className: 'helpText', style: 'padding:10px 0' }, 'Öneri bulunamadı; yukarıdan arayabilirsin.'),
