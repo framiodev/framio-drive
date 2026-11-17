@@ -2315,7 +2315,7 @@ async function shrLoadMeta(){const id=shrFo();if(!id)return;
  await frConfigure()}
 $('shrForum').onchange=()=>{shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';$('shrSel').textContent='';frFid='';shrLoadMeta()};
 /* Forum paketini seçili forum + başlıkla yapılandır (oturum kullanıcısı, başlığın etiketleri, ağ desteği) */
-function frMount(){if(frMounted)return true;try{if(typeof FramioForumPort=='undefined')throw new Error('forum-port.js yüklenemedi');FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true;return true}catch(e){$('frHint').textContent='Yükleme düğmesi kurulamadı: '+(e&&e.message||e);return false}}
+function frMount(){if(frMounted)return true;try{if(typeof FramioForumPort=='undefined')throw new Error('forum-port.js yüklenemedi');FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true;return true}catch(e){$('frHint').textContent='Yükleme düğmesi kurulamadı: '+(e&&e.message||e)+' | '+String(e&&e.stack||'').split('\n').slice(1,5).map(x=>x.trim().replace(/\(.*[\\/]/,'(')).join(' ← ');return false}}
 async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id)return;if(!frMount())return;
  if(!m.base){$('frHint').textContent='Forum bilgisi alınamadı';return}
  let tags=[];if(t){try{tags=(await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})).map(x=>x.slug)}catch(e){}}

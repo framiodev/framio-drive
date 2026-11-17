@@ -26,7 +26,7 @@ const externals = checkOnly ? ['mithril', 'mithril/stream', 'jquery', 'body-scro
 
 const r = await build({
   entryPoints: [path.join(shim, 'entry.js')],
-  bundle: true, format: 'iife', globalName: 'FramioForumPort', target: 'es2020',
+  bundle: true, format: 'iife', globalName: 'FramioForumPort', target: 'es2022',
   outfile: checkOnly ? '/tmp/forum-port-check.js' : path.join(out, 'forum-port.js'),
   jsx: 'transform', jsxFactory: 'm', jsxFragment: 'm.Fragment',
   inject: [path.join(shim, 'globals.js')],
