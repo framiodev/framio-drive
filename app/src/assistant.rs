@@ -6,7 +6,7 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 #[tauri::command]
 pub async fn assistant_gen(body: Value) -> Result<Value, String> {
     let key = drivenet::gemini::load_key().ok_or_else(|| "Gemini anahtarı yok: Ayarlar > Yapay zekâ bölümünden ekle".to_string())?;
-    let model = load_settings()["ai"]["model"].as_str().unwrap_or("gemini-2.5-flash").to_string();
+    let model = crate::org::ai_model().await;
     drivenet::gemini::generate(&key, &model, &body).await
 }
 

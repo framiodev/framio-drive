@@ -426,7 +426,7 @@ select option{background:#222;color:#fff}
       <div class="glass panel"><h2>Yapay zekâ <span>Gemini API — toplu düzenleme için (sohbet penceresi bunsuz çalışır)</span></h2>
         <div class="mut" id="aiNote" style="margin-bottom:8px"></div>
         <input id="aiKey" type="password" placeholder="Gemini API anahtarı (boş bırakırsan mevcut anahtar korunur)" autocomplete="off">
-        <div style="display:grid;grid-template-columns:1fr 170px;gap:8px"><input id="aiModel" placeholder="Model (örn. gemini-2.5-flash)"><input id="aiDelay" type="number" min="0" max="120" step="1" placeholder="İstekler arası sn"></div>
+        <div style="display:grid;grid-template-columns:1fr 170px;gap:8px"><input id="aiModel" list="aiModels" placeholder="Model (boşsa en yeni Flash seçilir)"><datalist id="aiModels"></datalist><input id="aiDelay" type="number" min="0" max="120" step="1" placeholder="İstekler arası sn"></div>
         <div class="acts" style="margin-top:0"><button class="btn pri" id="aiSave">Kaydet</button><button class="btn" id="aiOpen">Ücretsiz anahtar al</button><button class="btn danger" id="aiClear">Anahtarı sil</button></div>
         <div class="mut" style="margin-top:10px">Anahtar Windows Kimlik Bilgisi Yöneticisi’nde saklanır. Ücretsiz katmanda gönderilen görseller Google’ın ürünlerini geliştirmek için kullanılabilir; gizlilik istiyorsan ücretli katman kullan.</div></div>
       <div class="glass panel"><h2>Düzenleme profilleri <span>Hangi bilgiler okunsun, dosya ve klasörler nasıl adlansın</span></h2>
@@ -827,7 +827,7 @@ function asstToggle(){if($('asst').classList.contains('hide'))asstOpen();
  if(AS.state=='listen'){if(AS.stopRec)AS.stopRec();return}
  if(AS.state!='idle'&&AS.state!='err')asstCancel();
  asstStart()}
-async function asstStart(){const tok=++AS.tok;try{speechSynthesis.cancel()}catch(e){}asstState('listen');
+async function asstStart(){const tok=++AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());try{speechSynthesis.cancel()}catch(e){}asstState('listen');
  let a;try{a=await asstRecord(tok)}catch(e){return asstFail(e)}
  if(tok!==AS.tok)return;if(!a){asstSay('step','Seni duyamadım');asstState('idle','Seni duyamadım, tekrar dene');return}
  asstTurn({audio:a})}
@@ -881,7 +881,7 @@ const ASTOOLS=[
 function asstSys(){const s=selRows().slice(0,8).map(r=>r.dataset.n).join(', ');
  return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Dosya adı geçen her komutta önce dosya_ac / gezginde_goster gibi tek adımda işi yapan aracı dene; dosya_bul bulanık aramadır (yazım ve boşluk farkını tolere eder). "Onu", "aynı dosya", "bulunduğu dizin" gibi göndermeler odaktaki dosyayı kasteder, bu durumda sorgu verme. Birleşik komutları ("bul, dizinini aç, dosyayı seç") sırayla araç çağırarak tamamla. Yalnızca drive_ara'yı içerik/ad parçası için yedek olarak kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yapamayacağını dürüstçe söyle, bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: odak dosya ${AS.focus?AS.focus.name+' ('+(AS.focus.path||'yol bilinmiyor')+')':'yok'}; sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.`}
 const asGen=(contents,tools)=>invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})});
-async function asstTurn(inp){const tok=AS.tok;asstState('think');
+async function asstTurn(inp){const tok=AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());asstState('think');
  const user={role:'user',parts:inp.audio?[{text:'(Sesli komut)'},{inline_data:{mime_type:'audio/wav',data:inp.audio}}]:[{text:inp.text}]};
  const contents=[...AS.hist,user];let heard=inp.text||'';if(inp.text)asstSay('me',inp.text);
  for(let round=0;round<6;round++){let r;try{r=await asGen(contents,true)}catch(e){return asstFail(e)}
@@ -1435,7 +1435,7 @@ setInterval(()=>{if(tab=='files'&&sel&&!fSearch&&!document.querySelector('#frows
 /* ---------- Akıllı dizin düzenleme + yapay zekâ ayarları ---------- */
 let profs=[],pfIdx=0,orgItems=[],orgRes=[],orgSource=null,orgRun=false;
 const evl=window.__TAURI__.event.listen;
-async function loadAi(){try{const c=await invoke('ai_cfg_get');$('aiModel').value=c.model;$('aiDelay').value=c.delay;$('aiNote').textContent=c.has_key?'Anahtar kayıtlı.':'Henüz anahtar yok. “Ücretsiz anahtar al” ile Google AI Studio’dan alıp buraya yapıştır.';$('orgNoKey').textContent=c.has_key?'':'Önce Ayarlar > Yapay zekâ bölümüne Gemini API anahtarını ekle.';return c}catch(e){}}
+async function loadAi(){try{const c=await invoke('ai_cfg_get');$('aiModel').value=c.model;$('aiDelay').value=c.delay;$('aiNote').textContent=c.has_key?'Anahtar kayıtlı.':'Henüz anahtar yok. “Ücretsiz anahtar al” ile Google AI Studio’dan alıp buraya yapıştır.';$('orgNoKey').textContent=c.has_key?'':'Önce Ayarlar > Yapay zekâ bölümüne Gemini API anahtarını ekle.';if(c.has_key)invoke('ai_models').then(r=>{$('aiModels').innerHTML=r.models.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');if(r.current)$('aiModel').value=r.current;$('aiNote').textContent='Anahtar kayıtlı. '+r.models.length+' model kullanılabilir; liste anahtarından canlı okunur.'}).catch(e=>{$('aiNote').textContent='Anahtar kayıtlı, ama model listesi alınamadı: '+String(e)});return c}catch(e){}}
 $('aiSave').onclick=async()=>{try{await invoke('ai_cfg_set',{key:$('aiKey').value,model:$('aiModel').value,delay:+$('aiDelay').value||0});$('aiKey').value='';toast('Kaydedildi');loadAi()}catch(e){toast(String(e),true)}};
 $('aiClear').onclick=async()=>{await invoke('ai_key_clear');toast('Anahtar silindi');loadAi()};
 $('aiOpen').onclick=()=>invoke('open_url',{url:'https://aistudio.google.com/apikey'}).catch(e=>toast(String(e),true));

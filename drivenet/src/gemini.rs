@@ -15,6 +15,51 @@ pub fn clear_key() {
     if let Ok(e) = keyring::Entry::new(SERVICE, ACCOUNT) { let _ = e.delete_credential(); }
 }
 
+/// Emekliye ayrılan/eski nesil (1.x, 2.x) ya da boş model adı mı? Öyleyse güncel olanla değiştirilir.
+pub fn is_retired(m: &str) -> bool {
+    let m = m.trim();
+    m.is_empty() || m.starts_with("gemini-1.") || m.starts_with("gemini-2.")
+}
+
+/// Anahtarın erişebildiği, metin üretebilen Gemini modelleri: (kimlik, görünen ad). Yeniler başta.
+pub async fn list_models(key: &str) -> Result<Vec<(String, String)>, String> {
+    let r = reqwest::Client::new().get("https://generativelanguage.googleapis.com/v1beta/models")
+        .query(&[("pageSize", "1000")]).header("x-goog-api-key", key).timeout(Duration::from_secs(15))
+        .send().await.map_err(|e| format!("Model listesi alınamadı: {e}"))?;
+    let code = r.status();
+    if !code.is_success() { return Err(format!("Model listesi alınamadı ({code}); anahtarı kontrol et")); }
+    let v: Value = r.json().await.map_err(|e| e.to_string())?;
+    const SKIP: &[&str] = &["image", "tts", "embedding", "live", "audio", "robotics", "computer", "vision", "imagen", "native"];
+    let mut out: Vec<(String, String)> = v["models"].as_array().map(|a| a.iter().filter_map(|m| {
+        let id = m["name"].as_str()?.trim_start_matches("models/").to_string();
+        let ok = id.starts_with("gemini-") && m["supportedGenerationMethods"].as_array().map(|x| x.iter().any(|y| y == "generateContent")).unwrap_or(false);
+        if !ok || SKIP.iter().any(|k| id.contains(k)) { return None; }
+        Some((id, m["displayName"].as_str().unwrap_or("").to_string()))
+    }).collect()).unwrap_or_default();
+    out.sort_by(|a, b| b.0.cmp(&a.0));
+    Ok(out)
+}
+
+/// Listeden en yeni kararlı Flash'ı seçer (önizleme/lite/deneysel hariç); yoksa "latest" takma adı.
+pub fn pick_default(ids: &[String]) -> String {
+    let mut best: Option<(f32, &String)> = None;
+    for id in ids {
+        if id.contains("lite") || id.contains("preview") || id.contains("exp") { continue; }
+        let Some(mid) = id.strip_prefix("gemini-").and_then(|r| r.strip_suffix("-flash")) else { continue };
+        let Ok(ver) = mid.parse::<f32>() else { continue };
+        if best.map(|b| ver > b.0).unwrap_or(true) { best = Some((ver, id)); }
+    }
+    if let Some((_, id)) = best { return id.clone(); }
+    if ids.iter().any(|i| i == "gemini-flash-latest") { return "gemini-flash-latest".into(); }
+    ids.iter().find(|i| i.contains("flash")).cloned().unwrap_or_else(|| "gemini-flash-latest".into())
+}
+
+/// Kayıtlı model güncelse onu, değilse anahtarın erişebildiği en yeni Flash'ı döndürür.
+pub async fn resolve_model(key: &str, saved: &str) -> String {
+    if !is_retired(saved) { return saved.trim().to_string(); }
+    match list_models(key).await { Ok(l) if !l.is_empty() => pick_default(&l.into_iter().map(|x| x.0).collect::<Vec<_>>()), _ => "gemini-flash-latest".into() }
+}
+
 /// Görseli verilen istemle inceler; `fields` (anahtar, açıklama) için metin alanları + güven + not içeren JSON döndürür.
 /// 429/503 yanıtlarında bekleyip yeniden dener.
 pub async fn analyze(key: &str, model: &str, prompt: &str, fields: &[(String, String)], mime: &str, b64: &str) -> Result<Value, String> {

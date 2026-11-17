@@ -144,7 +144,7 @@ fn sys(p: &str) -> String {
 pub async fn meta_ask(platform: String, question: String, step: String) -> Result<String, String> {
     let p = pf(&platform)?;
     let key = gemini::load_key().ok_or("Gemini API anahtarı yok — “Gemini’de sor” ile kendi Gemini hesabında sorabilirsin")?;
-    let model = load_settings()["ai"]["model"].as_str().unwrap_or("gemini-2.5-flash").to_string();
+    let model = crate::org::ai_model().await;
     meta::chat(&key, &model, &sys(p), &format!("Kullanıcı şu an rehberde bu adımda: {step}\n\nSorusu: {question}")).await
 }
 

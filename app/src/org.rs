@@ -50,17 +50,35 @@ pub fn org_profiles_save(profiles: Value) -> Result<(), String> {
 #[tauri::command]
 pub fn ai_cfg_get() -> Value {
     let s = load_settings();
-    json!({ "has_key": gemini::load_key().is_some(), "model": s["ai"]["model"].as_str().unwrap_or("gemini-2.5-flash"), "delay": s["ai"]["delay"].as_f64().unwrap_or(7.0) })
+    json!({ "has_key": gemini::load_key().is_some(), "model": s["ai"]["model"].as_str().unwrap_or(""), "delay": s["ai"]["delay"].as_f64().unwrap_or(7.0) })
 }
 #[tauri::command]
 pub fn ai_cfg_set(key: String, model: String, delay: f64) -> Result<(), String> {
     if !key.trim().is_empty() { gemini::save_key(key.trim())?; }
     let mut s = load_settings();
-    s["ai"]["model"] = json!(if model.trim().is_empty() { "gemini-2.5-flash" } else { model.trim() });
+    s["ai"]["model"] = json!(model.trim());
     s["ai"]["delay"] = json!(delay.max(0.0).min(120.0));
     save_settings(&s);
     Ok(())
 }
+/// Geçerli modeli döndürür; eski/boşsa anahtarın erişebildiği en yeni Flash'a geçirip kaydeder.
+pub async fn ai_model() -> String {
+    let saved = load_settings()["ai"]["model"].as_str().unwrap_or("").to_string();
+    if !gemini::is_retired(&saved) { return saved; }
+    let m = match gemini::load_key() { Some(k) => gemini::resolve_model(&k, &saved).await, None => "gemini-flash-latest".to_string() };
+    let mut s = load_settings(); s["ai"]["model"] = json!(m); save_settings(&s);
+    m
+}
+
+/// Ayarlar için: anahtarın erişebildiği modeller ve seçili (gerekirse güncellenmiş) model.
+#[tauri::command]
+pub async fn ai_models() -> Result<Value, String> {
+    let key = gemini::load_key().ok_or("Gemini anahtarı yok")?;
+    let list = gemini::list_models(&key).await?;
+    let current = ai_model().await;
+    Ok(json!({ "current": current, "models": list.iter().map(|(id, name)| json!({ "id": id, "name": name })).collect::<Vec<_>>() }))
+}
+
 #[tauri::command]
 pub fn ai_key_clear() { gemini::clear_key(); }
 
@@ -116,7 +134,7 @@ pub async fn org_analyze(app: AppHandle, source: Value, items: Vec<Value>, profi
     };
     let key = if fsess.is_some() { String::new() } else { gemini::load_key().ok_or("Gemini anahtarı yok — Ayarlar > Yapay zekâ bölümünden ekle veya forum motorunu seç")? };
     let cfg = ai_cfg_get();
-    let model = cfg["model"].as_str().unwrap_or("gemini-2.5-flash").to_string();
+    let model = if fsess.is_some() { String::new() } else { ai_model().await };
     let delay = if fsess.is_some() { 1.5 } else { cfg["delay"].as_f64().unwrap_or(7.0) };
     let fields: Vec<(String, String)> = profile["fields"].as_array().map(|a| a.iter().map(|f| (f["key"].as_str().unwrap_or("").to_string(), f["desc"].as_str().unwrap_or("").to_string())).filter(|f| !f.0.is_empty()).collect()).unwrap_or_default();
     if fields.is_empty() { return Err("Profilde alan yok".into()); }
