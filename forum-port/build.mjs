@@ -30,7 +30,7 @@ const r = await build({
   outfile: checkOnly ? '/tmp/forum-port-check.js' : path.join(out, 'forum-port.js'),
   jsx: 'transform', jsxFactory: 'm', jsxFragment: 'm.Fragment',
   inject: [path.join(shim, 'globals.js')],
-  define: { XMLHttpRequest: 'FramioXHR' },
+  define: { XMLHttpRequest: 'window.FramioXHR' },
   plugins: [appShim], external: externals, logLevel: 'info', legalComments: 'none', minify: false,
   loader: { '.js': 'jsx' },
 });
@@ -38,7 +38,7 @@ if (checkOnly) process.exit(0);
 
 // Flarum cekirdek CSS'i (forumun kendi surumu): yalnizca .fl-scope icinde gecerli olacak sekilde derlenir
 const less = (await import('less')).default;
-const entry = `.fl-scope { @import (multiple) "forum.less"; }`;
+const entry = `@import "common/variables.less";\n@import "common/mixins.less";\n.fl-scope { @import (multiple) "forum.less"; }`;
 const fa = path.join(here, 'node_modules/@fortawesome/fontawesome-free');
 const res = await less.render(entry, { paths: [path.join(here, 'vendor/flarum-core/less'), path.join(fa, 'css')], filename: 'fl.less', javascriptEnabled: true, globalVars: { 'fa-bundled-fonts': 'true' } });
 let css = res.css
