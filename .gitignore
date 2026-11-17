@@ -5,3 +5,6 @@ client.json
 *.key
 *.key.pub.bak
 app/winfsp.msi
+forum-port/node_modules/
+app/ui/forum-port.js
+app/ui/forum-port.css

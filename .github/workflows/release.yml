@@ -5,7 +5,7 @@ name: Surum yayinla
 on:
   push:
     branches: [main]
-    paths: ['app/**', 'drivefs/**', 'drivenet/**', 'drivesync/**', 'drivecore/**', '.github/workflows/release.yml']
+    paths: ['forum-port/**', 'app/**', 'drivefs/**', 'drivenet/**', 'drivesync/**', 'drivecore/**', '.github/workflows/release.yml']
   workflow_dispatch:
 
 permissions:
@@ -72,6 +72,11 @@ jobs:
         if: steps.chk.outputs.skip != 'true'
         with:
           node-version: 22
+
+      - name: Forum eklenti paketi (orijinal kaynaklar + uyum katmani)
+        if: steps.chk.outputs.skip != 'true'
+        shell: bash
+        run: cd forum-port && npm install --no-audit --no-fund && node build.mjs
 
       - name: Tauri CLI kur
         if: steps.chk.outputs.skip != 'true'
