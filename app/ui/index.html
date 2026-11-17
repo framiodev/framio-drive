@@ -902,7 +902,7 @@ const asCss=document.createElement('style');asCss.textContent=`
 @keyframes assweep{to{transform:translateY(calc(100vh + 80px))}}
 #asst>*{position:relative;z-index:1}
 #asst .asH{flex-direction:column;align-items:center;gap:6px;text-align:center;margin:30px 0 8px}
-#asst .asT b{font-size:13px;font-weight:650;letter-spacing:.24em;color:var(--acc);text-transform:uppercase}
+#asst .asT b{font-size:13px;font-weight:650;letter-spacing:.24em;color:#ff4057;text-transform:uppercase}
 #asst .asT small{font-size:12.5px;color:var(--mut);white-space:normal;margin-top:3px}
 #asst .orb{--hud:var(--acc);width:min(24vh,178px);height:min(24vh,178px);margin:4px 0 0}
 #asst .orb::before{inset:34%;border-radius:50%;background:radial-gradient(circle,#fff 0,color-mix(in srgb,var(--hud) 35%,#fff) 20%,var(--hud) 52%,color-mix(in srgb,var(--hud) 60%,#000) 100%);box-shadow:0 0 22px var(--hud),0 0 56px color-mix(in srgb,var(--hud) 50%,transparent);transform:scale(calc(1 + var(--lvl)*.4));animation:asbreath 3.2s ease-in-out infinite}
@@ -932,10 +932,12 @@ const asCss=document.createElement('style');asCss.textContent=`
 #asst.mini{position:fixed;right:22px;bottom:22px;left:auto;top:auto;width:84px;height:84px;padding:0;cursor:pointer;z-index:90;align-items:center;justify-content:center;border-radius:50%}
 #asst.mini::before,#asst.mini::after,#asst.mini .asT,#asst.mini .asLog,#asst.mini .asConf,#asst.mini .asIn,#asst.mini .asH>.upB,#asst.mini .asBtns{display:none}
 #asst.mini .asH{margin:0}#asst.mini .orb{width:76px;height:76px;margin:0}
-#asst .orb{width:min(26vh,200px);height:min(26vh,200px)}
+#asst .orb{width:min(100%,36vh,310px);height:auto;aspect-ratio:1;margin:0 auto}
+#asst{background:linear-gradient(180deg,#07080b,#0c0d12);border-color:rgba(255,255,255,.09);--text:#f2f2f4;--mut:#9a9aa8;--stroke:rgba(255,255,255,.13);--glass2:rgba(255,255,255,.05);--track:rgba(255,255,255,.08);color:#f2f2f4}
 #asCv{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;display:none}
 #asst.gl #asCv{display:block}
-#asst.gl .orb{background:radial-gradient(circle,#040406 0,#07080b 68%,transparent 70%)}
+#asst.gl .orb{background:none;overflow:visible}
+#asst.gl #asCv{border-radius:0;filter:drop-shadow(0 0 8px rgba(255,35,60,.65)) drop-shadow(0 0 26px rgba(255,35,60,.4))}
 #asst.gl .orb::before,#asst.gl .orb::after,#asst.gl .orb i{display:none}
 #asst>.asBr{position:absolute;inset:16px;pointer-events:none;display:none;z-index:0;background:linear-gradient(var(--acc),var(--acc)) 0 0/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 0/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 0/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 0/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 100%/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 100%/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/2px 30px no-repeat}
 #asst.full{position:fixed;inset:0;width:auto;height:auto;max-width:none;z-index:2147483000;border-radius:0;border:0;padding:30px 24px 24px;align-items:center;background:#06070a;backdrop-filter:none;-webkit-backdrop-filter:none;--text:#f2f2f4;--mut:#9a9aa8;--stroke:rgba(255,255,255,.13);--glass2:rgba(255,255,255,.05);--track:rgba(255,255,255,.08);color:#f2f2f4}
@@ -1480,7 +1482,7 @@ function rxInit(){try{const cv=$('asCv'),gl=cv.getContext('webgl2',{alpha:true,p
  const mk=(t,src)=>{const sh=gl.createShader(t);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh};
  const pr=gl.createProgram();gl.attachShader(pr,mk(gl.VERTEX_SHADER,'#version 300 es\nin vec2 p;out vec2 vUv;void main(){vUv=p*.5+.5;gl_Position=vec4(p,0.,1.);}'));gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,RXF));gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error('link');
  gl.useProgram(pr);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);const l=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
- ['uColor','uHot','uLevel','uPhase','uOpen','uZoom','uIntensity'].forEach(n=>RX.U[n]=gl.getUniformLocation(pr,n));gl.uniform1f(RX.U.uZoom,1.06);
+ ['uColor','uHot','uLevel','uPhase','uOpen','uZoom','uIntensity'].forEach(n=>RX.U[n]=gl.getUniformLocation(pr,n));gl.uniform1f(RX.U.uZoom,.98);
  RX.gl=gl;RX.ok=true;$('asst').classList.add('gl');requestAnimationFrame(rxFrame)}catch(e){RX.ok=false;$('asst').classList.remove('gl')}}
 function rxFrame(t){requestAnimationFrame(rxFrame);if(!RX.ok)return;const a=$('asst');if(a.classList.contains('hide')||document.hidden)return;
  const dt=Math.min(.05,((t-RX.last)/1000)||.016);RX.last=t;const cv=$('asCv'),gl=RX.gl,d=Math.min(2,devicePixelRatio||1),w=Math.round(cv.clientWidth*d);if(!w)return;
@@ -1488,7 +1490,7 @@ function rxFrame(t){requestAnimationFrame(rxFrame);if(!RX.ok)return;const a=$('a
  const S=RXS[AS.state]||RXS.idle;let tg=AS.state=='speak'?.36+.3*Math.abs(Math.sin(t/230))+.12*Math.sin(t/97):AS.state=='think'?.28:AS.state=='listen'?RX.lvlIn:.07+.05*Math.sin(t/900);
  RX.lvl+=(tg-RX.lvl)*Math.min(1,dt*8);RX.phase+=dt*(.5+RX.lvl*.7)*S[2];RX.open+=(1-RX.open)*Math.min(1,dt*2.2);
  const tc=rxHex(S[0]),th=rxHex(S[1]),k=Math.min(1,dt*3);for(let i=0;i<3;i++){RX.c[i]+=(tc[i]-RX.c[i])*k;RX.h[i]+=(th[i]-RX.h[i])*k}
- gl.uniform3fv(RX.U.uColor,RX.c);gl.uniform3fv(RX.U.uHot,RX.h);gl.uniform1f(RX.U.uLevel,RX.lvl);gl.uniform1f(RX.U.uPhase,RX.phase);gl.uniform1f(RX.U.uOpen,RX.open);gl.uniform1f(RX.U.uIntensity,S[3]);
+ gl.uniform3fv(RX.U.uColor,RX.c);gl.uniform3fv(RX.U.uHot,RX.h);gl.uniform1f(RX.U.uLevel,RX.lvl);gl.uniform1f(RX.U.uPhase,RX.phase);gl.uniform1f(RX.U.uOpen,RX.open);gl.uniform1f(RX.U.uIntensity,S[3]*1.5);
  gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,3)}
 function asBoot(){if(RX.booted)return;RX.booted=1;RX.open=0;const L=['ÇEKİRDEK BAŞLATILIYOR','SES DEVRESİ ÇEVRİMİÇİ','ARAÇLAR YÜKLENİYOR'];L.forEach((x,i)=>setTimeout(()=>{if(AS.state=='idle')$('asSub').textContent=x+'…'},i*520));setTimeout(()=>{if(AS.state=='idle')$('asSub').textContent=asStateTxt.idle[1]},L.length*520+200)}
 function asFullSet(on){const a=$('asst');a.classList.toggle('full',on);if(on)a.classList.remove('mini');$('asFull').textContent=on?'⤡':'⤢'}
