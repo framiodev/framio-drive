@@ -247,11 +247,21 @@ pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Optio
     let now = now_secs();
     let usage = usage_map(&em);
     let konum_f = fold(&konum.unwrap_or_default());
+    // Sayı içeren sorgularda (06 VT 317) sayılar birebir aynı olmalı: 315/312 gibi benzerler elenir.
+    let qnums: Vec<String> = qt.iter().filter(|t| t.chars().any(|c| c.is_ascii_digit())).flat_map(|t| {
+        let mut out = vec![]; let mut cur = String::new();
+        for c in t.chars() { if c.is_ascii_digit() { cur.push(c); } else if !cur.is_empty() { out.push(std::mem::take(&mut cur)); } }
+        if !cur.is_empty() { out.push(cur); } out }).collect();
     let mut v: Vec<(f32, usize, f32)> = vec![];
     for (i, e) in ix.ents.iter().enumerate() {
         match kind.as_str() { "dosya" if e.folder => continue, "klasor" if !e.folder => continue, _ => {} }
         if !exts.is_empty() { let l = e.name.to_lowercase(); if !exts.iter().any(|x| l.ends_with(&format!(".{x}"))) { continue; } }
         if let Some(c) = &cutoff { if e.modified.as_str() < c.as_str() { continue; } }
+        if !qnums.is_empty() {
+            let nf = fold(&e.name); let b = nf.as_bytes();
+            let has = |num: &str| nf.match_indices(num).any(|(i, _)| (i == 0 || !b[i - 1].is_ascii_digit()) && (i + num.len() >= b.len() || !b[i + num.len()].is_ascii_digit()));
+            if !qnums.iter().all(|n| has(n)) { continue; }
+        }
         let base = if qc.is_empty() { 50.0 } else { score(&qs, &qc, &qt, e) };
         if base < 45.0 { continue; }
         if !konum_f.is_empty() { { let p = loose_path(&ix, e); if p.len() < 2 || !fold(&p[..p.len() - 1].join(" ")).contains(&konum_f) { continue; } } }
