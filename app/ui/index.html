@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr" data-theme="dark"><head><meta charset="utf-8"><title>Framio Drive</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="forum-port.css">
 <style>
 @font-face{font-family:'Inter';src:url('fonts/InterVariable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 :root{--ease:cubic-bezier(.22,.8,.24,1);--acc:#c8102e;--fs-xs:12px;--fs-sm:13px;--fs-md:14px;--fs-lg:16px;--fs-xl:20px;--fs-2xl:28px;--acc2:color-mix(in srgb,var(--acc),#fff 30%);--danger:#ff9a3c;--warn:#f2c14b;--ok:#3ddc97}
@@ -408,22 +409,17 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div id="shrItems" class="mut" style="margin-bottom:8px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div>
       <div class="glass panel shr-gen" id="shrGen"><div class="mut" id="shrGenTx" style="margin-bottom:10px"></div><div class="acts" style="margin:0"><button class="btn pri" id="shrGenGo">Gönder</button></div></div>
-      <div class="glass panel shr-fo hide"><h2>Başlık <span>Künyeye göre önerilir; yazarak da arayabilirsin. Başlığın türüne göre künye alanları değişir</span></h2>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><select id="shrSug"></select><button class="btn sm" id="shrRoute">Başlık öner</button></div>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara (öneri uygun değilse)"><button class="btn sm" id="shrFind">Ara</button></div>
+      <div class="glass panel shr-fo hide"><h2>Yanıt verilecek başlık <span>Forumdaki mevcut bir başlığa yanıt olarak paylaşılır</span></h2>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara ya da forum bağlantısını yapıştır"><button class="btn sm" id="shrFind">Ara</button></div>
+        <select id="shrSug" style="margin-top:8px"></select>
         <div id="shrSel" class="mut" style="margin:8px 0 2px"></div></div>
-      <div class="glass panel shr-fo hide"><h2>İmza ve önizleme <span>Forumdaki imza penceresiyle aynı: fotoğraf başına imza, ad ve sıra</span></h2>
-        <div id="shrPv" style="text-align:center;margin-bottom:10px"></div>
-        <div class="acts" style="margin:8px 0 0"><button class="btn" id="shrWmBtn">İmzayı seç / sırala…</button></div></div>
-      <div class="glass panel shr-fo hide"><h2>Künye <span>Seçili görselin künyesi; alanlar forumdaki gibi başlığın türüne göre gelir</span></h2>
-        <div id="shrForm"></div>
-        <div class="acts"><button class="btn" id="shrAi">Yapay zekâ ile yeniden oku</button><button class="btn" id="shrCopy">Künyeyi diğer karelere uygula</button><span class="mut" id="shrAiMsg"></span></div></div>
-      <div class="glass panel shr-fo hide"><h2>Zamanlama ve ağ <span>Hemen yayınla ya da planla; istersen ağdaki diğer forumlara da aktar</span></h2>
-        <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option><option value="draft">Taslak olarak kaydet</option></select><input id="shrAt" type="datetime-local" class="hide"></div>
-        <div class="mut" style="margin:8px 0 4px">Ağa aktar (başlık seçilince gelir)</div><div id="shrNodes" class="mut">Henüz başlık seçilmedi.</div></div>
-      <div class="glass panel shr-fo hide"><h2>Gönderi</h2>
-        <div class="mut" style="margin:0 0 4px">Gönderi önizlemesi</div><pre id="shrPrev" style="white-space:pre-wrap;background:var(--track);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:12.5px Consolas,monospace;margin:0 0 10px"></pre>
-        <div class="acts"><button class="btn pri" id="shrGo">Paylaş</button><a class="btn hide" id="shrOpen">Gönderiyi aç</a></div>
+      <div class="glass panel shr-fo hide"><h2>Yanıt <span>Fotoğraflar forumun kendi yükleme penceresiyle eklenir; künye, imza, bilgi ve ortak paylaşım orada seçilir</span></h2>
+        <div class="mcomp"><textarea id="frText" rows="7" placeholder="Yanıtını yaz… Fotoğraflar eklenince künye kodları buraya yerleşir"></textarea></div>
+        <div class="acts" style="margin-top:10px"><span id="frUp" class="fl-scope" style="background:transparent;display:inline-block"></span><button class="btn" id="frAddItems">Listedeki dosyaları forum penceresine aç</button><span class="mut" id="frHint"></span></div></div>
+      <div class="glass panel shr-fo hide"><h2>Zamanlama <span>Hemen yayınla, planla ya da taslak olarak kaydet</span></h2>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option><option value="draft">Taslak olarak kaydet</option></select><input id="shrAt" type="datetime-local" class="hide"></div></div>
+      <div class="glass panel shr-fo hide"><h2>Gönder</h2>
+        <div class="acts"><button class="btn pri" id="shrGo">Yanıtı gönder</button><a class="btn hide" id="shrOpen">Gönderiyi aç</a></div>
         <div class="bar" style="margin-top:12px"><i id="shrBar" style="width:0"></i></div><div class="mut" id="shrMsg" style="margin-top:6px;min-height:18px"></div></div>
     </div>
     <div class="tab scroll hide" id="t_act">
@@ -558,6 +554,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
 <div class="asIn"><input id="asIn" placeholder="Ya da komutu yaz…" autocomplete="off"><button class="btn pri sm asbtn" id="asGo" title="Dinle / gönder"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button></div></div>
 <div class="toasts" id="toasts"></div>
 <div id="hdGuide" style="display:none;position:fixed;inset:0;z-index:2147483100;background:rgba(0,0,0,.55);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px"><div class="glass" style="max-width:920px;width:100%;max-height:92vh;overflow:auto;border-radius:18px;padding:22px 24px;position:relative"><button class="btn" id="hdGuideX" style="position:absolute;right:14px;top:12px">Kapat ✕</button><h2 style="margin:0 0 4px">El hareketiyle fare — rehber</h2><div class="mut" style="margin-bottom:14px">Önce hazırlığı yap, sonra hareketleri dene. Kamera önizlemesindeki iskelet çizgisi görünüyorsa el algılanıyor demektir.</div><div id="hdGuideBody"></div><div class="acts" style="margin-top:16px"><button class="btn pri" id="hdGuideGo">Anladım, başlat</button></div></div></div>
+<script src="forum-port.js"></script>
 <script>
 const {invoke}=window.__TAURI__.core;const $=i=>document.getElementById(i);
 const vLetterOf=a=>'';
@@ -1386,7 +1383,6 @@ const HLP={
  apAcc:['Vurgu rengi','Marka/vurgu rengini değiştirir.','Renk tekerleği açılır; istediğin tonu seç.'],
  setQ:['Ayarlarda ara','Ayar adlarında ve açıklamalarında arar.','Birkaç harf yaz; eşleşen bölümler gelir.'],
  asFull:['Tam ekran asistan','Asistanı tüm ekranı kaplayan Jarvis görünümüne alır.','Tıkla; çıkmak için Esc ya da aynı düğme.'],
- shrWmBtn:['İmzayı seç / sırala','Forumdaki imza penceresini açar.','Fotoğraf başına imza seç, dosya adını düzenle, sürükleyerek sırala; sonra “Fotoğrafı Yükle”.'],
  provAdd:['Sağlayıcı ekle','Yeni bir yapay zekâ ya da ses sağlayıcısı ekler.','Hazır şablonu seç (OpenRouter, NVIDIA, Groq, Ollama, VoiceStudio, ElevenLabs…), anahtarını yapıştır, Kaydet.'],
  provPreset:['Hazır şablon','Sık kullanılan sağlayıcıların adresini otomatik doldurur.','Listeden seç; adres ve ad kendiliğinden gelir.'],
  provName:['Sağlayıcı adı','Listede görünecek ad.','İstediğin gibi adlandır.'],
@@ -1429,8 +1425,9 @@ const HLP={
  mbScan:['Sayfaları tara','Hesabına bağlı sayfaları listeler.','Giriş bilgilerini kaydettikten sonra kullan.'],
  mbAll:['Tümünü seç','Listedeki tüm sayfaları seçer.','Sonra “Seçilenleri ekle”.'],
  mbAdd:['Seçilenleri ekle','Seçili sayfaları uygulamaya ekler.','Önce sayfaları işaretle.'],
- shrCopy:['Künyeyi uygula','Seçili görselin bilgilerini diğerlerine kopyalar.','Aynı seriden fotoğraflarda zaman kazandırır.'],
- shrQ:['Başlık ara','Öneri uygun değilse başlığı elle arar.','Birkaç kelime yaz ve Ara’ya bas.']
+ shrQ:['Başlık ara','Yanıt vereceğin başlığı arar; forum bağlantısı da yapıştırabilirsin.','Birkaç kelime yaz ya da başlığın bağlantısını yapıştır.'],
+ frText:['Yanıt','Forumda başlığa yazılacak yanıt metni.','Fotoğraf ekleyince künye kodları buraya yerleşir; metni dilediğin gibi düzenle.'],
+ frAddItems:['Dosyaları forum penceresine aç','Listedeki dosyaları forumun İmza penceresine gönderir.','Drive ya da bilgisayardan eklediğin dosyalar forumdaki yükleme akışına girer.']
 };
 const HLP_SKIP=new Set(['asYes','asNo','asIn','asMin','asX','hdGuideX','hdGuideGo','upd','vsl','mAppId','mSecret','mToken','mSave','mLong','mRef','mClr','mQ','mAsk','mWeb','pfSel','pfNew','pfDup','pfDel','pfName','pfPrompt','pfAddF','pfFile','pfFolder','pfReq','pfUnk','pfUnkV','pfSave','fall','forg','fdoc','fnew','freload','freveal','ftempty','shrForum','shrPath','shrAdd','shrGenGo','shrSug','shrRoute','shrFind','shrAi','shrWhen','shrAt','shrGo','shrOpen']);
 let hlpEl=null,hlpT=0;
@@ -2276,360 +2273,23 @@ $('orgUndo').onclick=async()=>{if(!await confirmBox('Geri al','Son düzenleme ge
  try{const r=await invoke('org_undo');toast(`${r.ok} dosya geri alındı`+(r.failed?` · ${r.failed} hata`:''),!!r.failed);$('orgUndo').style.display=r.failed?'':'none';if(tab=='files')loadFiles()}catch(e){toast(String(e),true)}};
 async function pollOrg(){const l=await invoke('take_askorg');if(l.length){$('orgPath').value=l[0];setTab('org')}}
 
-/* ---------- Forumda paylaş ---------- */
-let shrIt=[],shrMeta={},shrMetaAt={},shrBusy=false,shrTopic=null,shrUrl='',shrSelI=0,shrWmSel='none',shrWmT=0,shrSugList=[],shrNodeList=[],shrCities={},shrRoutes={},shrRouting=false;
-let shrCtx={slugs:[],city:false,schema:null,tax:[],kind:''};
+/* ---------- Forumda paylaş: forumun kendi yükleme eklentisi (forum-port) ----------
+   Fotoğraf yükleme, imza, künye, bilgi, özelleştirme ve ortak paylaşım pencereleri forumdaki eklentinin aynı kaynak kodudur
+   (FramioForumPort). Uygulama yalnızca başlık seçimi, yanıt kutusu ve gönderimi yönetir. */
+let shrIt=[],shrMeta={},shrMetaAt={},shrBusy=false,shrTopic=null,shrUrl='',shrSugList=[],frMounted=false,frFid='';
 const shrFo=()=>$('shrForum').value;
 const shrM=()=>shrMeta[shrFo()]||{};
-const shrFold=s=>String(s||'').toLocaleLowerCase('tr-TR').replace(/[^a-z0-9çğıöşü]+/g,' ').trim();
-function shrBest(text,opts){const t=shrFold(text);if(!t||!opts.length)return '';let o=opts.find(x=>shrFold(x)==t);if(o)return o;
- o=opts.filter(x=>{const n=shrFold(x);return n&&(n.includes(t)||t.includes(n))}).sort((a,b)=>Math.abs(shrFold(a).length-t.length)-Math.abs(shrFold(b).length-t.length))[0];if(o)return o;
- const w=t.split(' ');let best='',sc=0;opts.forEach(x=>{const ow=shrFold(x).split(' ');const s=ow.filter(z=>w.includes(z)).length/Math.max(ow.length,w.length);if(s>sc){sc=s;best=x}});return sc>=0.5?best:''}
-function shrBrands(){const raw=shrM().brandOrder;let ord=[];try{ord=typeof raw=='string'?JSON.parse(raw):raw;if(!Array.isArray(ord))ord=[]}catch(e){ord=[]}
- const b=[...new Set((shrCtx.tax||[]).map(i=>String(i.brand||'').trim()))].filter(Boolean);
- return b.sort((a,c)=>{const i=ord.indexOf(a),j=ord.indexOf(c);if(i>-1&&j>-1)return i-j;if(i>-1)return -1;if(j>-1)return 1;return a.localeCompare(c,'tr')})}
-const shrModels=b=>[...new Set((shrCtx.tax||[]).filter(i=>String(i.brand||'').trim()==String(b||'').trim()).map(i=>i.model))];
-/* Künye alanları: forumdaki gibi — başlığın kategori şeması varsa onun alanları, şehir içi başlıkta şehir içi alanları, yoksa standart alanlar */
-function shrFields(){const sc=shrCtx.schema;if(sc){let fc=sc.fields_config;if(typeof fc=='string'){try{fc=JSON.parse(fc)}catch(e){fc=null}}
-  if(Array.isArray(fc)&&fc.length)return fc.map(f=>({key:f.key,label:f.label||f.key,type:f.type||'text'}))}
- if(shrCtx.city)return [{key:'brand',label:'Marka'},{key:'model',label:'Model'},{key:'fleetCode',label:'Filo / kapı no'},{key:'plate',label:'Plaka'},{key:'city',label:'Şehir'},{key:'route',label:'Hat'},{key:'location',label:'Çekim yeri'},{key:'year',label:'Yıl'}];
- return [{key:'company',label:'Firma'},{key:'plate',label:'Plaka'},{key:'brand',label:'Marka'},{key:'model',label:'Model'},{key:'location',label:'Çekim yeri'},{key:'year',label:'Yıl'}]}
-function shrKText(f){const sc=shrCtx.schema;const j=(a,s)=>a.map(x=>String(x||'').trim()).filter(Boolean).join(s);const yy=f.year?"'"+String(f.year).trim().slice(-2):'';
- if(sc&&sc.output_template){let r=String(sc.output_template);Object.keys(f).forEach(k=>{if(!/^[A-Za-z0-9_]+$/.test(k))return;const v=String(f[k]||'').trim();if(k=='year'&&v)r=r.replace(new RegExp("'\\{"+k+"\\}",'g'),()=>"'"+v.slice(-2));r=r.replace(new RegExp('\\{'+k+'\\}','g'),()=>v)});
-  r=r.replace(/\{[a-z_]+\}/gi,'').replace(/\|\s*\*\*/g,'**').replace(/\*\*\s*\|/g,'**');return r.split('\n').filter(l=>l.replace(/[-*\s]/g,'').length>0).join('\n')}
- let L;
- if(shrCtx.city){let r=String(f.route||'').trim();if(r&&!r.includes(' | ')){const d=r.indexOf(' - ');if(d>-1)r=r.slice(0,d).trim()+' | '+r.slice(d+3).trim()}
-  L=[j([f.brand,f.model],' '),j([f.fleetCode,f.plate],' | '),r,j([f.location,yy],' / ')]}
- else L=[j([f.company,f.plate],' | '),j([f.brand,f.model],' '),j([f.location,yy],' / ')];
- return L.filter(Boolean).map(l=>'- **'+l+'**').join('\n')}
-let shrNoK=false,KM=null;
-function shrKunye(f){if(shrNoK)return '';const t=shrKText(f);return t?`[framio-kunye theme="${shrM().kunyeTheme||'classic'}"]\n${t}\n[/framio-kunye]`:''}
-function shrAlt(f){const j=(a,s)=>a.map(x=>String(x||'').trim()).filter(Boolean).join(s);return [j([shrCtx.city?f.fleetCode:f.company,f.plate],' | '),j([f.brand,f.model],' ')].filter(Boolean).join(' - ')}
-const shrWmList=()=>(shrM().watermarks&&shrM().watermarks.watermarks)||[];
-const shrWmUrl=o=>!o||!o.url?'':(/^https?:/.test(o.url)?o.url:(shrM().base||'')+o.url);
-function shrThumbs(){shrIt.forEach(async x=>{if(x.th||x.thBusy)return;x.thBusy=1;try{x.th=await invoke('forum_thumb',{src:x.src,name:x.name});shrRender()}catch(e){x.thBusy=0;x.th=''}})}
+function shrThumbs(){shrIt.forEach(async x=>{if(x.th||x.thBusy)return;x.thBusy=1;try{x.th=await invoke('forum_thumb',{src:x.src,name:x.name});shrRender()}catch(e){x.thBusy=0}})}
 function shrRender(){
- $('shrItems').innerHTML=shrIt.length?'<div style="display:flex;flex-wrap:wrap;gap:10px">'+shrIt.map((x,i)=>{const a=x.ai.state,u=x.up&&x.up.state;
-  const ab=a=='busy'?'Yapay zekâ okuyor…':a=='ok'?'Künye okundu ✓':a=='err'?'Yapay zekâ hatası':'',ub=u=='busy'?'Yükleniyor…':u=='ok'?'Yüklendi ✓':u=='err'?'Yükleme hatası':'';
-  return `<div data-sel="${i}" style="width:150px;border:2px solid ${i==shrSelI?'var(--acc)':'var(--stroke)'};border-radius:12px;padding:6px;background:var(--track);cursor:pointer"><div data-sel="${i}" style="height:86px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div data-sel="${i}" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px">${i+1}. ${esc(x.name)}</div><div data-sel="${i}" class="mut" style="font-size:11px;min-height:30px">${ab}<br>${ub}</div><div style="display:flex;gap:4px"><button class="btn sm" data-up="${i}">←</button><button class="btn sm danger" data-rm="${i}">×</button></div></div>`}).join('')+'</div>'
-  :'Henüz görsel yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…” ya da Dosyalar sekmesinden ekle.';
- shrThumbs();shrPvRender();shrPrevUp();try{if(WM)wmRender()}catch(e){}try{if(KM)kmPartial()}catch(e){}if(shrNodeList.length&&!$('shrNodes').contains(document.activeElement))shrNodesRender()}
-function shrPvRender(){const x=shrIt[shrSelI],box=$('shrPv');
- if(!x){box.innerHTML='';return}
- if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;shrPvRender()}).catch(()=>{x.pvBusy=0})}
- const w=shrWmList(),cur=w.find(o=>(o.filename||o.id)==wmOf(x));
- box.innerHTML=x.pv?`<div style="position:relative;display:inline-block;max-width:100%"><img src="${x.pv}" style="display:block;max-width:100%;max-height:420px;border-radius:12px">${cur&&cur.url?`<img src="${esc(shrWmUrl(cur))}" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none" onerror="this.style.display='none'">`:''}</div>`:'<div class="mut" style="padding:40px 0">Önizleme hazırlanıyor…</div>';
- }
-$('shrWmBtn').onclick=()=>shrWmOpen(shrIt.slice());
-function shrPrevUp(){const m=shrM(),tag=m.bbcodeTag||'görsel';const ks=shrIt.map(x=>shrKunye(x.f)),same=ks.every(k=>k==ks[0]);
- const parts=shrIt.map((x,i)=>`[${tag} id=… alt="${shrAlt(x.f)}"]`+(!same&&ks[i]?'\n'+ks[i]:''));
- $('shrPrev').textContent=(same?parts.join('\n')+(ks[0]?'\n\n'+ks[0]:''):parts.join('\n\n'))+'\n\nBaşlık: '+(shrTopic?shrTopic.title:'(seçilmedi)');
- $('shrSel').innerHTML=shrTopic?`Seçili başlık: <b>${esc(shrTopic.title)}</b> <a href="#" id="shrTopicOpen" style="margin-left:8px">Forumda aç</a>`:'Başlık seçilmedi';const o=$('shrTopicOpen');if(o)o.onclick=ev=>{ev.preventDefault();invoke('forum_list').then(fl=>{const f=fl.find(x=>x.id==shrFo());const u=shrTopic.url||(f&&f.base+'/d/'+shrTopic.discussion_id);invoke('open_url',{url:u}).catch(er=>toast(String(er),true))})}}
-/* Künye formu (seçili görsel) */
-function shrFormRender(){const x=shrIt[shrSelI],box=(typeof KM!='undefined'&&KM&&$('kmForm'))||$('shrForm');
- if(!x){box.innerHTML='<div class="mut">Görsel ekleyince künye alanları burada çıkar.</div>';if($('shrAiMsg'))$('shrAiMsg').textContent='';return}
- const F=shrFields(),bs=shrBrands(),f=x.f;const opt=(l,v)=>l.map(b=>`<option value="${esc(b)}"${b==v?' selected':''}>${esc(b)}</option>`).join('');
- const cell=fl=>{const k=fl.key,v=String(f[k]||''),lb=esc(fl.label);let h;
-  if(k=='brand'&&bs.length)h=`<select data-fk="brand" style="width:100%;margin:0"><option value="">— ${lb} seç —</option>${opt(!v||bs.includes(v)?bs:[...bs,v],v)}</select>`;
-  else if(k=='model'&&bs.length){let ms=shrModels(f.brand);if(v&&!ms.includes(v))ms=[...ms,v];h=`<select data-fk="model" style="width:100%;margin:0"${f.brand?'':' disabled'}><option value="">— ${lb} seç —</option>${opt(ms,v)}</select>`}
-  else if(fl.type=='city_select'||k=='city')h=`<input data-fk="${esc(k)}" list="shrCityDl" value="${esc(v)}" placeholder="Seç veya yaz" style="width:100%;margin:0">`;
-  else if(fl.type=='route_select'||k=='route')h=`<input data-fk="${esc(k)}" list="shrRouteDl" value="${esc(v)}" placeholder="Seç veya yaz" style="width:100%;margin:0">`;
-  else if(fl.type=='year'||k=='year')h=`<input data-fk="${esc(k)}" type="number" value="${esc(v)}" style="width:100%;margin:0">`;
-  else h=`<input data-fk="${esc(k)}" value="${esc(v)}" placeholder="${lb}" style="width:100%;margin:0">`;
-  return `<label class="mut" style="display:block;font-size:12px">${lb}${h}</label>`};
- box.innerHTML='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+F.map(cell).join('')+'</div><datalist id="shrCityDl"></datalist><datalist id="shrRouteDl"></datalist>';
- if(F.some(z=>z.key=='city'||z.type=='city_select'||z.key=='route'||z.type=='route_select')){shrLoadCities();shrLoadRoutes(f.city)}
- shrDlUp();shrAiMsgUp()}
-function shrDlUp(){const id=shrFo(),x=shrIt[shrSelI];const c=$('shrCityDl'),r=$('shrRouteDl');if(c)c.innerHTML=(shrCities[id]||[]).map(n=>`<option value="${esc(n)}">`).join('');
- if(r&&x)r.innerHTML=(shrRoutes[id+'|'+x.f.city]||[]).map(o=>{const l=o.display_name||(o.route_name?`${o.route_code} - ${o.route_name}`:o.route_code);return `<option value="${esc(l)}">`}).join('')}
-async function shrLoadCities(){const id=shrFo();if(shrCities[id])return;shrCities[id]=[];try{const r=await invoke('forum_get',{id,path:'/api/framio-media/city-routes'});shrCities[id]=(r.cities||[]).map(c=>c.name||c).filter(Boolean);shrDlUp()}catch(e){shrCities[id]=null}}
-async function shrLoadRoutes(city){const id=shrFo();city=String(city||'').trim();const k=id+'|'+city;if(!city||shrRoutes[k])return;shrRoutes[k]=[];try{const r=await invoke('forum_get',{id,path:'/api/framio-media/city-routes?city='+encodeURIComponent(city)});shrRoutes[k]=r.data||[];shrDlUp()}catch(e){delete shrRoutes[k]}}
-function shrAiMsgUp(){const x=shrIt[shrSelI];const m=$('shrAiMsg')||{};m.textContent=!x?'':x.ai.state=='busy'?'Yapay zekâ okuyor…':x.ai.state=='err'?x.ai.msg:x.ai.state=='ok'?(x.ai.note||'Dolduruldu; kontrol et.'):''}
-function shrOne(k,v){if(typeof KM!='undefined'&&KM&&KM.one)shrIt.forEach(z=>{z.f[k]=v;z.dirty[k]=1})}
-const shrFormIn=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x||t.tagName=='SELECT')return;x.f[k]=t.value;x.dirty[k]=1;shrOne(k,t.value);shrPrevUp()};
-const shrFormCh=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x)return;x.f[k]=t.value;x.dirty[k]=1;shrOne(k,t.value);
- if(k=='brand'){if(x.f.model&&!shrModels(t.value).includes(x.f.model)){x.f.model='';delete x.dirty.model}shrFormRender()}
- if(k=='city'){shrLoadRoutes(t.value);shrDlUp()}
- shrPrevUp()};
-$('shrForm').oninput=shrFormIn;$('shrForm').onchange=shrFormCh;
-$('shrCopy').onclick=()=>{const s=shrIt[shrSelI];if(!s)return;shrIt.forEach((x,i)=>{if(i==shrSelI)return;['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){x.f[k]=s.f[k];x.dirty[k]=1}})});shrPrevUp();toast('Künye diğer karelere uygulandı (plaka ve filo kodu hariç)')};
-$('shrItems').onclick=e=>{const d=e.target.dataset;if(d.rm!==undefined){shrIt.splice(+d.rm,1);if(shrSelI>=shrIt.length)shrSelI=Math.max(0,shrIt.length-1)}
- else if(d.up!==undefined){const i=+d.up;if(i>0){[shrIt[i-1],shrIt[i]]=[shrIt[i],shrIt[i-1]];if(shrSelI==i)shrSelI=i-1;else if(shrSelI==i-1)shrSelI=i}}
- else if(d.sel!==undefined){shrSelI=+d.sel}else return;shrRender();shrFormRender()};
-/* Yapay zekâ: her görselin kendi künyesi; kullanıcının elle değiştirdiği alanlara dokunulmaz */
-const shrAiKeys=['company','plate','location','year','city','route','fleetCode'];
-function shrFillBM(x,brand,model){const f=x.f,bs=shrBrands();
- if(brand&&!x.dirty.brand)f.brand=bs.length?(shrBest(brand,bs)||String(brand).trim()):String(brand).trim();
- if(model&&!x.dirty.model){let m=String(model).trim();const b=f.brand||'';if(b&&shrFold(m).startsWith(shrFold(b)+' '))m=m.slice(b.length).trim();const ms=shrModels(f.brand);f.model=ms.length?(shrBest(m,ms)||m):m}}
-function shrApply(x,r,deep){const f=x.f;shrFillBM(x,r.brand,r.model);if(deep)return;
- const keys=new Set([...shrAiKeys,...shrFields().map(z=>z.key)]);keys.delete('brand');keys.delete('model');
- keys.forEach(k=>{const v=String(r[k]||'').trim();if(v&&!x.dirty[k])f[k]=v});
- const src=r.locationSource;x.ai.note='Dolduruldu'+({gps:' (çekim yeri GPS’ten)',session:' (çekim yeri aynı oturumdaki fotoğraflardan)',similar:' (çekim yeri forumdaki benzer fotoğraftan)',ai_guess:' (çekim yeri tahmin, kontrol et)'}[src]||'')+(r.yearSource=='file'?'; yıl dosya tarihinden':'')+'. Kontrol et.'}
-async function shrDoAi(x){const id=shrFo();if(!id||x.ai.state=='busy')return;const kind=shrCtx.kind;x.ai={state:'busy',kind,msg:'',note:''};shrRender();shrAiMsgUp();
- const base={id,src:x.src,name:x.name,tagSlug:shrCtx.slugs[0]||null,discussionId:shrTopic?String(shrTopic.discussion_id):null};
- const p1=invoke('forum_ai_fill',{...base,deep:false}),p2=invoke('forum_ai_fill',{...base,deep:true});
- try{const r=await p1;if(x.ai.kind!==kind||!shrIt.includes(x))return;shrApply(x,r,false);x.ai.state='ok'}catch(e){if(x.ai.kind===kind){x.ai.state='err';x.ai.msg=String(e)}}
- p2.then(r=>{if(x.ai.kind===kind&&shrIt.includes(x)&&x.ai.state=='ok'){shrApply(x,r,true);if(shrIt[shrSelI]===x)shrFormRender();shrPrevUp()}}).catch(()=>{});
- shrRender();if(shrIt[shrSelI]===x)shrFormRender();
- if(!shrTopic&&!shrRouting&&shrIt[0]===x&&x.ai.state=='ok')shrRoute()}
-$('shrAi').onclick=()=>{const x=shrIt[shrSelI];if(!x){toast('Önce görsel ekle',true);return}x.dirty={};x.ai.state='idle';shrDoAi(x)};
-/* ===== İmza seçimi penceresi — forumdaki WatermarkModal ile aynı düzen ve mantık ===== */
-function wmOf(x){return x.wm!=null?x.wm:shrWmSel}
-const WMCSS=`.modal .glass.WatermarkModal{background:var(--bg);--control-bg:var(--track);--primary-color:var(--acc);--body-bg:var(--glass2);--muted-color:var(--mut);--text-color:var(--text);--control-color:var(--text);width:min(1000px,94vw);max-width:none;padding:0;max-height:94vh;overflow:auto;border-radius:12px}
-.WatermarkModal .WmHead{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--control-bg)}.WatermarkModal .WmTitle{font-size:1.25em;font-weight:700}
-.WatermarkModal .WmX{background:none;border:0;color:var(--muted-color);font-size:20px;cursor:pointer;line-height:1}
-.Watermark-Layout{display:flex;flex-direction:column;padding:20px;gap:20px}@media(min-width:900px){.Watermark-Layout{flex-direction:row;align-items:stretch}.Watermark-Left{flex:1;min-width:0;display:flex;flex-direction:column}.Watermark-Right{width:340px;flex-shrink:0;display:flex;flex-direction:column;min-width:0}}
-.Preview-Wrapper{width:100%;display:flex;flex-direction:column;align-items:stretch}
-.Watermark-preview-area{position:relative;width:fit-content;max-width:100%;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden;min-height:200px}
-.Watermark-preview-area img.WmPv{display:block;max-width:100%;max-height:440px;object-fit:contain;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.18)}
-.WmPvBox{position:relative;display:inline-block;max-width:100%;cursor:zoom-in}.WmPvBox .WmOv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.WmPreviewLoading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;background:var(--control-bg);color:var(--muted-color);font-size:13px;font-weight:600}.WmPvBox.is-sharp .WmPreviewLoading{display:none}
-.WmDel{position:absolute;top:10px;left:10px;width:32px;height:32px;border:0;border-radius:6px;background:#ef4444;color:#fff;cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 5px rgba(0,0,0,.2)}
-.WmCnt{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.65);color:#fff;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700}
-.WmNav{position:absolute;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:8px;background:var(--primary-color);color:#fff;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,.2)}.WmNav.l{left:8px}.WmNav.r{right:8px}.WmNav:disabled{opacity:.3;cursor:default}
-.WmA-meta{display:flex;align-items:center;gap:8px;width:100%;margin-top:10px;font-size:12px;font-weight:600;color:var(--muted-color);font-variant-numeric:tabular-nums}.WmA-meta i{color:var(--primary-color)}
-.WmPick-orderHint{display:flex;align-items:center;gap:6px;margin:6px 0;font-size:12px;font-weight:600;color:var(--muted-color)}.WmPick-orderHint i{color:var(--primary-color)}
-.WmPick-strip{display:flex;gap:8px;width:100%;margin-top:6px}.WmPick-thumbs{display:flex;gap:8px;min-width:0;overflow-x:auto;padding-bottom:2px}
-.WmPick-thumb{position:relative;flex:0 0 auto;width:96px;height:72px;border:2px solid transparent;border-radius:8px;overflow:hidden;background:var(--control-bg) center/cover no-repeat;cursor:grab;opacity:.7;transition:transform .25s ease,box-shadow .2s,opacity .2s}
-.WmPick-thumb.is-active{border-color:var(--primary-color);opacity:1}.WmPick-thumb.is-dragging{opacity:.35;transform:scale(.94)}.WmPick-thumb.is-over{box-shadow:-4px 0 0 0 var(--primary-color)}
-.WmPick-num{position:absolute;top:3px;left:3px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:rgba(0,0,0,.65);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}.WmPick-thumb.is-active .WmPick-num{background:var(--primary-color)}
-.WmPick-move{position:absolute;top:50%;transform:translateY(-50%);width:22px;height:22px;border:0;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:10px;cursor:pointer;opacity:0;transition:opacity .15s}.WmPick-move.l{left:3px}.WmPick-move.r{right:3px}.WmPick-thumb:hover .WmPick-move,.WmPick-thumb.is-active .WmPick-move{opacity:1}.WmPick-move:hover{background:var(--primary-color)}
-.WmPick-thumbBadge{position:absolute;right:3px;bottom:3px;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;font-size:9px;color:#fff;background:rgba(0,0,0,.6)}.WmPick-thumbBadge.is-signed{background:var(--primary-color)}
-.WmPick-addTile{flex:0 0 auto;width:72px;height:72px;display:flex;align-items:center;justify-content:center;border:2px dashed var(--control-bg);border-radius:8px;color:var(--muted-color);cursor:pointer;font-size:18px;background:none}.WmPick-addTile:hover{border-color:var(--primary-color);color:var(--primary-color)}
-.WmA-file{width:100%;margin-bottom:18px}.WmA-fileHint{margin:0 0 8px;font-size:12px;font-weight:500;color:var(--muted-color)}
-.WatermarkModal .Modern-Input-Group{display:flex;align-items:center;padding:0 12px;border:1px solid var(--control-bg);border-radius:8px;background:var(--body-bg)}.WatermarkModal .Modern-Input-Group:focus-within{border-color:var(--primary-color);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-color) 15%,transparent)}
-.WatermarkModal .Modern-Input-Group i{margin-right:10px;font-size:14px;color:var(--muted-color)}.WatermarkModal .Modern-Input-Group input{flex:1;min-width:0;height:44px;border:0!important;outline:0;background:transparent!important;font-size:14px;font-weight:500;color:var(--text-color);margin:0!important;box-shadow:none!important}
-.WmA-plateWarn{margin-top:8px;padding:6px 8px;border-left:3px solid #ffc107;border-radius:4px;background:rgba(255,193,7,.15);color:#d98a00;font-size:11px;font-weight:600}
-.WmA-loading{padding:20px;text-align:center;font-size:13px;color:var(--muted-color)}
-.WmA-options{display:flex;flex-direction:column;gap:10px}.WmA-optWrap{position:relative}
-.WmA-opt{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:48px;margin:0;padding:0 16px;border:2px solid transparent;border-radius:8px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;user-select:none;box-shadow:0 2px 5px rgba(0,0,0,.06);transition:transform .15s,box-shadow .15s,border-color .15s}
-.WmA-opt:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
-.WmA-opt.is-primary{background:var(--primary-color);color:#fff}.WmA-opt.is-primary.is-selected{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary-color) 30%,transparent)}
-.WmA-opt.is-site{background:var(--control-bg);color:var(--control-color)}.WmA-opt.is-site.is-selected{border-color:var(--primary-color);color:var(--primary-color)}
-.WmA-opt.is-none{background:var(--body-bg);color:var(--muted-color);border-color:var(--control-bg)}.WmA-opt.is-none.is-selected{border-color:var(--text-color);color:var(--text-color)}
-.WmA-chevron{position:absolute;right:16px;font-size:11px;transition:transform .15s}.WmA-chevron.is-open{transform:rotate(180deg)}
-.WmA-menu{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;max-height:220px;overflow-y:auto;padding:4px;border:1px solid var(--control-bg);border-radius:8px;background:var(--bg);box-shadow:0 10px 28px rgba(0,0,0,.25)}
-.WmA-menuHead{padding:6px 10px 4px;font-size:11px;font-weight:700;color:var(--muted-color)}
-.WmA-menuItem{display:flex;align-items:center;justify-content:space-between;width:100%;padding:9px 10px;border:0;border-radius:6px;background:none;color:var(--text-color);font:inherit;font-size:13px;text-align:left;cursor:pointer}.WmA-menuItem:hover{background:var(--control-bg)}.WmA-menuItem.is-selected{font-weight:700;color:var(--primary-color)}
-.WmA-menuLabel{display:inline-flex;align-items:center;gap:8px}.WmA-swatch{width:12px;height:12px;flex-shrink:0;border-radius:3px;border:2px solid transparent}
-.WmA-splitRow{position:relative;display:grid;grid-template-columns:2fr 1fr;gap:8px;align-items:stretch}.WmA-splitMain{min-width:0}.WmA-splitRow .WmA-optWrap{position:static}.WmA-splitRow .WmA-opt{height:100%}
-.WmA-allSwitch{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-height:48px;margin:0;padding:0;border:2px solid var(--control-bg);border-radius:8px;background:var(--body-bg);cursor:pointer}.WmA-allSwitch.is-on{border-color:var(--primary-color)}
-.WmA-allLabel{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted-color)}.WmA-allSwitch.is-on .WmA-allLabel{color:var(--primary-color)}
-.WmA-toggle{position:relative;width:32px;height:18px;border-radius:999px;background:var(--control-bg);transition:background .15s}.WmA-allSwitch.is-on .WmA-toggle{background:var(--primary-color)}.WmA-toggle span{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}.WmA-allSwitch.is-on .WmA-toggle span{transform:translateX(14px)}
-.WmPick-auto{display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--primary-color);background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
-.WmPa{margin-top:10px;display:flex;flex-direction:column;gap:8px}.WmPa-sw{flex-direction:row;justify-content:space-between;padding:0 14px}.WmPa-q{height:40px;padding:0 12px;border:1px solid var(--control-bg);border-radius:8px;background:var(--body-bg);color:var(--text-color)}.WmPa-res{display:flex;flex-direction:column}.WmPa-user{display:flex;align-items:center;justify-content:space-between;font-size:13px}
-.WmA-actions{display:flex;gap:8px;margin-top:auto;padding-top:16px;border-top:1px solid var(--control-bg)}.WmA-actions .btn{flex:1;height:42px;font-weight:700}
-.WmLb{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out}.WmLb .WmPvBox{cursor:zoom-out}.WmLb img.WmPv{max-width:95vw;max-height:95vh;border-radius:8px}`;
-let WM=null,shrPA=null;
-const wmNameBase=n=>{const i=n.lastIndexOf('.');return i>0?n.slice(0,i):n},wmExt=n=>{const i=n.lastIndexOf('.');return i>0?n.slice(i):''};
-function wmOrient(x){const d=x.dim;if(!d||!d.w||!d.h)return 'landscape';if(Math.abs(d.w-d.h)/Math.max(d.w,d.h)<.04)return 'square';return d.w<d.h?'portrait':'landscape'}
-const wmOLabel=o=>o=='portrait'?'Dikey':o=='square'?'Kare':'Yatay';
-function wmMeasure(x){if(x.dim||x.dimBusy)return;x.dimBusy=1;const src=x.pv||x.th;if(!src){x.dimBusy=0;return}const im=new Image();im.onload=()=>{x.dim={w:im.naturalWidth,h:im.naturalHeight};x.dimBusy=0;wmAuto();wmRender()};im.onerror=()=>{x.dimBusy=0};im.src=src}
-const wmData=()=>shrM().watermarks||{},wmAll=()=>{const b=wmData().watermarks||[];return shrPA&&shrPA.marks?b.filter(w=>!w.is_personal).concat(shrPA.marks.map(w=>Object.assign({},w,{is_personal:true}))):b},wmFUrl=o=>shrWmUrl(o),wmIdOf=o=>o.filename||o.id||o.name;
-function wmPersonal(x){const L=wmAll().filter(w=>w.is_personal);if(!L.length)return null;const o=wmOrient(x);return L.find(w=>{const wo=(w.orientation||w.type||'').toLowerCase(),fn=(w.filename||'').toLowerCase();return o=='portrait'?wo=='portrait'||fn.includes('dikey'):wo=='landscape'||!fn.includes('dikey')})||L[0]}
-function wmTemplates(x){const o=wmOrient(x);return wmAll().filter(w=>!w.is_personal).filter(w=>{const wo=(w.orientation||w.type||'landscape').toLowerCase();return wo=='all'||wo==o})}
-/* otomatik seçim: kişisel imza varsa yöne uygun olan; elle seçilene dokunulmaz */
-function wmAuto(){if(!WM)return;const mode=wmData().mode||'hybrid';if(mode=='templates')return;WM.items.forEach((x,i)=>{if(WM.touched[i]||(WM.sel[i]&&WM.sel[i]!='none'))return;if(!x.dim)return;const p=wmPersonal(x);if(p){WM.sel[i]=wmIdOf(p);WM.auto[i]=true}})}
-function shrWmOpen(list){if(document.querySelector('.WatermarkModal'))return;if(!list||!list.length)return;
- if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
- list.forEach(x=>x.asked=1);
- WM={items:list.slice(),sel:list.map(x=>x.wm!=null?x.wm:shrWmSel),touched:list.map(x=>x.wm!=null),auto:list.map(()=>false),names:list.map(x=>wmNameBase(x.name)),act:0,all:list.length>1,dd:false,zoom:false,drag:null,over:null,box:document.createElement('div')};
- WM.box.className='modal';document.body.appendChild(WM.box);
- WM.box.addEventListener('mousedown',e=>{if(e.target===WM.box&&!e.target.closest('.glass'))wmClose()});
- WM.key=e=>{if(e.key=='Escape'){if(WM.zoom){WM.zoom=false;wmRender()}else wmClose();e.stopPropagation()}else if(e.key=='ArrowLeft'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))wmGo(-1);else if(e.key=='ArrowRight'&&!/INPUT|TEXTAREA/.test(document.activeElement.tagName))wmGo(1)};document.addEventListener('keydown',WM.key,true);
- WM.items.forEach(x=>{wmPv(x)});wmRender();wmAuto()}
-function wmClose(){if(!WM)return;document.removeEventListener('keydown',WM.key,true);WM.box.remove();WM=null}
-function wmPv(x){if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;wmMeasure(x);wmRender()}).catch(()=>{x.pvBusy=0})}else wmMeasure(x)}
-function wmGo(d){if(!WM)return;const n=WM.act+d;if(n<0||n>=WM.items.length)return;WM.act=n;wmRender()}
-function wmSelect(id){if(WM.all){WM.sel.fill(id);WM.touched.fill(true);WM.auto.fill(false)}else{WM.sel[WM.act]=id;WM.touched[WM.act]=true;WM.auto[WM.act]=false}if(WM.items.length>1&&WM.sel.every(s=>s==WM.sel[0]))WM.all=true;WM.dd=false;wmRender()}
-function wmMove(a,b){if(a==b||b<0||b>=WM.items.length)return;const cur=WM.items[WM.act];[WM.items,WM.sel,WM.names,WM.touched,WM.auto].forEach(ar=>{const [v]=ar.splice(a,1);ar.splice(b,0,v)});WM.act=Math.max(0,WM.items.indexOf(cur));wmRender()}
-function wmBtnStyle(w,sw){const s=[];if(w.bg_color)s.push('background:'+w.bg_color);if(w.text_color)s.push('color:'+w.text_color);if(w.border_color)s.push('border-color:'+w.border_color);if(sw&&!w.bg_color&&!w.border_color)s.push('background:var(--control-bg)');return s.join(';')}
-function wmRender(){if(!WM)return;const x=WM.items[WM.act],n=WM.items.length;if(!x){wmClose();return}
- const sel=WM.sel[WM.act],cur=wmAll().find(w=>wmIdOf(w)==sel),o=wmOrient(x),mode=wmData().mode||'hybrid';
- const ov=sel&&sel!='none'&&cur&&cur.url?wmFUrl(cur):'';
- const d=x.dim,size=x.size;const meta=d?[d.w+' × '+d.h,wmOLabel(o),((d.w*d.h)/1e6).toFixed(1).replace('.',',')+' MP'].join(' · '):'Ölçülüyor…';
- const pvh=x.pv?`<div class="WmPvBox is-sharp" data-a="zoom"><img class="WmPv" src="${x.pv}">${ov?`<img class="WmOv" src="${esc(ov)}" onerror="this.style.display='none'">`:''}</div>`:`<div class="WmPvBox"><div style="width:420px;max-width:100%;height:280px"></div><div class="WmPreviewLoading"><span>Fotoğraf yükleniyor…</span></div></div>`;
- const thumbs=WM.items.map((it,i)=>{const sg=WM.sel[i]&&WM.sel[i]!='none';return `<div class="WmPick-thumb${i==WM.act?' is-active':''}${WM.drag===i?' is-dragging':''}${WM.over===i&&WM.drag!==i?' is-over':''}" draggable="true" data-i="${i}" title="${esc(it.name)} — sürükleyerek sıralayın" style="${it.th?`background-image:url(${it.th})`:''}"><span class="WmPick-num">${i+1}</span>${i>0?`<button class="WmPick-move l" data-a="mv" data-i="${i}" data-d="-1" title="Sola taşı">‹</button>`:''}${i<n-1?`<button class="WmPick-move r" data-a="mv" data-i="${i}" data-d="1" title="Sağa taşı">›</button>`:''}<span class="WmPick-thumbBadge${sg?' is-signed':''}">${sg?'✎':'⦸'}</span></div>`}).join('');
- const name=WM.names[WM.act]||'';
- const person=mode!='templates'?wmPersonal(x):null,tpls=mode!='personal'?wmTemplates(x):[];
- const sw=c=>n<2?c:`<div class="WmA-splitRow"><div class="WmA-splitMain">${c}</div><button class="WmA-allSwitch${WM.all?' is-on':''}" data-a="all" title="${WM.all?'Seçim tüm fotoğraflara uygulanıyor':'Seçim yalnızca bu fotoğrafa uygulanıyor'}"><span class="WmA-allLabel">Tümüne</span><span class="WmA-toggle"><span></span></span></button></div>`;
- const big=(id,label,on,cls)=>`<div class="WmA-optWrap"><button class="WmA-opt ${cls}${on?' is-selected':''}" data-a="pick" data-id="${esc(id)}">${esc(label)}</button></div>`;
- const selT=tpls.find(t=>wmIdOf(t)==sel);
- const dd=`<div class="WmA-optWrap"><button class="WmA-opt is-site${selT?' is-selected':''}" data-a="dd" style="${selT?wmBtnStyle(selT):''}"><span>${esc(selT?selT.label:'Site İmzası Seç')}</span><span class="WmA-chevron${WM.dd?' is-open':''}">▾</span></button>${WM.dd?`<div class="WmA-menu"><div class="WmA-menuHead">${wmOLabel(o)} fotoğraf imzaları</div>${tpls.map(t=>{const id=wmIdOf(t),on=sel==id;return `<button class="WmA-menuItem${on?' is-selected':''}" data-a="pick" data-id="${esc(id)}"><span class="WmA-menuLabel"><span class="WmA-swatch" style="${wmBtnStyle(t,1)}"></span>${esc(t.label||id)}</span>${on?'✓':''}</button>`}).join('')}</div>`:''}</div>`;
- const none=big('none','İmza Ekleme (Orijinal Kalsın)',sel=='none','is-none');
- const auto=WM.auto[WM.act]?`<div class="WmPick-auto">${person?'İmzanız otomatik seçildi.':'Bu fotoğraf için imza otomatik seçildi.'} Değiştirebilirsiniz.</div>`:'';
- const opts=!shrM().watermarks?`<div class="WmA-loading">İmzalar yükleniyor…</div>`:`<div class="WmA-options">${auto}${person?big(wmIdOf(person),'Kişisel İmza',sel==wmIdOf(person),'is-primary'):''}${tpls.length?sw(dd):''}${tpls.length?none:sw(none)}${wmPaPanel()}</div>`;
- const plate=/^[0-9]{2}\s*[A-ZÇĞİÖŞÜ]{1,3}\s*[0-9]{2,4}(?:\s*[-_.]\s*\d{1,3}|\s*\(\d{1,3}\))?$/i.test(name.trim());
- WM.box.innerHTML=`<div class="glass WatermarkModal"><div class="WmHead"><div class="WmTitle">İmza Seçimi (${WM.act+1} / ${n})</div><button class="WmX" data-a="close" title="Kapat">✕</button></div>
- <div class="Watermark-Layout"><div class="Watermark-Left"><div class="Preview-Wrapper"><div class="Watermark-preview-area">${pvh}<button class="WmDel" data-a="del" title="Bu fotoğrafı listeden çıkar">🗑</button><div class="WmCnt">${WM.act+1} / ${n}</div>${n>1?`<button class="WmNav l" data-a="nav" data-d="-1"${WM.act==0?' disabled':''}>‹</button><button class="WmNav r" data-a="nav" data-d="1"${WM.act==n-1?' disabled':''}>›</button>`:''}</div>
- <div class="WmA-meta"><span>🖼</span><span>${meta}</span></div>${n>1?'<div class="WmPick-orderHint">↔ Fotoğrafları sürükleyerek ya da oklarla sıralayın; gönderide bu sırayla yer alırlar.</div>':''}
- <div class="WmPick-strip"><div class="WmPick-thumbs">${thumbs}</div><button class="WmPick-addTile" data-a="add" title="Fotoğraf ekle">＋</button></div></div></div>
- <div class="Watermark-Right"><div class="WmA-file"><p class="WmA-fileHint">Görsel adını yazın (forumda dosya adı olarak kullanılır; araç plakası ise künye eşleşmesi daha doğru olur).</p><div class="Modern-Input-Group"><i>✎</i><input id="wmName" placeholder="Dosya adı" value="${esc(name)}"></div><div id="wmWarn">${name.trim()&&!plate?'<div class="WmA-plateWarn">Dosya adı plakaya benzemiyor. Doğru künye eşleşmesi için plaka yazmanız tavsiye edilir.</div>':''}</div></div>
- ${opts}<div class="WmA-actions"><button class="btn pri" data-a="ok">${n} Fotoğrafı Yükle</button></div></div></div></div>${WM.zoom?`<div class="WmLb" data-a="unzoom"><div class="WmPvBox"><img class="WmPv" src="${x.pv||''}">${ov?`<img class="WmOv" src="${esc(ov)}" onerror="this.style.display='none'">`:''}</div></div>`:''}`}
-document.addEventListener('click',async e=>{if(!WM)return;const b=e.target.closest('[data-a]');if(!b||!WM.box.contains(b))return;const a=b.dataset.a;
- if(a=='close')return wmClose();if(a=='zoom'){WM.zoom=true;return wmRender()}if(a=='unzoom'){WM.zoom=false;return wmRender()}
- if(a=='nav')return wmGo(+b.dataset.d);if(a=='mv'){e.stopPropagation();return wmMove(+b.dataset.i,+b.dataset.i+ +b.dataset.d)}
- if(a=='dd'){WM.dd=!WM.dd;return wmRender()}if(a=='pick')return wmSelect(b.dataset.id);
- if(a=='all'){WM.all=!WM.all;if(WM.all)wmSelect(WM.sel[WM.act]);else wmRender();return}
- if(a=='del'){const i=WM.act,x=WM.items[i];const k=shrIt.indexOf(x);if(k>-1)shrIt.splice(k,1);[WM.items,WM.sel,WM.names,WM.touched,WM.auto].forEach(ar=>ar.splice(i,1));WM.act=Math.min(WM.act,WM.items.length-1);shrRender();shrFormRender();if(!WM.items.length)return wmClose();return wmRender()}
- if(a=='add'){try{const ps=await invoke('pick_upload_files');if(!ps||!ps.length)return;const add=[];ps.forEach(p=>{const nm=String(p).split('\\').pop();if(shrPush(nm,{kind:'local',path:String(p)})){const x=shrIt[shrIt.length-1];x.asked=1;add.push(x)}});add.forEach(x=>{WM.items.push(x);WM.sel.push(WM.all?WM.sel[WM.act]:'none');WM.names.push(wmNameBase(x.name));WM.touched.push(WM.all);WM.auto.push(false);wmPv(x)});shrRender();wmRender();shrKickAi()}catch(er){toast(String(er),true)}return}
- if(a=='pa'){WM.pa=WM.pa||{};WM.pa.on=!WM.pa.on;if(!WM.pa.on)shrPA=null;return wmRender()}if(a=='pacl'){shrPA=null;WM.items.forEach(x=>{x.up=null});return wmRender()}if(a=='pasel')return wmPaPick(WM.pa.res[+b.dataset.i]);if(a=='pup')return wmPUp(b.dataset.o);
- if(a=='ok')return wmConfirm()});
-document.addEventListener('input',e=>{if(!WM||e.target.id!='wmName')return;WM.names[WM.act]=e.target.value;const nm=e.target.value.trim(),plate=/^[0-9]{2}\s*[A-ZÇĞİÖŞÜ]{1,3}\s*[0-9]{2,4}(?:\s*[-_.]\s*\d{1,3}|\s*\(\d{1,3}\))?$/i.test(nm);$('wmWarn').innerHTML=nm&&!plate?'<div class="WmA-plateWarn">Dosya adı plakaya benzemiyor. Doğru künye eşleşmesi için plaka yazmanız tavsiye edilir.</div>':''});
-document.addEventListener('dragstart',e=>{const t=WM&&e.target.closest&&e.target.closest('.WmPick-thumb');if(!t)return;WM.drag=+t.dataset.i;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(WM.drag))}catch(x){}});
-document.addEventListener('dragover',e=>{const t=WM&&e.target.closest&&e.target.closest('.WmPick-thumb');if(!t)return;e.preventDefault();if(WM.over!=+t.dataset.i){WM.over=+t.dataset.i;wmRender()}});
-document.addEventListener('drop',e=>{const t=WM&&e.target.closest&&e.target.closest('.WmPick-thumb');if(!t)return;e.preventDefault();const f=WM.drag;WM.drag=null;WM.over=null;if(f!=null)wmMove(f,+t.dataset.i);else wmRender()});
-document.addEventListener('dragend',()=>{if(WM){WM.drag=null;WM.over=null;wmRender()}});
-document.addEventListener('click',e=>{if(WM&&WM.dd&&!e.target.closest('.WmA-optWrap')){WM.dd=false;wmRender()}});
-
-/* Üye adına paylaş (yalnız yönetici) + Kişisel İmza Yükle (yalnız forum izin veriyorsa) */
-function wmCanUp(){const d=wmData();return (d.mode||'hybrid')!='templates'&&d.allow_personal_upload!==false&&!wmAll().some(w=>w.is_personal)&&!shrPA}
-function wmPaPanel(){const m=shrM();let h='';
- if(m.isAdmin){const on=WM.pa&&WM.pa.on;h+=`<div class="WmPa"><button class="WmA-allSwitch WmPa-sw${on?' is-on':''}" data-a="pa"><span class="WmA-allLabel">Üye adına paylaş</span><span class="WmA-toggle"><span></span></span></button>`;
-  if(on){h+=shrPA?`<div class="WmPa-user"><b>@${esc(shrPA.username)}</b> adına paylaşılıyor${shrPA.marks&&shrPA.marks.length?'':' (kişisel imzası yok)'}<button class="btn sm" data-a="pacl">Kaldır</button></div>`:`<input id="wmPaQ" class="WmPa-q" placeholder="Üye ara (kullanıcı adı)" autocomplete="off"><div id="wmPaRes" class="WmPa-res"></div>`}
-  h+='</div>'}
- if(wmCanUp())h+=`<div class="WmPa"><div class="WmA-fileHint">Kendi imzanı yükle (PNG/WebP, şeffaf arka planlı)</div><div style="display:flex;gap:8px"><button class="btn sm" data-a="pup" data-o="yatay">Yatay imza yükle</button><button class="btn sm" data-a="pup" data-o="dikey">Dikey imza yükle</button></div></div>`;
- return h}
-let wmPaT=0;
-document.addEventListener('input',e=>{if(!WM||e.target.id!='wmPaQ')return;const q=e.target.value.trim();clearTimeout(wmPaT);const out=$('wmPaRes');if(q.length<2){out.innerHTML='';return}
- wmPaT=setTimeout(async()=>{try{const r=await invoke('forum_req',{id:shrFo(),method:'GET',path:'/api/users?filter[q]='+encodeURIComponent(q)+'&page[limit]=8'});WM.pa.res=(r.data||[]).map(u=>({id:u.id,username:u.attributes.username,name:u.attributes.displayName||u.attributes.username}));const o=$('wmPaRes');if(o)o.innerHTML=WM.pa.res.length?WM.pa.res.map((u,i)=>`<button class="WmA-menuItem" data-a="pasel" data-i="${i}"><span>${esc(u.name)}</span><small>@${esc(u.username)}</small></button>`).join(''):'<div class="WmA-loading">Üye bulunamadı</div>'}catch(x){}},300)});
-async function wmPaPick(u){try{let marks=[];try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio-media/watermarks?for_user='+encodeURIComponent(u.username)});marks=(r.user||[]).map(w=>Object.assign({},w,{is_personal:true}))}catch(x){}
- shrPA={id:u.id,username:u.username,marks};WM.sel=WM.sel.map(v=>{const c=(shrM().watermarks.watermarks||[]).find(w=>wmIdOf(w)==v&&w.is_personal);return c?shrWmSel:v});WM.touched=WM.touched.map(()=>false);WM.items.forEach(x=>{x.up=null});wmAuto();wmRender()}catch(e){toast(String(e),true)}}
-async function wmPUp(o){try{const ps=await invoke('pick_upload_files');if(!ps||!ps.length)return;const p=String(ps[0]),ext=(p.split('.').pop()||'').toLowerCase();if(ext!='png'&&ext!='webp'){toast('Kişisel imza yalnız PNG veya WebP olabilir',true);return}
- toast('İmza yükleniyor…');const id=shrFo();await invoke('forum_wm_upload',{id,src:{kind:'local',path:p},name:'kisisel_'+o+'.'+ext});shrMeta[id]=await invoke('forum_meta',{id});shrMetaAt[id]=Date.now();wmAuto();wmRender();toast('Kişisel imza yüklendi')}catch(e){toast(String(e),true)}}
-function wmConfirm(){const its=WM.items,first=shrIt.indexOf(its[0]);
- its.forEach((x,i)=>{const nn=(WM.names[i]||'').trim()||wmNameBase(x.name),full=nn+wmExt(x.name);if(x.name!=full){x.name=full;x.up=null}x.wm=WM.sel[i];x.wmDone=1});
- const rest=shrIt.filter(x=>!its.includes(x));rest.splice(Math.max(0,Math.min(first,rest.length)),0,...its);shrIt=rest;shrSelI=Math.max(0,shrIt.indexOf(its[0]));
- wmClose();shrRender();shrFormRender();shrKick();shrPrevUp();kmOpen()}
-function shrWmAsk(){if(shrDest!='forum'||!shrM().watermarks)return;const p=shrIt.filter(x=>!x.asked);if(p.length)shrWmOpen(p)}
-
-
-/* Künye modalı (forumun "Araç Künye Bilgileri" penceresi): sol önizleme + açıklama kipi + şerit, sağ künye formu */
-const KMCSS=`.KmCap{display:flex;gap:6px;margin:10px 0}.KmCap button{flex:1;height:34px;border:2px solid var(--control-bg);border-radius:8px;background:var(--body-bg);color:var(--muted-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.KmCap button.on{border-color:var(--primary-color);color:var(--primary-color)}
-.KmAi{margin-bottom:12px}.KmAi-top{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted-color);margin-bottom:5px}.KmAi-bar{height:6px;border-radius:99px;background:var(--control-bg);overflow:hidden}.KmAi-bar i{display:block;height:100%;background:var(--primary-color);transition:width .3s}
-.KmBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.KmBtns .btn{height:42px;font-weight:700}.KmBtns .full{grid-column:1/3}
-.KmBack{margin-top:8px;border:0;background:none;color:var(--muted-color);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;width:100%}
-.KmChip{padding:6px 12px;border-radius:999px;border:1px solid var(--control-bg);background:var(--body-bg);color:var(--muted-color);font:inherit;font-size:12px;font-weight:600;cursor:pointer}.KmChip.on{background:var(--text-color);color:var(--bg)}
-.KmBox{margin-top:14px;padding:10px 12px;border:1px solid var(--control-bg);border-radius:10px;font-size:12px}`;
-function kmOpen(){if(shrDest!='forum'||document.querySelector('.KunyeModal')||!shrIt.length)return;
- if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
- if(!document.getElementById('kmCss')){const s=document.createElement('style');s.id='kmCss';s.textContent=KMCSS;document.head.appendChild(s)}
- shrNoK=false;KM={one:shrOneMode,box:document.createElement('div')};KM.box.className='modal';document.body.appendChild(KM.box);
- KM.key=e=>{if(e.key=='Escape'){kmClose();e.stopPropagation()}};document.addEventListener('keydown',KM.key,true);
- KM.box.addEventListener('click',kmClick);KM.box.addEventListener('input',shrFormIn);KM.box.addEventListener('change',shrFormCh);
- kmRender()}
-function kmClose(){if(!KM)return;document.removeEventListener('keydown',KM.key,true);KM.box.remove();KM=null;shrRender();shrFormRender()}
-function kmAiPct(){const n=shrIt.length||1,d=shrIt.filter(x=>x.ai.state=='ok'||x.ai.state=='err').length;return Math.round(d*100/n)}
-function kmPartial(){if(!KM||!$('kmAi'))return;$('kmAi').innerHTML=kmAiHtml();const t=$('kmStrip');if(t)t.innerHTML=kmThumbs();const p=$('kmPvBox');if(p)p.innerHTML=kmPv();const m=$('shrAiMsg');shrAiMsgUp()}
-function kmAiHtml(){const p=kmAiPct(),x=shrIt[shrSelI];const msg=x?x.ai.state=='busy'?'Yapay zekâ okuyor…':x.ai.state=='err'?x.ai.msg:x.ai.state=='ok'?(x.ai.note||'Dolduruldu; kontrol et.'):'':'';
- return `<div class="KmAi-top"><span>Framio AI</span><span>%${p}</span></div><div class="KmAi-bar"><i style="width:${p}%"></i></div><div class="WmA-fileHint" id="kmAiMsg" style="margin-top:6px">${esc(msg)}</div>`}
-function kmThumbs(){return shrIt.map((it,i)=>`<div class="WmPick-thumb${i==shrSelI?' is-active':''}" data-a="ksel" data-i="${i}" title="${esc(it.name)}"><img src="${it.th||''}" alt=""></div>`).join('')}
-function kmPv(){const x=shrIt[shrSelI];if(!x)return '';const cur=shrWmList().find(o=>(o.filename||o.id)==wmOf(x));
- if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;kmPartial()}).catch(()=>{x.pvBusy=0})}
- return x.pv?`<img class="WmPv" src="${x.pv}">${cur&&cur.url?`<img class="WmOv" src="${esc(shrWmUrl(cur))}" onerror="this.style.display='none'">`:''}`:'<div class="WmA-loading">Önizleme hazırlanıyor…</div>'}
-function kmRender(){if(!KM)return;const n=shrIt.length;if(!n){kmClose();return}if(shrSelI>=n)shrSelI=n-1;
- const hasX=typeof shrCrossOpen=='function'&&shrNodeList.length,hasI=typeof shrInfoOpen=='function';
- KM.box.innerHTML=`<div class="glass WatermarkModal KunyeModal"><div class="WmHead"><div class="WmTitle">Araç Künye Bilgileri (${shrSelI+1} / ${n})</div><button class="WmX" data-a="kclose" title="Kapat">✕</button></div>
- <div class="Watermark-Layout"><div class="Watermark-Left"><div class="Preview-Wrapper"><div class="Watermark-preview-area"><div class="WmPvBox is-sharp" id="kmPvBox">${kmPv()}</div></div></div>
- ${n>1?`<div class="KmCap"><button data-a="kone" class="${KM.one?'on':''}">Tek Açıklama</button><button data-a="kmany" class="${KM.one?'':'on'}">Birden Çok</button></div>`:''}
- <div class="WmPick-strip"><div class="WmPick-thumbs" id="kmStrip">${kmThumbs()}</div></div></div>
- <div class="Watermark-Right"><div class="KmAi" id="kmAi">${kmAiHtml()}</div><div id="kmForm"></div>
- ${typeof shrCustOpen=='function'?`<div class="KmBox"><b>Gönderi Özelleştirme</b><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn sm" data-a="kcust">Müzik · Konum…</button>${shrCustTags().map(t=>`<span class="KmChip on">${esc(t)}</span>`).join('')}</div></div>`:''}
- <div class="KmBtns">${hasX?'<button class="btn" data-a="kcross">Ortak Paylaş</button>':''}${hasI?'<button class="btn" data-a="kinfo">Info Ekle</button>':''}<button class="btn" data-a="knok">Künye Ekleme</button><button class="btn pri" data-a="kok">Bilgileri Onayla</button></div>
- <button class="KmBack" data-a="kback">Yüklemeyi İptal Et ve Geri Dön</button></div></div></div>`;
- shrFormRender()}
-async function kmClick(e){const b=e.target.closest('[data-a]');if(!b||!KM)return;const a=b.dataset.a;
- if(a=='kclose')return kmClose();
- if(a=='ksel'){shrSelI=+b.dataset.i;return kmRender()}
- if(a=='kone'){KM.one=shrOneMode=true;const s=shrIt[shrSelI];if(s)shrIt.forEach(z=>{if(z!==s)['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){z.f[k]=s.f[k];z.dirty[k]=1}})});shrPrevUp();return kmRender()}
- if(a=='kmany'){KM.one=shrOneMode=false;return kmRender()}
- if(a=='knok'){shrNoK=true;kmClose();shrPrevUp();return toast('Künye eklenmeyecek')}
- if(a=='kok'){shrNoK=false;kmClose();shrPrevUp();return toast('Künye onaylandı')}
- if(a=='kinfo')return shrInfoOpen();if(a=='kcross')return shrCrossOpen();if(a=='kcust')return shrCustOpen();
- if(a=='kback'){const id=shrFo();for(const x of shrIt){const m=x.up&&x.up.bbcode&&/\bid="?(\d+)/.exec(x.up.bbcode);if(m){try{await invoke('forum_req',{id,method:'DELETE',path:'/api/framio-media/image/'+m[1]})}catch(er){}}x.up=null;x.wmDone=0;x.asked=0}
-  kmClose();shrWmOpen(shrIt.slice())}}
-
-/* ---- v0.48: Info Ekle, Gönderi Özelleştirme (müzik/konum), Ortak Paylaş (ağa aktar) modalları ---- */
-let shrInfo=[],shrCust={music:null,gps:null,per:null},shrOneMode=false,SUB=null;
-function subOpen(cls,title,body,foot){if(SUB)subClose();if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
- if(!document.getElementById('kmCss')){const s=document.createElement('style');s.id='kmCss';s.textContent=KMCSS;document.head.appendChild(s)}
- const b=document.createElement('div');b.className='modal';b.innerHTML=`<div class="glass WatermarkModal ${cls}" style="max-width:760px;width:min(760px,94vw)"><div class="WmHead"><div class="WmTitle">${title}</div><button class="WmX" data-s="x">✕</button></div><div style="padding:16px 20px;overflow:auto;max-height:72vh" id="subBody"></div></div>`;
- document.body.appendChild(b);SUB={box:b,cls,foot};b.addEventListener('click',e=>{const t=e.target.closest('[data-s]');if(t&&t.dataset.s=='x')foot&&foot();});return b}
-function subClose(){if(!SUB)return;try{if(SUB.audio){SUB.audio.pause()}}catch(e){}SUB.box.remove();SUB=null}
-const infoFmt=e=>{const q=e.text.split('\n').map(l=>'> '+l).join('\n');return e.scope=='all'?`> [b][i]T R I V I A[/i][/b]\n> \n${q}`:`> **📷 Fotoğraf ${e.photos.map(p=>p+1).join(', ')} · Meraklısına Info**\n>\n${q}`};
-const shrInfoResult=()=>shrInfo.filter(e=>e.text.trim()&&(e.scope=='all'||e.photos.length)).map(e=>({scope:e.scope,photos:[...e.photos],text:e.text,formatted:infoFmt(e)}));
-function shrInfoOpen(){kmClose();const multi=shrIt.length>1;let act=0;const E=shrInfo.length?shrInfo.map(e=>({...e,photos:[...e.photos]})):[{scope:'all',photos:[],text:''}];
- const done=()=>{shrInfo=E;subClose();shrPrevUp();kmOpen()};
- const b=subOpen('InfoModal','Info Ekle',null,done);const body=b.querySelector('#subBody');
- const wrap=(t,a)=>{const ta=body.querySelector('#infoTa'),e=E[act],s0=ta.selectionStart,s1=ta.selectionEnd;e.text=e.text.slice(0,s0)+t+e.text.slice(s0,s1)+a+e.text.slice(s1);draw();const n=body.querySelector('#infoTa');n.focus();n.setSelectionRange(s0+t.length,s1+t.length)};
- const FM={bold:['[b]','[/b]'],italic:['[i]','[/i]'],strike:['[s]','[/s]'],url:['[url]','[/url]'],quote:['[quote]','[/quote]'],code:['[code]','[/code]'],list:['[list]\n[*]','\n[/list]'],num:['[list=1]\n[*]','\n[/list]']};
- function draw(){const e=E[act];const lab=(x,i)=>x.scope=='all'?`Info ${i+1} · Tüm gönderi`:`Info ${i+1} · ${x.photos.length?'Fotoğraf '+x.photos.map(p=>p+1).join(', '):'fotoğraf seçilmedi'}`;
-  body.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${E.map((x,i)=>`<button class="KmChip${i==act?' on':''}" data-i="${i}">${esc(lab(x,i))}${E.length>1?` <span data-del="${i}" title="Kaldır">✕</span>`:''}</button>`).join('')}<button class="KmChip" data-add="1">＋ Info ekle</button></div>
-  ${multi?`<div class="KmBox" style="margin:0 0 12px"><b>Bu Info nereye ait?</b> <span class="KmCap" style="display:inline-flex;margin:0 0 0 8px"><button data-sc="all" class="${e.scope=='all'?'on':''}">Tüm gönderi</button><button data-sc="photos" class="${e.scope=='photos'?'on':''}">Seçilen fotoğraflar</button></span>${e.scope=='photos'?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${shrIt.map((x,i)=>`<div data-ph="${i}" style="position:relative;width:72px;height:54px;border-radius:8px;overflow:hidden;cursor:pointer;border:${e.photos.includes(i)?'3px solid var(--primary-color,#b0102a)':'1px solid #cbd5e1'};opacity:${e.photos.includes(i)?1:.65}"><img src="${x.th||''}" style="width:100%;height:100%;object-fit:cover"><span style="position:absolute;left:4px;top:3px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px">${i+1}</span></div>`).join('')}</div>`:''}</div>`:''}
-  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${[['bold','B'],['italic','I'],['strike','S'],['url','🔗'],['quote','❝'],['code','&lt;/&gt;'],['list','• Liste'],['num','1. Liste']].map(([k,l])=>`<button class="btn sm" data-f="${k}">${l}</button>`).join('')}<label class="btn sm" style="cursor:pointer">🎨<input type="color" id="infoClr" style="width:18px;height:18px;border:0;padding:0;margin-left:4px"></label></div>
-  <textarea id="infoTa" rows="9" style="width:100%;font-family:monospace" placeholder="${e.scope=='photos'?'Seçilen fotoğraflara özel bilgileri buraya girin…':'Gönderinin tamamı için detaylı bilgileri buraya girin…'}">${esc(e.text)}</textarea>
-  <div style="display:flex;justify-content:space-between;margin-top:12px"><button class="btn" data-bk="1">← Künye Ekranına Dön</button><button class="btn pri" data-ok="1">Info'yu Tamamla ve Bitir</button></div>`;}
- body.addEventListener('input',ev=>{if(ev.target.id=='infoTa')E[act].text=ev.target.value});
- body.addEventListener('change',ev=>{if(ev.target.id=='infoClr')wrap(`[color=${ev.target.value}]`,'[/color]')});
- body.addEventListener('click',ev=>{const t=ev.target.closest('button,[data-ph],[data-del]');if(!t)return;const d=t.dataset;
-  if(d.del!==undefined){ev.stopPropagation();E.splice(+d.del,1);act=Math.max(0,Math.min(act,E.length-1))}
-  else if(d.i!==undefined)act=+d.i;else if(d.add){E.push({scope:multi?'photos':'all',photos:[],text:''});act=E.length-1}
-  else if(d.sc)E[act].scope=d.sc;else if(d.ph!==undefined){const p=+d.ph,a=E[act].photos;a.includes(p)?a.splice(a.indexOf(p),1):a.push(p);a.sort((x,y)=>x-y)}
-  else if(d.f){wrap(FM[d.f][0],FM[d.f][1]);return}
-  else if(d.bk)return done();
-  else if(d.ok){const bad=E.find(x=>x.text.trim()&&x.scope=='photos'&&!x.photos.length);if(bad){act=E.indexOf(bad);draw();return toast('Fotoğrafa özel Info için en az bir fotoğraf seçin',true)}return done()}
-  else return;draw()});
- draw()}
-/* Gönderi Özelleştirme: müzik + konum (genel ya da fotoğraf başına) */
-function shrCustTags(){const c=shrCust,t=[];const one=(m,g,p)=>{if(m)t.push('🎵 '+m.title);if(g)t.push('📍 '+g.lat+', '+g.lon)};if(c.per&&c.per.some(x=>x&&(x.music||x.gps)))c.per.forEach((x,i)=>{if(x&&(x.music||x.gps)){const k=[];if(x.music)k.push('🎵');if(x.gps)k.push('📍');t.push('Foto '+(i+1)+' '+k.join(''))}});else one(c.music,c.gps);return t}
-const shrCustOf=x=>shrCust.per?(shrCust.per[shrIt.indexOf(x)]||{}):shrCust;
-function shrCustOpen(){kmClose();const multi=shrIt.length>1;const C={tab:'music',per:!!shrCust.per&&multi,idx:0,music:shrCust.music?{...shrCust.music}:null,gps:shrCust.gps?{...shrCust.gps}:null,P:shrIt.map((x,i)=>({music:shrCust.per&&shrCust.per[i]?shrCust.per[i].music:null,gps:shrCust.per&&shrCust.per[i]?shrCust.per[i].gps:null})),res:[],q:'',busy:false};
- const cur=()=>C.per?C.P[C.idx]:C;let aud=null,map=null,mk=null,qt=0;
- const stop=()=>{if(aud){try{aud.pause()}catch(e){}aud=null}};
- const save=()=>{stop();shrCust={music:C.per?null:C.music,gps:C.per?null:C.gps,per:C.per?C.P.map(x=>({music:x.music,gps:x.gps})):null};subClose();shrPrevUp();kmOpen()};
- const b=subOpen('CustomizeModal','Gönderi Özelleştirme',null,save);const body=b.querySelector('#subBody');
- const search=async q=>{C.busy=true;drawList();try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio-media/music/search?q='+encodeURIComponent(q||'Türkiye En Çok Dinlenenler')});C.res=r.data||[]}catch(e){C.res=[]}C.busy=false;drawList()};
- const drawList=()=>{const o=body.querySelector('#cuList');if(!o)return;o.innerHTML=C.busy?'<div class="WmA-loading">Aranıyor…</div>':C.res.length?C.res.map((t,i)=>`<button class="WmA-menuItem" data-tr="${i}" style="gap:10px;justify-content:flex-start"><img src="${esc(t.cover_url||'')}" style="width:40px;height:40px;border-radius:6px"><span style="flex:1"><b>${esc(t.title)}</b><br><small>${esc(t.artist||'')}</small></span><span data-pv="${i}" title="Dinle" style="padding:6px">▶</span></button>`).join(''):'<div class="WmA-loading">Sonuç yok</div>'};
- const play=(t,from)=>{stop();if(!t||!t.preview_url)return;aud=new Audio(t.preview_url);aud.volume=.85;const st=from?(+t.start_offset||0):0,du=from?(+t.clip_duration||15):30;aud.currentTime=st;aud.ontimeupdate=()=>{if(aud&&aud.currentTime>=st+du){aud.currentTime=st}};aud.play().catch(()=>{})};
- const setGps=(la,lo)=>{cur().gps={lat:+(+la).toFixed(6),lon:+(+lo).toFixed(6)};const a=body.querySelector('#cuLa'),o=body.querySelector('#cuLo');if(a)a.value=cur().gps.lat;if(o)o.value=cur().gps.lon};
- const initMap=()=>{const el=body.querySelector('#cuMap');if(!el)return;const go=()=>{if(!window.L||!el.isConnected)return;try{if(map){map.remove();map=null;mk=null}}catch(e){}const g=cur().gps;map=L.map(el).setView(g?[g.lat,g.lon]:[39.0,35.0],g?14:6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
-  const put=(la,lo)=>{if(mk)mk.setLatLng([la,lo]);else{mk=L.marker([la,lo],{draggable:true}).addTo(map);mk.on('dragend',()=>{const p=mk.getLatLng();setGps(p.lat,p.lng)})}};if(g)put(g.lat,g.lon);map.on('click',e=>{put(e.latlng.lat,e.latlng.lng);setGps(e.latlng.lat,e.latlng.lng)});C.put=put;setTimeout(()=>map&&map.invalidateSize(),100)};
-  if(window.L)return go();if(!document.getElementById('lfCss')){const l=document.createElement('link');l.id='lfCss';l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l)}
-  if(!document.getElementById('lfJs')){const sc=document.createElement('script');sc.id='lfJs';sc.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';sc.onload=go;document.head.appendChild(sc)}else setTimeout(go,400)};
- function draw(){const c=cur(),m=c.music;
-  body.innerHTML=`${multi?`<div class="KmCap"><button data-md="all" class="${C.per?'':'on'}">Tüm gönderiye</button><button data-md="per" class="${C.per?'on':''}">Her fotoğrafa ayrı</button></div>${C.per?`<div class="WmPick-thumbs" style="margin-bottom:10px">${shrIt.map((x,i)=>`<div class="WmPick-thumb${i==C.idx?' is-active':''}" data-ix="${i}"><img src="${x.th||''}"></div>`).join('')}</div>`:''}`:''}
-  <div class="KmCap"><button data-tab="music" class="${C.tab=='music'?'on':''}">🎵 Gönderi Müziği</button><button data-tab="loc" class="${C.tab=='loc'?'on':''}">📍 Konum</button></div>
-  ${C.tab=='music'?`${m?`<div class="KmBox" style="display:flex;gap:10px;align-items:center"><img src="${esc(m.cover_url||'')}" style="width:48px;height:48px;border-radius:8px"><div style="flex:1"><b>${esc(m.title)}</b><br><small>${esc(m.artist||'')}</small></div><button class="btn sm" data-a2="pl">▶ Dinle</button><button class="btn sm" data-a2="rm">Kaldır</button></div>
-   <div class="KmBox"><label>Başlangıç: <b id="cuOf">${m.start_offset||0}</b> sn<input type="range" data-r="o" min="0" max="${Math.max(0,(C.dur||30)-(m.clip_duration||15))}" value="${m.start_offset||0}" style="width:100%"></label><label>Süre: <b id="cuDu">${m.clip_duration||15}</b> sn<input type="range" data-r="d" min="5" max="30" value="${m.clip_duration||15}" style="width:100%"></label></div>`:''}
-   <input id="cuQ" class="WmPa-q" style="width:100%;margin:10px 0" placeholder="Şarkı ya da sanatçı ara" value="${esc(C.q)}"><div id="cuList" class="WmPa-res" style="max-height:260px;overflow:auto"></div>`
-  :`<input id="cuAddr" class="WmPa-q" style="width:100%;margin-bottom:8px" placeholder="Adres ya da yer ara (Enter)"><div id="cuMap" style="height:260px;border-radius:10px;background:var(--control-bg)"></div><div style="display:flex;gap:8px;margin-top:8px"><input id="cuLa" class="WmPa-q" placeholder="Enlem" value="${c.gps?c.gps.lat:''}"><input id="cuLo" class="WmPa-q" placeholder="Boylam" value="${c.gps?c.gps.lon:''}"><button class="btn sm" data-a2="gps">Uygula</button><button class="btn sm" data-a2="rg">Konumu Kaldır</button></div>`}
-  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pri" data-a2="ok">✓ Tamamla ve Kaydet</button></div>`;
-  if(C.tab=='music'){drawList();if(!C.res.length&&!C.busy)search(C.q)}else initMap()}
- body.addEventListener('input',ev=>{const t=ev.target;if(t.id=='cuQ'){C.q=t.value;clearTimeout(qt);qt=setTimeout(()=>search(C.q.trim().length>1?C.q.trim():''),350)}
-  else if(t.dataset.r){const m=cur().music;if(!m)return;if(t.dataset.r=='o'){m.start_offset=+t.value;body.querySelector('#cuOf').textContent=t.value}else{m.clip_duration=+t.value;body.querySelector('#cuDu').textContent=t.value}}});
- body.addEventListener('keydown',async ev=>{if(ev.target.id=='cuAddr'&&ev.key=='Enter'){try{const r=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=tr&q='+encodeURIComponent(ev.target.value))).json();if(r[0]){setGps(r[0].lat,r[0].lon);if(map&&C.put){C.put(+r[0].lat,+r[0].lon);map.setView([+r[0].lat,+r[0].lon],14)}}else toast('Yer bulunamadı',true)}catch(e){toast('Arama yapılamadı',true)}}});
- body.addEventListener('click',ev=>{const t=ev.target.closest('[data-md],[data-ix],[data-tab],[data-a2],[data-tr],[data-pv]');if(!t)return;const d=t.dataset;
-  if(d.pv!==undefined){ev.stopPropagation();return play(C.res[+d.pv],false)}
-  if(d.tr!==undefined){const k=C.res[+d.tr];cur().music={id:k.id,title:k.title,artist:k.artist,album:k.album,preview_url:k.preview_url,cover_url:k.cover_url,start_offset:0,clip_duration:15};C.dur=30;play(cur().music,true);return draw()}
-  if(d.md){C.per=d.md=='per';C.idx=0;stop();return draw()}if(d.ix!==undefined){C.idx=+d.ix;return draw()}if(d.tab){C.tab=d.tab;stop();return draw()}
-  if(d.a2=='pl')return play(cur().music,true);if(d.a2=='rm'){stop();cur().music=null;return draw()}if(d.a2=='rg'){cur().gps=null;return draw()}
-  if(d.a2=='gps'){const la=parseFloat(body.querySelector('#cuLa').value),lo=parseFloat(body.querySelector('#cuLo').value);if(isNaN(la)||isNaN(lo))return toast('Geçerli koordinat gir',true);setGps(la,lo);if(map&&C.put){C.put(la,lo);map.setView([la,lo],14)}return}
-  if(d.a2=='ok')save()});
- draw()}
-/* Ortak Paylaş: ağ düğümleri paneli (sayfadaki #shrNodes) modal içinde açılır */
-function shrCrossOpen(){if(!shrTopic){toast('Önce bir başlık seç',true);return}kmClose();const n=$('shrNodes'),home=n.parentNode,nx=n.nextSibling;
- const back=()=>{home.insertBefore(n,nx);subClose();kmOpen()};const b=subOpen('CrossModal','Ortak Paylaş (Ağa Aktar)',null,back);const body=b.querySelector('#subBody');
- body.innerHTML='<div class="WmA-fileHint">Gönderi yayımlanınca seçtiğin forumlara da aktarılır. Hedef başlık, etiket ve imzayı her düğüm için ayarla.</div><div id="crossHost"></div><div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pri" id="crossOk">Tamam</button></div>';
- body.querySelector('#crossHost').appendChild(n);body.querySelector('#crossOk').onclick=back;shrNodesRender()}
-/* Arka plan yükleme: görsel eklenir eklenmez (seçili imzayla) forumun yükleme ucuna gider; paylaşımda hazır kullanılır */
-function shrDoUp(x){const id=shrFo();if(!id||!shrMeta[id])return;const wm=wmOf(x);if(x.up&&x.up.wm==wm&&x.up.name==x.name&&x.up.state!='err')return;
- const u={wm,name:x.name,state:'busy'};x.up=u;u.p=invoke('forum_upload_one',{id,src:x.src,name:x.name,watermark:wm,target:shrPA?shrPA.username:''}).then(c=>{u.bbcode=c;u.state='ok'}).catch(e=>{u.state='err';u.err=String(e)}).finally(()=>shrRender());shrRender()}
-function shrKickAi(){const id=shrFo();if(!id||!shrMeta[id])return;shrIt.forEach(x=>{if(x.ai.state=='idle')shrDoAi(x)})}
-function shrKick(){const id=shrFo();if(!id||!shrMeta[id])return;shrIt.forEach(x=>{if(x.ai.state=='idle')shrDoAi(x);if(x.wmDone)shrDoUp(x)})}
-function shrMk(name,src){return {name,src,th:'',f:{},dirty:{},ai:{state:'idle',kind:'',msg:'',note:''},up:null}}
+ $('shrItems').innerHTML=shrIt.length?'<div style="display:flex;flex-wrap:wrap;gap:10px">'+shrIt.map((x,i)=>`<div style="width:110px;border:1px solid var(--stroke);border-radius:12px;padding:6px;background:var(--track)"><div style="height:70px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px" title="${esc(x.name)}">${esc(x.name)}</div><button class="btn sm" data-rm="${i}" style="width:100%">Çıkar</button></div>`).join('')+'</div>'
+  :'Henüz dosya yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…”, Dosyalar sekmesinden ekle ya da forumdaki “Fotoğraf Yükle” düğmesiyle seç.';
+ shrThumbs();const h=$('frHint');if(h)h.textContent=shrIt.length?shrIt.length+' dosya hazır':''}
+$('shrItems').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;shrIt.splice(+b.dataset.rm,1);shrRender()};
+function shrMk(name,src){return {name,src,th:''}}
 function shrPush(name,src){const k=src.key||src.path;if(shrIt.some(x=>(x.src.key||x.src.path)==k))return false;shrIt.push(shrMk(name,src));return true}
 function shrAddLocal(p){p=p.trim().replace(/^"|"$/g,'');if(!p)return;shrPush(p.split('\\').pop(),{kind:'local',path:p})}
-$('shrAdd').onclick=()=>{shrAddLocal($('shrPath').value);$('shrPath').value='';shrRender();shrFormRender();shrKick();shrWmAsk()};
+$('shrAdd').onclick=()=>{shrAddLocal($('shrPath').value);$('shrPath').value='';shrRender()};
+
 /* Paylaş: hedef seçimi (e-posta, panoya kopyala, klasörde göster, forum). Forum yalnızca ekliyse görünür. */
 let shrDest='mail',shrHasForum=false;
 const shrDests=()=>[['mail','E-posta'],['copy','Panoya kopyala'],['show','Klasörde göster']].concat(shrHasForum?[['forum','Forum']]:[]);
@@ -2649,104 +2309,56 @@ $('shrGenGo').onclick=async()=>{if(!shrIt.length){toast('Önce bir dosya ekle',t
 async function shrInit(){let fl=[],all=[];try{all=await invoke('forum_list');fl=all.filter(f=>f.user)}catch(e){}
  shrHasForum=all.length>0;if(!shrHasForum&&shrDest=='forum')shrDest='mail';shrDestRender();if(shrDest!='forum'){shrRender();return}
  const cur=shrFo();$('shrForum').innerHTML=fl.map(f=>`<option value="${esc(f.id)}">${esc(f.name)} (${esc(f.user)})</option>`).join('');if(fl.some(f=>f.id==cur))$('shrForum').value=cur;
- $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();shrFormRender();if(fl.length)await shrLoadMeta()}
+ $('shrNo').textContent=fl.length?'':'Önce Ayarlar > Forumlar bölümünden bir foruma giriş yap.';shrRender();if(fl.length)await shrLoadMeta()}
 async function shrLoadMeta(){const id=shrFo();if(!id)return;
  if(!shrMeta[id]||Date.now()-(shrMetaAt[id]||0)>300000){try{shrMeta[id]=await invoke('forum_meta',{id});shrMetaAt[id]=Date.now()}catch(e){toast(String(e),true);return}}
- const m=shrMeta[id],w=shrWmList();const dv=m.defaultWatermark;
- if(shrWmSel=='none'||!w.some(o=>(o.filename||o.id)==shrWmSel))shrWmSel=dv&&w.some(o=>(o.filename||o.id)==dv)?dv:'none';
- if(!shrTopic)await shrLoadCtx();else shrRender();
- shrRender();shrFormRender();shrKick();shrWmAsk()}
-$('shrForum').onchange=()=>{shrPA=null;shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';shrCtx={slugs:[],city:false,schema:null,tax:[],kind:''};shrIt.forEach(x=>{x.ai={state:'idle',kind:'',msg:'',note:''};x.up=null;x.wm=null;x.wmDone=0;x.asked=0});shrLoadMeta()};
-/* Başlığın künye bağlamı: etiketleri → kategori şeması, şehir içi kipi, marka/model listesi */
-async function shrLoadCtx(){const t=shrTopic,id=shrFo(),m=shrM();let tags=[];
- if(t){try{tags=await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})}catch(e){}}
- const mt=m.tags||[],slugs=[];tags.forEach(tg=>{slugs.push(tg.slug);const full=mt.find(z=>z.id==tg.id);if(full&&full.parent){const p=mt.find(z=>z.id==full.parent);if(p)slugs.push(p.slug)}});
- const uniq=[...new Set(slugs.filter(Boolean))],cs=String(m.cityTagSlug||'').split(',').map(s=>s.trim()).filter(Boolean);
- const city=uniq.some(s=>cs.includes(s)||/sehirici|sehir-ici/.test(s));
- let c={schema:null,taxonomy:[]};try{c=await invoke('forum_context',{id,discussionId:t?String(t.discussion_id):'',slugs:uniq})}catch(e){}
- if(shrTopic!==t||shrFo()!==id)return;
- const sc=c.schema&&c.schema.fields_config?c.schema:null,ts=sc&&Array.isArray(sc.tag_slugs)?sc.tag_slugs:[],direct=!!sc&&(ts.includes('url:'+(t?t.discussion_id:''))||uniq.some(s=>ts.includes(s)));
- const old=shrCtx.kind;shrCtx={slugs:uniq,city,schema:sc,tax:c.taxonomy||[],kind:(city?'c':'')+(direct?'s'+(sc.id||sc.name||''):'')};
- // Yeni liste: mevcut marka/model yazımı listedeki seçeneğe eşlenir
- const bs=shrBrands();if(bs.length)shrIt.forEach(x=>{if(x.f.brand){const b=shrBest(x.f.brand,bs);if(b)x.f.brand=b}if(x.f.model&&x.f.brand){const mm=shrBest(x.f.model,shrModels(x.f.brand));if(mm)x.f.model=mm}});
- shrFormRender();shrPrevUp();
- // Başlığın türü künye alanlarını değiştiriyorsa (ör. şehir içi: hat, filo kodu) yapay zekâ o şemayla yeniden okur
- if(old!==shrCtx.kind)shrIt.forEach(x=>{if(x.ai.state!='busy')shrDoAi(x)})}
-function shrSug(list,auto){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join('');
- if(shrSugList.length){shrTopic=shrSugList[0];$('shrSug').value=0}else{shrTopic=null;$('shrSug').innerHTML='<option value="">Öneri yok — aşağıdan ara</option>'}shrPrevUp();shrLoadNodes();shrLoadCtx()}
-async function shrRoute(){const x=shrIt[shrSelI]||shrIt[0];shrRouting=true;try{shrSug(await invoke('forum_route',{id:shrFo(),fields:x?x.f:{},hint:x?x.name:''}))}catch(e){toast(String(e),true)}shrRouting=false}
-$('shrRoute').onclick=shrRoute;
-$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrPrevUp();shrLoadNodes();shrLoadCtx()};
-$('shrFind').onclick=async()=>{const q=$('shrQ').value.trim();if(!q)return;try{shrSug(await invoke('forum_find_topic',{id:shrFo(),q}))}catch(e){toast(String(e),true)}};
-$('shrQ').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(shrQt);$('shrFind').click()}};
-let shrQt=0,shrQn=0;$('shrQ').oninput=()=>{clearTimeout(shrQt);const q=$('shrQ').value.trim();if(q.length<2)return;shrQt=setTimeout(async()=>{const n=++shrQn;try{const r=await invoke('forum_find_topic',{id:shrFo(),q});if(n==shrQn)shrSug(r)}catch(e){}},300)};
+ await frConfigure()}
+$('shrForum').onchange=()=>{shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';$('shrSel').textContent='';frFid='';shrLoadMeta()};
+/* Forum paketini seçili forum + başlıkla yapılandır (oturum kullanıcısı, başlığın etiketleri, ağ desteği) */
+async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id||!m.base)return;
+ if(typeof FramioForumPort=='undefined'){toast('Forum eklentisi yüklenemedi',true);return}
+ let tags=[];if(t){try{tags=(await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})).map(x=>x.slug)}catch(e){}}
+ if(shrFo()!==id||shrTopic!==t)return;
+ await FramioForumPort.configure({id,base:m.base,attrs:m.attrs||{},user:m.user,discussion:t?{id:t.discussion_id,title:t.title,tags}:null});frFid=id;
+ if(!frMounted){FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true}}
+function frInsert(t){const a=$('frText'),s=a.selectionStart==null?a.value.length:a.selectionStart,e=a.selectionEnd==null?s:a.selectionEnd,pre=a.value.slice(0,s),post=a.value.slice(e);
+ const ins=(pre&&!pre.endsWith('\n')?'\n':'')+t+(post&&!post.startsWith('\n')?'\n':'');a.value=pre+ins+post;const c=pre.length+ins.length;a.setSelectionRange(c,c);a.focus()}
+/* Listedeki (Drive/yerel) dosyalar: baytları Rust'tan alınıp File yapılır, forumun kendi İmza penceresi açılır */
+$('frAddItems').onclick=async()=>{if(!shrIt.length){toast('Önce listeye dosya ekle',true);return}if(!frFid){toast('Önce forum ve başlık seç',true);return}
+ const btn=$('frAddItems');btn.disabled=true;try{
+  const files=[];for(const x of shrIt){const b=await invoke('forum_file_bytes',{src:x.src,name:x.name});const ext=(x.name.split('.').pop()||'jpg').toLowerCase();files.push(new File([b],x.name,{type:ext=='png'?'image/png':ext=='webp'?'image/webp':'image/jpeg'}))}
+  FramioForumPort.addFiles(files);shrIt=[];shrRender()}catch(e){toast(String(e),true)}btn.disabled=false};
+/* Başlık seçimi: arama ya da forum bağlantısı */
+function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.length?shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join(''):'<option value="">Başlık bulunamadı</option>';
+ shrTopic=shrSugList[0]||null;if(shrSugList.length)$('shrSug').value=0;shrTopicSet()}
+function shrTopicSet(){$('shrSel').textContent=shrTopic?'Yanıt verilecek: '+shrTopic.title:'';frConfigure()}
+$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrTopicSet()};
+async function shrFindRun(){const q=$('shrQ').value.trim();if(!q)return;const id=shrFo();
+ try{const mm=q.match(/\/d\/(\d+)/);
+  if(mm){const r=await invoke('forum_req',{id,method:'GET',path:'/api/discussions/'+mm[1]});shrSug([{discussion_id:mm[1],title:r.data.attributes.title,url:r.data.attributes.shareUrl}])}
+  else shrSug(await invoke('forum_find_topic',{id,q}))}catch(e){toast(String(e),true)}}
+$('shrFind').onclick=shrFindRun;
+$('shrQ').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(shrQt);shrFindRun()}};
+let shrQt=0,shrQn=0;$('shrQ').oninput=()=>{clearTimeout(shrQt);const q=$('shrQ').value.trim();if(q.length<2||/\/d\/\d+/.test(q))return;shrQt=setTimeout(async()=>{const n=++shrQn;try{const r=await invoke('forum_find_topic',{id:shrFo(),q});if(n==shrQn)shrSug(r)}catch(e){}},300)};
 $('shrWhen').onchange=()=>$('shrAt').classList.toggle('hide',$('shrWhen').value!='later');
-/* Ağa aktar: forumdaki pencere gibi — her hedef forum için başlık (yanıt/yeni başlık), etiket ve ayrı imza seçimi */
-let shrNodeSt={};
-const shrAuto=()=>{const f=(shrIt[0]||{}).f||{};return (shrCtx.city?[f.brand,f.model]:[f.company,f.model]).map(z=>String(z||'').trim()).filter(Boolean).join(shrCtx.city?' ':' & ')};
-function shrWmModes(){const m=shrM(),o=[];if(m.wmAllowKeep!==false)o.push(['keep_source','Kaynak imzası (olduğu gibi)']);if(m.wmAllowTarget!==false)o.push(['target_site','Hedef forumun imzası (seç)']);if(m.wmAllowNone)o.push(['no_watermark','İmzasız']);return o.length?o:[['keep_source','Kaynak imzası (olduğu gibi)']]}
-function shrOrient(x){if(x.or)return x.or;if(x.pv&&!x.orBusy){x.orBusy=1;const im=new Image();im.onload=()=>{x.or=im.naturalWidth>=im.naturalHeight?'landscape':'portrait';shrNodesRender()};im.src=x.pv}return 'landscape'}
-function shrWmPick(s,o){const list=(s.wmList||[]).filter(w=>w.type==o||w.type=='other');let c=list.find(w=>w.id==s.wmSel[o]);if(!c&&list.length){c=list.find(w=>w.is_personal)||list[0];s.wmSel[o]=c.id}return c?c.id:''}
-function shrResHtml(i){const s=shrNodeSt[shrNodeList[i].id];return (s.res||[]).map((d,j)=>`<div data-pick="${i}" data-pj="${j}" style="padding:6px 8px;border-radius:8px;cursor:pointer;background:var(--track);margin:3px 0;font-size:13px">${esc(d.title)} <span class="mut">(${d.comment_count||0} yanıt)</span></div>`).join('')+(s.pick?`<div class="mut" style="margin-top:4px">Seçili: <b>${esc(s.pick)}</b></div>`:'')}
-function shrWmBlock(n,s,i){if(!s.wmList){shrNodeWm(n);return '<div class="mut">Hedef forumun imzaları yükleniyor…</div>'}
- if(!s.wmList.length)return '<div class="mut">Hedef forumda imza bulunamadı.</div>';
- const x0=shrIt[shrSelI]||shrIt[0];
- return [...new Set(shrIt.map(shrOrient))].map(o=>{const list=s.wmList.filter(w=>w.type==o||w.type=='other'),cur=shrWmPick(s,o);
-  return `<div class="mut" style="font-size:12px;margin:6px 0 2px">${o=='portrait'?'Dikey':'Yatay'} fotoğraflar için imza</div><div style="display:flex;flex-wrap:wrap;gap:8px">${list.map(w=>`<div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="width:108px;cursor:pointer;border:2px solid ${w.id==cur?'var(--acc)':'var(--stroke)'};border-radius:10px;padding:4px;background:var(--track)"><div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="position:relative;height:62px;border-radius:6px;overflow:hidden;background:rgba(127,127,127,.25) center/cover no-repeat${x0&&x0.th?`;background-image:url(${x0.th})`:''}"><img data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" src="${esc(w.url)}" style="position:absolute;inset:0;width:100%;height:100%" onerror="this.style.display='none'"></div><div data-wci="${i}" data-wco="${o}" data-wcv="${esc(w.id)}" style="font-size:11px;margin-top:3px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(w.label||w.name||w.filename)}</div></div>`).join('')}</div>`}).join('')}
-function shrNodesRender(){const box=$('shrNodes');if(!shrNodeList.length)return;
- box.innerHTML=shrNodeList.map((n,i)=>{const s=shrNodeSt[n.id];let b='';
-  if(s.on){
-   b+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><label class="mut" style="font-size:12px">Hedefte<select data-nm="${i}" style="width:100%;margin:0"><option value="reply"${s.mode=='reply'?' selected':''}>Mevcut başlığa yanıt</option><option value="new_discussion"${s.mode!='reply'?' selected':''}>Yeni başlık aç</option></select></label>`;
-   if(s.mode=='reply')b+=`<label class="mut" style="font-size:12px">Başlık ara<input data-nq="${i}" value="${esc(s.q)}" placeholder="Hedef forumda başlık ara" style="width:100%;margin:0"></label></div><div data-nr="${i}">${shrResHtml(i)}</div><label class="mut" style="display:block;font-size:12px;margin-top:6px">Başlık adresi<input data-nu="${i}" value="${esc(s.url)}" placeholder="Hedef başlığın adresi" style="width:100%;margin:0"></label>`;
-   else{if(!s.cats)shrNodeCats(n);b+=`<label class="mut" style="font-size:12px">Başlık<input data-nt="${i}" value="${esc(s.title!==null?s.title:shrAuto())}" style="width:100%;margin:0"></label></div><label class="mut" style="display:block;font-size:12px;margin-top:6px">Etiket${s.cats&&s.cats.length?`<select data-ng="${i}" style="width:100%;margin:0"><option value="">— varsayılan —</option>${s.cats.map(c=>`<option value="${esc(c.slug||c.id)}"${(c.slug||c.id)==s.tag?' selected':''}>${esc(c.name)}</option>`).join('')}</select>`:`<input data-ng="${i}" value="${esc(s.tag)}" placeholder="Etiket (slug)" style="width:100%;margin:0">`}</label>`}
-   b+=`<label class="mut" style="display:block;font-size:12px;margin-top:8px">İmza<select data-nw="${i}" style="width:100%;margin:0">${shrWmModes().map(([v,l])=>`<option value="${v}"${s.wmMode==v?' selected':''}>${l}</option>`).join('')}</select></label>`;
-   if(s.wmMode=='target_site')b+=shrWmBlock(n,s,i)}
-  return `<div style="border:1px solid var(--stroke);border-radius:12px;padding:10px;margin:8px 0"><label style="display:flex;gap:8px;align-items:center;margin:0"><input type="checkbox" data-nd="${i}"${s.on?' checked':''} style="width:auto;margin:0"><b>${esc(n.name)}</b>${n.mapped&&n.mapped.url?'<span class="mut">— bu başlık için eşleşme var</span>':''}</label>${b}</div>`}).join('')}
-async function shrNodeWm(n){const s=shrNodeSt[n.id];if(s.wmList||s.wmBusy)return;s.wmBusy=1;let u='';try{u=((await invoke('forum_list')).find(f=>f.id==shrFo())||{}).user||''}catch(e){}
- try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=watermarks&node_id='+encodeURIComponent(n.id)+(u?'&username='+encodeURIComponent(u):'')});s.wmList=r.watermarks||[]}catch(e){s.wmList=[]}s.wmBusy=0;shrNodesRender()}
-async function shrNodeCats(n){const s=shrNodeSt[n.id];if(s.cats||s.catBusy)return;s.catBusy=1;try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=categories&node_id='+encodeURIComponent(n.id)});s.cats=r.categories||[]}catch(e){s.cats=[]}s.catBusy=0;shrNodesRender()}
-async function shrNodeSearch(i){const n=shrNodeList[i],s=shrNodeSt[n.id],q=s.q.trim();try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio/crosspost/target-data?action=discussions&node_id='+encodeURIComponent(n.id)+(q?'&q='+encodeURIComponent(q):'')});s.res=r.discussions||[];const el=$('shrNodes').querySelector(`[data-nr="${i}"]`);if(el)el.innerHTML=shrResHtml(i)}catch(e){}}
-let shrNQt=0;
-$('shrNodes').onchange=e=>{const d=e.target.dataset,t=e.target;const n=i=>shrNodeList[+i],st=i=>shrNodeSt[n(i).id];
- if(d.nd!==undefined){const s=st(d.nd);s.on=t.checked;if(s.on&&s.wmMode=='target_site')shrNodeWm(n(d.nd));shrNodesRender()}
- else if(d.nm!==undefined){st(d.nm).mode=t.value;shrNodesRender()}
- else if(d.nw!==undefined){const s=st(d.nw);s.wmMode=t.value;shrNodesRender()}
- else if(d.ng!==undefined)st(d.ng).tag=t.value;
- else if(d.nu!==undefined){const s=st(d.nu);s.url=t.value.trim();s.pick=''}};
-$('shrNodes').oninput=e=>{const d=e.target.dataset,t=e.target;
- if(d.nq!==undefined){shrNodeSt[shrNodeList[+d.nq].id].q=t.value;clearTimeout(shrNQt);const i=+d.nq;shrNQt=setTimeout(()=>shrNodeSearch(i),350)}
- else if(d.nt!==undefined)shrNodeSt[shrNodeList[+d.nt].id].title=t.value;
- else if(d.nu!==undefined){const s=shrNodeSt[shrNodeList[+d.nu].id];s.url=t.value.trim();s.pick=''}};
-$('shrNodes').onclick=e=>{const d=e.target.dataset;
- if(d.pick!==undefined){const i=+d.pick,s=shrNodeSt[shrNodeList[i].id],x=(s.res||[])[+d.pj];if(x){s.url=x.url;s.pick=x.title;shrNodesRender()}}
- else if(d.wci!==undefined){const s=shrNodeSt[shrNodeList[+d.wci].id];s.wmSel[d.wco]=d.wcv;shrNodesRender()}};
-async function shrLoadNodes(){shrNodeList=[];shrNodeSt={};const t=shrTopic;if(!t){$('shrNodes').textContent='Henüz başlık seçilmedi.';return}
- try{const r=await invoke('forum_nodes',{id:shrFo(),discussionId:String(t.discussion_id)});if(shrTopic!==t)return;shrNodeList=(r.nodes||[]);
-  if(!shrNodeList.length){$('shrNodes').textContent='Bu forumda tanımlı ağ düğümü yok.';return}
-  if(!r.can_crosspost){shrNodeList=[];$('shrNodes').textContent='Ağa aktarma yetkin yok.';return}
-  const mapped=shrNodeList.some(n=>n.mapped&&n.mapped.url),modes=shrWmModes().map(z=>z[0]),dm=modes.includes(shrM().wmDefault)?shrM().wmDefault:modes[0];
-  shrNodeList.forEach(n=>{const mp=n.mapped&&n.mapped.url;shrNodeSt[n.id]={on:mapped?!!mp:false,mode:mp?'reply':'new_discussion',url:mp?n.mapped.url:'',pick:mp?(n.mapped.title||''):'',title:null,tag:n.default_tag_slug||'',q:'',res:[],wmMode:dm,wmList:null,wmSel:{},cats:null}});
-  shrNodeList.forEach(n=>{if(shrNodeSt[n.id].on&&shrNodeSt[n.id].wmMode=='target_site')shrNodeWm(n)});
-  shrNodesRender()}
- catch(e){$('shrNodes').textContent='Ağ bilgisi alınamadı: '+e}}
-$('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo();if(!id){toast('Forum seç',true);return}if(!shrIt.length){toast('Görsel ekle',true);return}if(!shrTopic){toast('Bir başlık seç',true);return}
- const later=$('shrWhen').value=='later',draft=$('shrWhen').value=='draft',at=$('shrAt').value;if(later&&!at){toast('Yayın zamanını seç',true);return}
- const nodes=shrNodeList.filter(n=>shrNodeSt[n.id].on).map(n=>{const s=shrNodeSt[n.id];return {id:n.id,name:n.name,mode:s.mode,url:s.mode=='reply'?s.url.trim():'',title:s.title!==null?s.title:shrAuto(),tag:s.tag,wmMode:s.wmMode,wmByItem:shrIt.map(x=>s.wmMode=='target_site'?shrWmPick(s,shrOrient(x)):'')}});
- for(const n of nodes){if(n.mode=='reply'&&!n.url){toast(n.name+': hedef başlığın adresini seç ya da “Yeni başlık aç” de',true);return}if(n.mode!='reply'&&!n.title.trim()){toast(n.name+': yeni başlık için bir ad yaz',true);return}const s=shrNodeSt[n.id];if(s.wmMode=='target_site'&&!s.wmList){toast(n.name+': hedef forumun imzaları henüz yüklenmedi',true);return}}
- if((later||draft)&&nodes.length){toast('Ağa aktarma yalnızca hemen yayınlanan gönderilerde kullanılabilir (taslak/zamanlamada kapalı tut)',true);return}
- if(shrIt.some(x=>x.ai.state=='busy')&&!await confirmBox('Yapay zekâ bitmedi','Bazı görsellerin künyesi hâlâ okunuyor; şu anki bilgilerle devam edilsin mi?','Devam et'))return;
- if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak ${draft?'taslak olarak kaydedilecek (yayımlanmaz)':later?'şu zamanda yayınlanmak üzere zamanlanacak: '+at.replace('T',' '):'gönderilecek ve hemen yayınlanacak'} (${shrWmSel=='none'?'imzasız':'imzalı'})${nodes.length?'; ağda '+nodes.length+' foruma da aktarılacak':''}.`,draft?'Taslağa kaydet':later?'Zamanla':'Paylaş'))return;
- shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='0';$('shrMsg').textContent='Yüklemeler tamamlanıyor…';
- try{await Promise.all(shrIt.map(x=>x.up&&x.up.state=='busy'?x.up.p:null));
-  const items=shrIt.map(x=>({name:x.name,src:x.src,bbcode:x.up&&x.up.state=='ok'&&x.up.wm==wmOf(x)&&x.up.name==x.name?x.up.bbcode:'',watermark:wmOf(x),alt:shrAlt(x.f),kunye:shrKunye(x.f),fields:x.f,music:shrCustOf(x).music||null,gps:shrCustOf(x).gps||null}));
-  const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes,info:shrInfoResult(),draft,postAs:shrPA?shrPA.id:0,postAsName:shrPA?shrPA.username:''}});
-  if(r.draft){$('shrMsg').textContent='Taslak kaydedildi ✓';$('shrBar').style.width='100%';toast('Taslak kaydedildi')}
-  else if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
-  else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:[];const bad=cr.filter(x=>x.error||(Array.isArray(x.results)&&x.results.some(y=>y&&y.success===false)));const nm=id=>(nodes.find(z=>z.id==id)||{}).name||id;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(bad.length?' — ağa aktarma sorunu: '+bad.map(x=>nm(x.node)+(x.error?' ('+x.error+')':'')).join(', '):' — ağa aktarıldı: '+cr.map(x=>nm(x.node)).join(', ')):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
-  shrIt=[];shrSelI=0;shrInfo=[];shrCust={music:null,gps:null,per:null};shrNoK=false;shrRender();shrFormRender()}
- catch(e){$('shrMsg').textContent='';toast(String(e),true)}shrBusy=false;$('shrGo').disabled=false};
+/* Gönder: yalnız yanıt. Yayın/taslak/zamanlama forumun uçlarıyla; yayın sonrası ortak paylaşım niyeti uygulanır */
+$('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo(),t=shrTopic,text=$('frText').value.trim();
+ if(!t){toast('Önce yanıt vereceğin başlığı seç',true);return}if(!text){toast('Yanıt boş',true);return}if(frFid!==id){await frConfigure()}
+ const when=$('shrWhen').value,at=$('shrAt').value;if(when=='later'&&!at){toast('Yayın zamanını seç',true);return}
+ const P=FramioForumPort,rel={discussion:{data:{type:'discussions',id:String(t.discussion_id)}}};
+ shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='30%';$('shrMsg').textContent='Gönderiliyor…';
+ try{
+  if(when=='draft'){await P.request({method:'POST',url:P.apiUrl()+'/drafts',body:{data:{type:'drafts',attributes:{title:t.title,content:text,relationships:rel,extra:{}}}}});$('shrMsg').textContent='Taslak kaydedildi ✓';toast('Taslak kaydedildi')}
+  else if(when=='later'){const r=await P.request({method:'POST',url:P.apiUrl()+'/framio-assistant/schedule',body:{items:[{discussion_id:Number(t.discussion_id),content:text,label:t.title,publish_at:at.replace('T',' ')}]}});if(!r||r.ok!==true)throw new Error('Forum zamanlamayı kabul etmedi (tarih geçmişte olabilir)');$('shrMsg').textContent='Zamanlandı ✓ '+at.replace('T',' ');toast('Zamanlandı')}
+  else{const attrs={content:text},pa=P.getPostAs();if(pa)attrs.framioPostAs=pa;
+   const r=await P.request({method:'POST',url:P.apiUrl()+'/posts',body:{data:{type:'posts',attributes:attrs,relationships:rel}}});
+   const n=r&&r.data&&r.data.attributes&&r.data.attributes.number;shrUrl=m_url(t,n);P.clearPostAs();await P.applyCrosspost(r);
+   $('shrMsg').textContent='Paylaşıldı ✓';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
+  $('shrBar').style.width='100%';$('frText').value=''}
+ catch(e){$('shrBar').style.width='0';$('shrMsg').textContent='';toast(e&&e.response?'Gönderilemedi (HTTP '+e.status+')':String(e&&e.message||e),true)}
+ shrBusy=false;$('shrGo').disabled=false};
+const m_url=(t,n)=>(shrM().base||'')+'/d/'+t.discussion_id+(n?'/'+n:'');
 $('shrOpen').onclick=()=>{if(shrUrl)invoke('open_url',{url:shrUrl}).catch(er=>toast(String(er),true))};
-evl('forum-share',e=>{const d=e.payload;$('shrMsg').textContent=d.msg;$('shrBar').style.width=Math.min(100,(d.i/d.total)*100)+'%'});
 async function pollShare(){const l=await invoke('take_askshare');if(l.length){l.forEach(shrAddLocal);setTab('shr')}}
 loadProfs();loadAi();
 

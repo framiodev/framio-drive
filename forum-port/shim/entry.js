@@ -6,6 +6,8 @@ import UploadButton from '../vendor/upload-exif/forum/components/UploadButton.js
 import CrosspostModal from '../vendor/crosspost/forum/components/CrosspostModal.tsx';
 
 let root = null, btn = null;
+const themed = [];
+const applyTheme = () => themed.forEach((e) => e.setAttribute('data-theme', document.documentElement.dataset.theme || 'dark'));
 
 function ensureRoot() {
   if (root) return;
@@ -13,8 +15,7 @@ function ensureRoot() {
   root.className = 'fl-scope App';
   root.id = 'fl-root';
   root.style.display = 'contents';
-  const th = () => root.setAttribute('data-theme', document.documentElement.dataset.theme || 'dark');
-  th(); new MutationObserver(th).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  themed.push(root); applyTheme(); new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   document.body.appendChild(root);
   const mm = document.createElement('div'); mm.id = 'modal'; root.appendChild(mm);
   const al = document.createElement('div'); al.id = 'alerts'; root.appendChild(al);
@@ -40,6 +41,7 @@ export async function configure(f) {
 /** Forumun kendi "Fotoğraf Yükle" bileşenini verilen elemana basar */
 export function mountUpload(el, hooks) {
   ensureRoot();
+  el.classList.add('fl-scope'); themed.push(el); applyTheme();
   app._onInsert = hooks.onInsert;
   m.mount(el, { view: () => m(UploadButton, { editor: app.composer.editor, oncreate: (v) => { btn = v.state; } }) });
 }

@@ -78,6 +78,9 @@ pub async fn forum_meta(id: String) -> Result<Value, String> {
     let admin = forum::call(&base, &tok, "GET", &format!("/api/users/{uid}?include=groups"), None).await.ok()
         .map(|u| u["included"].as_array().map(|a| a.iter().any(|g| g["type"] == "groups" && g["id"].as_str() == Some("1"))).unwrap_or(false)).unwrap_or(false);
     m["isAdmin"] = json!(admin);
+    if let Ok(u) = forum::call(&base, &tok, "GET", &format!("/api/users/{uid}"), None).await {
+        m["user"] = json!({ "id": uid.to_string(), "attributes": u["data"]["attributes"].clone(), "isAdmin": admin });
+    }
     m["base"] = json!(base);
     Ok(m)
 }
@@ -226,6 +229,38 @@ pub async fn forum_upload_one(id: String, src: Value, name: String, watermark: S
         r => r?,
     };
     Ok(r["bbcode"].as_str().unwrap_or("").to_string())
+}
+
+fn pct_decode(s: &str) -> String {
+    let b = s.as_bytes();
+    let mut o: Vec<u8> = vec![];
+    let mut i = 0;
+    while i < b.len() {
+        if b[i] == b'%' && i + 2 < b.len() {
+            if let Some(Ok(v)) = s.get(i + 1..i + 3).map(|h| u8::from_str_radix(h, 16)) { o.push(v); i += 3; continue; }
+        }
+        o.push(b[i]); i += 1;
+    }
+    String::from_utf8_lossy(&o).to_string()
+}
+
+/// Forum eklentisi paketinin (forum-port) tüm istekleri buradan geçer: ham gövde + üstbilgiler (x-fid, x-method, x-path, x-ct).
+#[tauri::command]
+pub async fn forum_fwd(request: tauri::ipc::Request<'_>) -> Result<Value, String> {
+    let h = request.headers();
+    let get = |k: &str| h.get(k).and_then(|v| v.to_str().ok()).unwrap_or("").to_string();
+    let (id, method, path, ct) = (get("x-fid"), get("x-method").to_uppercase(), pct_decode(&get("x-path")), get("x-ct"));
+    let body = match request.body() { tauri::ipc::InvokeBody::Raw(b) => b.clone(), _ => vec![] };
+    let (base, tok) = sess(&id).await?;
+    let (st, text) = drivenet::forum::fwd(&base, &tok, &method, &path, &ct, body).await?;
+    Ok(json!({ "status": st, "body": text }))
+}
+
+/// Dosyanın ham baytları (yerel ya da Drive); forum paketi bunları File nesnesine çevirir.
+#[tauri::command]
+pub async fn forum_file_bytes(src: Value, name: String) -> Result<tauri::ipc::Response, String> {
+    let b = source_bytes(&src, &name).await?;
+    Ok(tauri::ipc::Response::new(b))
 }
 
 /// Genel forum isteği (GET/POST/PATCH/DELETE; yalnız /api/ altı). Görsel silme, özel veri, taslak vb. için.

@@ -118,7 +118,7 @@ pub async fn meta(base: &str, token: &str) -> Result<Value, String> {
         "title": a["title"], "canStartDiscussion": a["canStartDiscussion"], "bbcodeTag": a["framio-upload-exif.active_bbcode_tag"], "kunyeTheme": a["framio-upload-exif.kunye_theme"],
         "cityTagSlug": a["framio-upload-exif.city_tag_slug"],
         "wmAllowKeep": a["framioCrosspostWmAllowKeepSource"], "wmAllowTarget": a["framioCrosspostWmAllowTargetSite"], "wmAllowNone": a["framioCrosspostWmAllowNoWatermark"], "wmDefault": a["framioCrosspostWmDefaultMode"], "brandOrder": a["framio-upload-exif.brand_order"],
-        "tags": tag_list, "schemas": schemas, "watermarks": marks,
+        "tags": tag_list, "schemas": schemas, "watermarks": marks, "attrs": a.clone(),
     }))
 }
 
@@ -165,6 +165,21 @@ pub async fn call(base: &str, token: &str, method: &str, path: &str, body: Optio
     let (st, v) = json_of(r).await?;
     if st >= 400 { return Err(err_text(st, &v)); }
     Ok(v)
+}
+
+/// Forum eklentisi paketinin ham isteği: yol /api/ altında olmalı; gövde ve içerik türü olduğu gibi iletilir.
+pub async fn fwd(base: &str, token: &str, method: &str, path: &str, content_type: &str, body: Vec<u8>) -> Result<(u16, String), String> {
+    if !path.starts_with("/api/") || path.contains("..") { return Err("Geçersiz yol".into()); }
+    let c = long_client()?;
+    let url = format!("{base}{path}");
+    let mut rb = match method { "POST" => c.post(url), "DELETE" => c.delete(url), "PATCH" => c.patch(url), "PUT" => c.put(url), _ => c.get(url) };
+    rb = rb.header("Authorization", format!("Token {token}"));
+    if !content_type.is_empty() { rb = rb.header("Content-Type", content_type); }
+    if !body.is_empty() { rb = rb.body(body); }
+    let r = rb.send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
+    let st = r.status().as_u16();
+    let t = r.text().await.map_err(|e| e.to_string())?;
+    Ok((st, t))
 }
 
 /// Forumun yükleme ucu: görseli (orijinal baytlarıyla) yükler, imzayı ekletir; yanıtta BBCode döner.
