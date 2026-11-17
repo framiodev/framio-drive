@@ -36,6 +36,7 @@ pub struct ChangeFile {
     #[serde(default)] pub size: Option<String>,
     #[serde(default)] pub md5_checksum: Option<String>,
     #[serde(default)] pub parents: Vec<String>,
+    #[serde(default)] pub modified_time: Option<String>,
 }
 #[derive(Debug, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -104,7 +105,7 @@ impl Drive {
         loop {
             let mut req = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
                 ("q", "trashed=false".to_string()),
-                ("fields", "nextPageToken,files(id,name,mimeType,parents)".into()),
+                ("fields", "nextPageToken,files(id,name,mimeType,parents,modifiedTime)".into()),
                 ("pageSize", "1000".into()),
                 ("corpora", "user".into()),
             ]);
@@ -165,7 +166,7 @@ impl Drive {
         loop {
             let r = self.http.get(format!("{API}/changes")).bearer_auth(&self.token).query(&[
                 ("pageToken", page.as_str()), ("pageSize", "500"), ("includeRemoved", "true"), ("spaces", "drive"),
-                ("fields", "nextPageToken,newStartPageToken,changes(removed,fileId,file(id,name,mimeType,trashed,size,md5Checksum,parents))"),
+                ("fields", "nextPageToken,newStartPageToken,changes(removed,fileId,file(id,name,mimeType,trashed,size,md5Checksum,parents,modifiedTime))"),
             ]).send().await?;
             if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
             let l: ChangeList = r.json().await?;
