@@ -479,6 +479,25 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div style="display:grid;grid-template-columns:1fr 170px;gap:8px"><input id="aiModel" list="aiModels" placeholder="Model (boşsa en yeni Flash seçilir)"><datalist id="aiModels"></datalist><input id="aiDelay" type="number" min="0" max="120" step="1" placeholder="İstekler arası sn"></div>
         <div class="acts" style="margin-top:0"><button class="btn pri" id="aiSave">Kaydet</button><button class="btn" id="aiOpen">Ücretsiz anahtar al</button><button class="btn danger" id="aiClear">Anahtarı sil</button></div>
         <div class="mut" style="margin-top:10px">Anahtar Windows Kimlik Bilgisi Yöneticisi’nde saklanır. Ücretsiz katmanda gönderilen görseller Google’ın ürünlerini geliştirmek için kullanılabilir; gizlilik istiyorsan ücretli katman kullan.</div></div>
+      <div class="glass panel" id="provPanel"><h2>Yapay zekâ modelleri <span>Gemini’nin yanında OpenRouter, NVIDIA, Groq, Ollama ve diğerleri; birden çok anahtar</span></h2>
+        <div class="mut" style="margin-bottom:8px">Gemini her zaman hazırdır. Buraya kendi sağlayıcılarını ekle; ardından aşağıdaki “Model rolleri”nden asistanın hangisini kullanacağını seç. Anahtarların Windows Kimlik Bilgisi Yöneticisi’nde saklanır.</div>
+        <div id="provList"></div>
+        <div class="acts"><button class="btn pri" id="provAdd">Sağlayıcı ekle</button></div>
+        <div id="provForm" class="hide" style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          <select id="provPreset"></select>
+          <div style="display:flex;gap:8px;flex-wrap:wrap"><input id="provName" placeholder="Ad (ör. OpenRouter)" style="flex:1;min-width:180px"><input id="provUrl" placeholder="Adres (ör. https://openrouter.ai/api/v1)" style="flex:2;min-width:240px"></div>
+          <textarea id="provKeys" rows="3" placeholder="API anahtarları — her satıra bir tane (birden çok anahtar eklersen kota dolunca sıradakine geçilir). Yerel sağlayıcılarda boş bırak." style="width:100%;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;-webkit-text-security:disc;resize:vertical"></textarea>
+          <textarea id="provModels" rows="4" placeholder="Modeller — her satıra bir model kimliği (isteğe bağlı: kimlik | görünen ad). “Modelleri getir” ile otomatik de doldurabilirsin." style="width:100%;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;resize:vertical"></textarea>
+          <div class="acts" style="margin-top:0"><button class="btn" id="provFetch">Modelleri getir</button><button class="btn" id="provTestBtn">Bağlantıyı test et</button><button class="btn pri" id="provSave">Kaydet</button><button class="btn" id="provCancel">Vazgeç</button></div>
+          <div class="mut" id="provMsg" style="min-height:18px"></div></div></div>
+      <div class="glass panel" id="roleBrainPanel"><h2>Model rolleri <span>Asistan hangi modelle çalışsın</span></h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><div class="mut" style="margin-bottom:4px">Asistan beyni</div><select id="roleBrain"></select></div><div style="flex:1;min-width:240px"><div class="mut" style="margin-bottom:4px">Yedek model (ana model hata verirse)</div><select id="roleBackup"></select></div></div>
+        <div class="mut" id="roleNote" style="margin-top:8px;line-height:1.5"></div></div>
+      <div class="glass panel" id="voiceEngPanel"><h2>Ses motorları <span>Asistanın konuşma sesi ve ses tanıma: Windows (ücretsiz), VoiceStudio (yerel, ücretsiz), ElevenLabs (ücretsiz katman)</span></h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:240px"><div class="mut" style="margin-bottom:4px">Okuma sesi</div><select id="roleTts"></select></div><div style="flex:1;min-width:200px"><div class="mut" style="margin-bottom:4px">Ses / model</div><div style="display:flex;gap:6px"><input id="roleTtsVoice" list="roleVoices" placeholder="ses kimliği (ör. alloy)"><input id="roleTtsModel" placeholder="model (isteğe bağlı)"></div><datalist id="roleVoices"></datalist></div></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><div style="flex:1;min-width:240px"><div class="mut" style="margin-bottom:4px">Ses tanıma (konuşmayı yazıya çevirir)</div><select id="roleStt"></select></div><div style="flex:1;min-width:200px"><div class="mut" style="margin-bottom:4px">Model (isteğe bağlı)</div><input id="roleSttModel" placeholder="ör. whisper-large-v3"></div></div>
+        <div class="acts"><button class="btn" id="roleTtsTry">Sesi dene</button></div>
+        <div class="mut" id="voiceNote" style="margin-top:8px;line-height:1.5">Not: Canlı çift yönlü konuşma yalnızca Gemini ile çalışır. Başka bir model seçersen asistan “bas-konuş” kipinde çalışır ve cevapları seçtiğin ses motoruyla okur.</div></div>
       <div class="glass panel"><h2>Düzenleme profilleri <span>Hangi bilgiler okunsun, dosya ve klasörler nasıl adlansın</span></h2>
         <div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;align-items:start"><select id="pfSel"></select><button class="btn sm" id="pfNew">Yeni</button><button class="btn sm" id="pfDup">Çoğalt</button><button class="btn sm danger" id="pfDel">Sil</button></div>
         <div class="mut" style="margin:8px 0 4px">Profil adı</div><input id="pfName">
@@ -937,7 +956,7 @@ function asstToggle(){if($('asst').classList.contains('hide'))asstOpen();
  if(AS.state=='listen'){if(AS.stopRec)AS.stopRec();return}
  if(AS.state!='idle'&&AS.state!='err')asstCancel();
  asstStart()}
-async function asstStart(){if(AS.cfg.mode!='ptt')return liveStart();const tok=++AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());try{speechSynthesis.cancel()}catch(e){}asstState('listen');
+async function asstStart(){if(AS.cfg.mode!='ptt'&&!asBrain())return liveStart();const tok=++AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());try{speechSynthesis.cancel()}catch(e){}asstState('listen');
  let a;try{a=await asstRecord(tok)}catch(e){return asstFail(e)}
  if(tok!==AS.tok)return;if(!a){asstSay('step','Seni duyamadım');asstState('idle','Seni duyamadım, tekrar dene');return}
  asstTurn({audio:a})}
@@ -966,7 +985,8 @@ function asWav(chunks,sr){let len=0;chunks.forEach(c=>len+=c.length);const all=n
  const buf=new ArrayBuffer(44+n*2),dv=new DataView(buf),w=(p,t)=>{for(let i=0;i<t.length;i++)dv.setUint8(p+i,t.charCodeAt(i))};
  w(0,'RIFF');dv.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,R,true);dv.setUint32(28,R*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);w(36,'data');dv.setUint32(40,n*2,true);new Int16Array(buf,44,n).set(pcm);
  const u=new Uint8Array(buf);let bin='';for(let i=0;i<u.length;i+=32768)bin+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(bin)}
-function asstSpeak(text){return new Promise(res=>{if(!AS.cfg.speak||!window.speechSynthesis){res();return}try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),vs=speechSynthesis.getVoices();u.lang='tr-TR';const v=vs.find(x=>x.name==AS.cfg.voice)||vs.find(x=>(x.lang||'').toLowerCase().startsWith('tr'));if(v)u.voice=v;u.rate=1.05;u.onend=u.onerror=()=>res();speechSynthesis.speak(u)}catch(e){res()}})}
+function asstSpeak(text){const t=typeof PVR=='function'&&PVR().tts;if(AS.cfg.speak&&t&&t.provider)return asstSpeakPV(text).catch(e=>{asstSay('step','Ses motoru hatası ('+e+'); Windows sesine geçildi.');return asstSpeakWin(text)});return asstSpeakWin(text)}
+function asstSpeakWin(text){return new Promise(res=>{if(!AS.cfg.speak&&!text){res();return}if(!window.speechSynthesis){res();return}try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text),vs=speechSynthesis.getVoices();u.lang='tr-TR';const v=vs.find(x=>x.name==AS.cfg.voice)||vs.find(x=>(x.lang||'').toLowerCase().startsWith('tr'));if(v)u.voice=v;u.rate=1.05;u.onend=u.onerror=()=>res();speechSynthesis.speak(u)}catch(e){res()}})}
 /* --- Gemini --- */
 const sv_=t=>({type:'STRING',description:t});
 const ASTOOLS=[
@@ -1043,9 +1063,11 @@ function asstSys(){const s=selRows().slice(0,8).map(r=>r.dataset.n).join(', ');
 const asTimeout=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('Gemini '+ms/1000+' sn içinde yanıt vermedi. İnternet/VPN/güvenlik duvarını kontrol et ya da Ayarlar > Sesli asistan > “Bağlantıyı test et”i çalıştır.')),ms))]);
 const asGen=(contents,tools)=>asTimeout(invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})}),70000);
 async function asstTurn(inp){const tok=AS.tok;$('asLog').querySelectorAll('.err').forEach(n=>n.remove());asstState('think');
+ {const br=asBrain();if(br)return asstTurnOA(inp,br)}
+ if(inp.audio&&PVR().stt&&PVR().stt.provider){try{const t=await asTranscribe(inp.audio);if(t)inp={text:t,noEcho:inp.noEcho}}catch(e){}}
  const user={role:'user',parts:inp.audio?[{text:'(Sesli komut)'},{inline_data:{mime_type:'audio/wav',data:inp.audio}}]:[{text:inp.text}]};
  const contents=[...AS.hist,user];let heard=inp.text||'';if(inp.text&&!inp.noEcho)asstSay('me',inp.text);
- for(let round=0;round<6;round++){let r;try{r=await asGen(contents,true)}catch(e){return asstFail(e)}
+ for(let round=0;round<6;round++){let r;try{r=await asGen(contents,true)}catch(e){const bk=asBackup();if(bk&&round==0){asstSay('step','Ana model yanıt vermedi; yedek modele geçiliyor…');return asstTurnOA(inp,bk)}return asstFail(e)}
   if(tok!==AS.tok)return;
   const parts=(r.candidates&&r.candidates[0]&&r.candidates[0].content&&r.candidates[0].content.parts)||[];
   if(!parts.length)return asstFail(new Error(r.promptFeedback?'İstek engellendi':'Gemini boş yanıt verdi'));
@@ -1255,7 +1277,7 @@ hdUI();hdCams();
 
 /* ===== Gezinme: 3 sekme + Araçlar menüsü + hesap menüsü + tek Ayarlar sayfası ===== */
 const SETCATS=[['gen','Genel'],['look','Görünüm'],['drive','Sürücü'],['asst','Asistan ve ses'],['ai','Yapay zekâ'],['hand','El hareketi'],['tools','Araçlar ve profiller'],['ext','Eklentiler'],['upd','Güncelleme']];
-const SETMAP=[['Görünüm','look'],['Sürücü','drive'],['Yapay zekâ','ai'],['Düzenleme profilleri','tools'],['Forumlar','ext'],['Sesli asistan','asst'],['El hareketiyle','hand'],['Filigran','tools'],['Hesap','gen'],['Sürüm ve güncelleme','upd'],['Genel','gen'],['Eklentiler','ext'],['Bilgi kartları','gen']];
+const SETMAP=[['Görünüm','look'],['Sürücü','drive'],['Yapay zekâ','ai'],['Model rolleri','ai'],['Ses motorları','asst'],['Düzenleme profilleri','tools'],['Forumlar','ext'],['Sesli asistan','asst'],['El hareketiyle','hand'],['Filigran','tools'],['Hesap','gen'],['Sürüm ve güncelleme','upd'],['Genel','gen'],['Eklentiler','ext'],['Bilgi kartları','gen']];
 let setCat='gen';
 function setBuild(){const ts=$('t_set');if(ts.dataset.built)return;ts.dataset.built=1;const ta=$('t_app');[...ta.children].forEach(c=>ts.appendChild(c));
  const panels=[...ts.querySelectorAll(':scope>.panel')];const wrap=document.createElement('div');wrap.className='setwrap';
@@ -1346,6 +1368,24 @@ const HLP={
  apSize:['Boyut','Arayüzü büyütür ya da küçültür.','Yüksek çözünürlükte okunabilirlik için artır.'],
  apAcc:['Vurgu rengi','Marka/vurgu rengini değiştirir.','Renk tekerleği açılır; istediğin tonu seç.'],
  setQ:['Ayarlarda ara','Ayar adlarında ve açıklamalarında arar.','Birkaç harf yaz; eşleşen bölümler gelir.'],
+ provAdd:['Sağlayıcı ekle','Yeni bir yapay zekâ ya da ses sağlayıcısı ekler.','Hazır şablonu seç (OpenRouter, NVIDIA, Groq, Ollama, VoiceStudio, ElevenLabs…), anahtarını yapıştır, Kaydet.'],
+ provPreset:['Hazır şablon','Sık kullanılan sağlayıcıların adresini otomatik doldurur.','Listeden seç; adres ve ad kendiliğinden gelir.'],
+ provName:['Sağlayıcı adı','Listede görünecek ad.','İstediğin gibi adlandır.'],
+ provUrl:['Adres (base URL)','Sağlayıcının OpenAI uyumlu API adresi.','Şablon doldurur; özel sunucuda sonu /v1 olan adresi yaz.'],
+ provKeys:['API anahtarları','Sağlayıcıya erişim anahtarları (gizli saklanır).','Her satıra bir anahtar yaz; birden çok anahtar varsa kota dolunca sıradakine geçilir. Yerel sağlayıcıda boş bırak.'],
+ provModels:['Modeller','Asistanda seçilebilecek model kimlikleri.','Her satıra bir kimlik yaz ya da “Modelleri getir” ile doldur.'],
+ provFetch:['Modelleri getir','Sağlayıcıdan model listesini çeker.','Anahtarı girdikten sonra tıkla; istemediklerini satırdan sil.'],
+ provTestBtn:['Bağlantıyı test et','Adresin ve anahtarın çalıştığını sınar.','Kısa bir deneme isteği gönderir; süreyi gösterir.'],
+ provSave:['Kaydet','Sağlayıcıyı kaydeder.','Anahtarlar Windows kasasına yazılır.'],
+ provCancel:['Vazgeç','Formu kapatır.','Kaydedilmemiş değişiklikler atılır.'],
+ roleBrain:['Asistan beyni','Asistanın kullanacağı yapay zekâ modeli.','Varsayılan Gemini’dir. Başka model seçersen canlı konuşma yerine bas-konuş kullanılır; model araç çağırmayı desteklemelidir.'],
+ roleBackup:['Yedek model','Ana model hata verirse devreye giren model.','İsteğe bağlı; farklı bir sağlayıcıdan seçmek en güvenlisidir.'],
+ roleTts:['Okuma sesi','Asistanın cevapları hangi sesle okuyacağı.','Windows (ücretsiz), VoiceStudio (yerel, ücretsiz) ya da ElevenLabs (ücretsiz katman) seçilebilir.'],
+ roleTtsVoice:['Ses kimliği','Seçilen sağlayıcıdaki ses.','ElevenLabs’te listeden seç; VoiceStudio’da ses adını yaz (ör. alloy).'],
+ roleTtsModel:['Ses modeli','Sentez modeli (isteğe bağlı).','Boş bırakırsan sağlayıcının varsayılanı kullanılır.'],
+ roleStt:['Ses tanıma','Konuşmanı yazıya çeviren sağlayıcı.','Boşsa varsayılan çalışır; VoiceStudio ya da ElevenLabs seçersen onlar kullanılır.'],
+ roleSttModel:['Tanıma modeli','Ses tanıma modeli (isteğe bağlı).','Örn. whisper-large-v3; boşsa varsayılan.'],
+ roleTtsTry:['Sesi dene','Seçtiğin sesle kısa bir cümle okutur.','Ses seçtikten sonra dinleyip karar ver.'],
  asMemClr:['Hafızayı temizle','Tüm asistan notlarını siler.','Geri alınamaz.'],
  hdMode:['Kontrol alanı','Elin hangi alanı kontrol edeceği.','“Yalnız uygulama” güvenlidir; “Tüm masaüstü” gerçek fareyi sürer (Ctrl+Alt+H ile aç/kapat).'],
  hdCam:['Kamera','El takibi için kullanılacak kamera.','Doğru kamerayı seç.'],
@@ -1387,6 +1427,78 @@ function hlpInit(){for(const id of Object.keys(HLP)){const el=document.getElemen
 document.addEventListener('scroll',hlpHide,true);
 window.HLP_IDS=()=>Object.keys(HLP);
 hlpInit();setTimeout(hlpInit,1500);
+
+/* ===== Çoklu yapay zekâ / ses sağlayıcıları ===== */
+let PV={providers:[],roles:{}};const PVR=()=>PV.roles||{};
+const PVP=[{k:'openrouter',n:'OpenRouter',u:'https://openrouter.ai/api/v1',t:'Yüzlerce model tek anahtarla; adı “:free” ile biten modeller ücretsizdir.'},
+ {k:'nvidia',n:'NVIDIA (build.nvidia.com)',u:'https://integrate.api.nvidia.com/v1',t:'Ücretsiz deneme kredisiyle popüler açık modeller.'},
+ {k:'groq',n:'Groq',u:'https://api.groq.com/openai/v1',t:'Ücretsiz katmanı olan, çok hızlı çıkarım.'},
+ {k:'openai',n:'OpenAI',u:'https://api.openai.com/v1',t:''},{k:'together',n:'Together AI',u:'https://api.together.xyz/v1',t:''},
+ {k:'mistral',n:'Mistral',u:'https://api.mistral.ai/v1',t:''},{k:'deepseek',n:'DeepSeek',u:'https://api.deepseek.com/v1',t:''},
+ {k:'ollama',n:'Ollama (bu bilgisayarda, ücretsiz)',u:'http://localhost:11434/v1',nokey:1,t:'Ollama kuruluysa anahtar gerekmez.'},
+ {k:'lmstudio',n:'LM Studio (bu bilgisayarda)',u:'http://localhost:1234/v1',nokey:1,t:'LM Studio’da yerel sunucuyu başlat.'},
+ {k:'custom',n:'Özel (OpenAI uyumlu adres)',u:'',t:'Kendi sunucun ya da başka bir OpenAI uyumlu servis.'},
+ {k:'voicestudio',n:'VoiceStudio (yerel ses motoru, ücretsiz)',u:'http://localhost:3900/v1',nokey:1,voice:1,t:'github.com/debpalash/voicestudio — kendi bilgisayarında çalışır; konuşma sentezi ve ses tanıma.'},
+ {k:'elevenlabs',n:'ElevenLabs (ses; ücretsiz katman var)',kind:'elevenlabs',u:'https://api.elevenlabs.io',voice:1,t:'elevenlabs.io’dan ücretsiz hesap açıp anahtar al; sentez ve ses tanıma.'}];
+let pvEdit=null;
+async function provLoad(){try{PV=await invoke('prov_list')}catch(e){PV={providers:[],roles:{}}}provRender();roleRender()}
+function provRender(){const L=$('provList');if(!L)return;L.innerHTML=PV.providers.length?PV.providers.map(p=>`<div class="pvc" data-id="${esc(p.id)}"><div class="pvn"><b>${esc(p.name)}</b><span class="pvb">${p.kind=='elevenlabs'?'ses':'OpenAI uyumlu'}</span></div><div class="mut pvu">${esc(p.base_url||'api.elevenlabs.io')} · ${p.has_key?(p.key_count+' anahtar'):'anahtarsız'} · ${(p.models||[]).length} model</div><div class="pva"><button class="btn sm" data-a="test" title="Bağlantıyı dener">Test</button><button class="btn sm" data-a="edit" title="Sağlayıcıyı düzenle">Düzenle</button><button class="btn sm danger" data-a="del" title="Sağlayıcıyı ve anahtarlarını sil">Sil</button></div><div class="mut pvr hide"></div></div>`).join(''):'<div class="mut" style="padding:6px 0">Henüz ek sağlayıcı yok. “Sağlayıcı ekle” ile başla.</div>'}
+function provForm(p,pre){pvEdit=p||null;$('provForm').classList.remove('hide');$('provForm').style.display='flex';
+ $('provPreset').innerHTML='<option value="">Hazır şablon seç…</option>'+PVP.map(x=>`<option value="${x.k}">${esc(x.n)}</option>`).join('');$('provPreset').style.display=p?'none':'';
+ $('provName').value=p?p.name:(pre?pre.n:'');$('provUrl').value=p?(p.base_url||''):(pre?pre.u:'');$('provUrl').style.display=(p&&p.kind=='elevenlabs')||(pre&&pre.kind=='elevenlabs')?'none':'';
+ $('provKeys').value='';$('provKeys').placeholder=p&&p.has_key?`Kayıtlı ${p.key_count} anahtar var (gizli). Değiştirmek için yenilerini yaz; boş bırakırsan korunur.`:'API anahtarları — her satıra bir tane (birden çok anahtar eklersen kota dolunca sıradakine geçilir). Yerel sağlayıcılarda boş bırak.';
+ $('provModels').value=p?(p.models||[]).map(m=>m.label&&m.label!=m.id?m.id+' | '+m.label:m.id).join('\n'):'';$('provMsg').textContent=pre&&pre.t?pre.t:'';$('provForm').dataset.kind=(p&&p.kind)||(pre&&pre.kind)||'openai';$('provForm').scrollIntoView({block:'nearest',behavior:'smooth'})}
+$('provAdd').onclick=()=>provForm(null,null);
+$('provPreset').onchange=()=>{const x=PVP.find(q=>q.k==$('provPreset').value);if(x)provForm(null,x),$('provPreset').value=x.k};
+$('provCancel').onclick=()=>$('provForm').classList.add('hide');
+function provParseModels(){return $('provModels').value.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const [id,...r]=l.split('|');return{id:id.trim(),label:(r.join('|').trim()||id.trim())}})}
+function provKeysList(){return $('provKeys').value.split('\n').map(l=>l.trim()).filter(Boolean)}
+async function provSaveNow(){const kind=$('provForm').dataset.kind||'openai';const rec={id:pvEdit?pvEdit.id:'',name:$('provName').value.trim(),kind,base_url:kind=='elevenlabs'?'https://api.elevenlabs.io':$('provUrl').value.trim(),models:provParseModels()};const ks=provKeysList();
+ return invoke('prov_save',{p:rec,keys:ks.length?ks:null})}
+$('provSave').onclick=async()=>{try{const id=await provSaveNow();$('provForm').classList.add('hide');toast('Sağlayıcı kaydedildi');await provLoad()}catch(e){$('provMsg').textContent=String(e)}};
+$('provFetch').onclick=async()=>{$('provMsg').textContent='Modeller getiriliyor…';try{const id=await provSaveNow();pvEdit=(await invoke('prov_list')).providers.find(p=>p.id==id);const m=await invoke('prov_models',{id});$('provModels').value=m.join('\n');$('provMsg').textContent=m.length+' model bulundu. İstemediklerini satırdan sil, sonra Kaydet.';await provLoad()}catch(e){$('provMsg').textContent='Getirilemedi: '+e}};
+$('provTestBtn').onclick=async()=>{$('provMsg').textContent='Sınanıyor…';try{const id=await provSaveNow();pvEdit=(await invoke('prov_list')).providers.find(p=>p.id==id);const m=provParseModels()[0];const r=await invoke('prov_test',{id,model:m?m.id:''});$('provMsg').textContent=(r.ok?'✓ Bağlandı — ':'✗ ')+(r.ok?r.text:r.err)+' ('+r.ms+' ms)';await provLoad()}catch(e){$('provMsg').textContent='✗ '+e}};
+$('provList').onclick=async e=>{const b=e.target.closest('button[data-a]');if(!b)return;const c=b.closest('.pvc'),id=c.dataset.id,p=PV.providers.find(x=>x.id==id),out=c.querySelector('.pvr');
+ if(b.dataset.a=='edit')return provForm(p,null);
+ if(b.dataset.a=='del'){if(!await confirmBox('Sağlayıcıyı sil',`“${p.name}” ve kayıtlı anahtarları silinecek.`,'Sil'))return;try{await invoke('prov_delete',{id});toast('Silindi');provLoad()}catch(x){toast(String(x),true)}return}
+ if(b.dataset.a=='test'){out.classList.remove('hide');out.textContent='Sınanıyor…';const m=(p.models||[])[0];try{const r=await invoke('prov_test',{id,model:m?m.id:''});out.textContent=(r.ok?'✓ Bağlandı — ':'✗ ')+(r.ok?r.text:r.err)+' ('+r.ms+' ms)'}catch(x){out.textContent='✗ '+x}}};
+/* roller */
+const roleOpts=(withNone,none)=>`<option value="">${none}</option>`+(withNone?'<option value="gemini|">Gemini (varsayılan)</option>':'')+PV.providers.filter(p=>p.kind=='openai').map(p=>(p.models||[]).length?`<optgroup label="${esc(p.name)}">`+p.models.map(m=>`<option value="${esc(p.id)}|${esc(m.id)}">${esc(m.label||m.id)}</option>`).join('')+'</optgroup>':'').join('');
+function roleRender(){const R=PVR(),sel=(r)=>r&&r.provider?(r.provider+'|'+(r.model||'')):'';
+ $('roleBrain').innerHTML=roleOpts(false,'Gemini (varsayılan, canlı konuşma destekli)');$('roleBrain').value=sel(R.brain);if($('roleBrain').value!=sel(R.brain))$('roleBrain').value='';
+ $('roleBackup').innerHTML=roleOpts(false,'Yedek yok');$('roleBackup').value=sel(R.backup);if($('roleBackup').value!=sel(R.backup))$('roleBackup').value='';
+ const vp=PV.providers.filter(p=>p.kind=='elevenlabs'||/audio|voice|3900/i.test((p.base_url||'')+p.name)||true);const vo=(none)=>`<option value="">${none}</option>`+PV.providers.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('');
+ $('roleTts').innerHTML=vo('Windows sesi (ücretsiz, varsayılan)');$('roleTts').value=(R.tts&&R.tts.provider)||'';$('roleTtsVoice').value=(R.tts&&R.tts.voice)||'';$('roleTtsModel').value=(R.tts&&R.tts.model)||'';
+ $('roleStt').innerHTML=vo('Varsayılan (Gemini ses anlar / tarayıcı)');$('roleStt').value=(R.stt&&R.stt.provider)||'';$('roleSttModel').value=(R.stt&&R.stt.model)||'';
+ $('roleNote').textContent=R.brain&&R.brain.provider?'Asistan seçtiğin modelle çalışır. Canlı konuşma yalnızca Gemini’de olduğu için “bas-konuş” kipi kullanılır. Seçtiğin model araç çağırmayı (function calling) desteklemiyorsa dosya işlemleri çalışmaz; destekleyen bir model seç.':'Asistan Gemini ile çalışır.'}
+async function roleSave(){const sp=v=>{const [a,b]=String(v||'').split('|');return a?{provider:a,model:b||''}:{}};
+ const R={brain:sp($('roleBrain').value),backup:sp($('roleBackup').value),tts:{provider:$('roleTts').value,voice:$('roleTtsVoice').value.trim(),model:$('roleTtsModel').value.trim()},stt:{provider:$('roleStt').value,model:$('roleSttModel').value.trim()}};
+ PV.roles=R;try{await invoke('prov_roles_set',{roles:R})}catch(e){toast(String(e),true)}roleRender()}
+['roleBrain','roleBackup','roleTts','roleStt'].forEach(i=>$(i).onchange=roleSave);['roleTtsVoice','roleTtsModel','roleSttModel'].forEach(i=>$(i).onchange=roleSave);
+$('roleTts').addEventListener('change',async()=>{const id=$('roleTts').value,p=PV.providers.find(x=>x.id==id);if(p&&p.kind=='elevenlabs'){try{const v=await invoke('prov_voices',{id});$('roleVoices').innerHTML=v.map(x=>`<option value="${esc(x.id)}">${esc(x.name)}</option>`).join('');if(!$('roleTtsVoice').value&&v[0]){$('roleTtsVoice').value=v[0].id;roleSave()}}catch(e){toast('Sesler alınamadı: '+e,true)}}else if(p&&!$('roleTtsVoice').value){$('roleTtsVoice').value='alloy';roleSave()}});
+$('roleTtsTry').onclick=async()=>{const t=PVR().tts;if(!t||!t.provider){asstSpeakWin('Merhaba, ben Framio asistanıyım.');return}try{$('roleTtsTry').disabled=true;await asstSpeakPV('Merhaba, ben Framio asistanıyım. Sesimi beğendin mi?')}catch(e){toast('Ses motoru: '+e,true)}finally{$('roleTtsTry').disabled=false}};
+provLoad();
+/* asistan entegrasyonu */
+const asBrain=()=>{const b=PVR().brain;return b&&b.provider&&PV.providers.some(p=>p.id==b.provider&&p.kind=='openai')?b:null};
+const asBackup=()=>{const b=PVR().backup;return b&&b.provider&&PV.providers.some(p=>p.id==b.provider&&p.kind=='openai')?b:null};
+const oaConv=o=>{if(Array.isArray(o))return o.map(oaConv);if(o&&typeof o=='object'){const r={};for(const k in o)r[k]=k=='type'&&typeof o[k]=='string'?o[k].toLowerCase():oaConv(o[k]);return r}return o};
+const oaTools=()=>ASTOOLS.filter(t=>t.name!='duyulan').map(t=>({type:'function',function:{name:t.name,description:t.description,parameters:oaConv(t.parameters||{type:'OBJECT',properties:{}})}}));
+async function asTranscribe(b64){const r=PVR().stt;if(!r||!r.provider)throw new Error('Ses tanıma sağlayıcısı seçilmedi (Ayarlar › Ses motorları)');return invoke('prov_transcribe',{id:r.provider,audio:b64,mime:'audio/wav',model:r.model||''})}
+async function asstTurnOA(inp,br){const tok=AS.tok;asstState('think');let heard=inp.text||'';
+ if(inp.audio){try{heard=await asTranscribe(inp.audio)}catch(e){return asstFail(e)}if(!heard)return asstFail(new Error('Konuşma anlaşılamadı'))}
+ if(heard&&!inp.noEcho)asstSay('me',heard);
+ const msgs=[{role:'system',content:asstSys()},...AS.hist.map(h=>({role:h.role=='model'?'assistant':'user',content:(h.parts||[]).map(p=>p.text||'').join('')})),{role:'user',content:heard}];
+ const tools=oaTools();
+ for(let round=0;round<6;round++){let r;try{r=await asTimeout(invoke('prov_chat',{id:br.provider,body:{model:br.model,messages:msgs,tools,tool_choice:'auto',temperature:.3}}),90000)}catch(e){return asstFail(new Error('Model hatası: '+(e&&e.message||e)))}
+  if(tok!==AS.tok)return;const m=r.choices&&r.choices[0]&&r.choices[0].message;if(!m)return asstFail(new Error('Model boş yanıt verdi'));
+  const calls=m.tool_calls||[];if(!calls.length){const text=(m.content||'').trim()||'Tamam.';return asstFinish(heard,text,tok)}
+  msgs.push({role:'assistant',content:m.content||null,tool_calls:calls});const outs=[];
+  for(const c of calls){let a={};try{a=JSON.parse(c.function.arguments||'{}')}catch(e){}let out;try{out=await asstExec(c.function.name,a,tok)}catch(e){out={hata:String(e&&e.message||e)}}
+   if(tok!==AS.tok)return;msgs.push({role:'tool',tool_call_id:c.id,content:JSON.stringify(out).slice(0,6000)});outs.push([c.function.name,out])}
+  {if(outs.length&&outs.every(o=>ASQUICK.has(o[0])&&o[1]&&o[1].soyle&&!o[1].hata))return asstFinish(heard,outs.map(o=>o[1].soyle).join(' '),tok)}}
+ asstFail(new Error('Çok fazla adım gerekti, komutu sadeleştirip tekrar dene'))}
+let asAud=null;
+async function asstSpeakPV(text){const t=PVR().tts;const r=await invoke('prov_speech',{id:t.provider,text,voice:t.voice||'',model:t.model||''});const a=new Audio('data:'+r.mime+';base64,'+r.data);asAud=a;await new Promise((res,rej)=>{a.onended=res;a.onpause=res;a.onerror=()=>rej(new Error('ses çalınamadı'));a.play().catch(rej)})}
 
 /* ===== El rehberi (görsel) ===== */
 function hdHandSVG(f,pinch,arrow,label){const A='var(--acc)',D='color-mix(in srgb,currentColor 55%,transparent)';let o='';const xs=[48,70,92,112];
