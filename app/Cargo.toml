@@ -15,6 +15,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-global-shortcut = "2"
 cpal = "0.15"
 rustpotter = "3"
+# rustpotter -> candle-core 0.2: half 2.5+ (rand 0.9) ile derlenmiyor
+half = "=2.4.1"
 drivesync = { path = "../drivesync" }
 drivenet = { path = "../drivenet" }
 drivefs = { path = "../drivefs" }
