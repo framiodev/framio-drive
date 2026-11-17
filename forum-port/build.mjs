@@ -39,10 +39,14 @@ if (checkOnly) process.exit(0);
 // Flarum cekirdek CSS'i (forumun kendi surumu): yalnizca .fl-scope icinde gecerli olacak sekilde derlenir
 const less = (await import('less')).default;
 const entry = `.fl-scope { @import (multiple) "forum.less"; }`;
-const res = await less.render(entry, { paths: [path.join(here, 'vendor/flarum-core/less')], filename: 'fl.less', javascriptEnabled: true });
+const fa = path.join(here, 'node_modules/@fortawesome/fontawesome-free');
+const res = await less.render(entry, { paths: [path.join(here, 'vendor/flarum-core/less'), path.join(fa, 'css')], filename: 'fl.less', javascriptEnabled: true, globalVars: { 'fa-bundled-fonts': 'true' } });
 let css = res.css
   .replace(/\.fl-scope\s+:root/g, '.fl-scope')
   .replace(/\.fl-scope\s+(html|body)\b/g, '.fl-scope')
   .replace(/\.fl-scope\s+\.fl-scope/g, '.fl-scope');
+// Simge yazi tipleri CSS icine gomulur (uygulama cevrimdisi da dogru gorunsun); ttf yedekleri atilir
+css = css.replace(/,\s*url\((['"]?)\.\.\/webfonts\/[^)]*\.ttf\1\)\s*format\((['"]?)truetype\2\)/g, '');
+css = css.replace(/url\((['"]?)\.\.\/webfonts\/([^)'"]*\.woff2)\1\)/g, (_, q, f) => 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(fa, 'webfonts', f)).toString('base64') + ')');
 fs.writeFileSync(path.join(out, 'forum-port.css'), css);
 console.log('forum-port.js ve forum-port.css hazir');
