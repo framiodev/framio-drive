@@ -88,18 +88,53 @@ pub async fn analyze(key: &str, model: &str, prompt: &str, fields: &[(String, St
 
 /// Ham generateContent çağrısı (sesli asistan): gövdeyi olduğu gibi gönderir, tüm yanıtı döndürür.
 /// 429/503 yanıtlarında bekleyip yeniden dener.
+/// Hata zincirini ("üst hata › neden › neden") okunur bir metne çevirir ve türünü ipucuyla belirtir.
+fn net_err(e: &reqwest::Error) -> String {
+    let mut s = e.to_string();
+    let mut src = std::error::Error::source(e);
+    while let Some(c) = src { s.push_str(&format!(" › {c}")); src = c.source(); }
+    let hint = if e.is_timeout() { "zaman aşımı" } else if e.is_connect() { "bağlantı kurulamadı (internet, VPN, güvenlik duvarı ya da antivirüs engelliyor olabilir)" } else { "istek gönderilemedi" };
+    format!("{hint}: {s}")
+}
+
 pub async fn generate(key: &str, model: &str, body: &Value) -> Result<Value, String> {
     let url = format!("https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent");
-    let client = reqwest::Client::builder().timeout(Duration::from_secs(60)).build().map_err(|e| e.to_string())?;
+    // HTTP/1.1 + bağlantı havuzsuz: bayat/yarım kalmış bağlantılardan kaynaklanan "istek gönderilemedi" hatalarını önler
+    let client = reqwest::Client::builder().connect_timeout(Duration::from_secs(15)).timeout(Duration::from_secs(90))
+        .http1_only().pool_max_idle_per_host(0).build().map_err(|e| e.to_string())?;
     let mut last = String::new();
-    for i in 0..3u64 {
-        let r = client.post(&url).header("x-goog-api-key", key).json(body).send().await.map_err(|e| format!("Gemini'ye bağlanılamadı: {e}"))?;
+    for i in 0..4u64 {
+        let r = match client.post(&url).header("x-goog-api-key", key).json(body).send().await {
+            Ok(r) => r,
+            Err(e) => { last = format!("Gemini'ye bağlanılamadı — {}", net_err(&e)); if i < 3 { tokio::time::sleep(Duration::from_secs(1 + i)).await; continue; } return Err(last); }
+        };
         let st = r.status().as_u16();
-        let v: Value = r.json().await.map_err(|e| e.to_string())?;
+        let v: Value = r.json().await.map_err(|e| format!("Gemini yanıtı okunamadı: {e}"))?;
         if (200..300).contains(&st) { return Ok(v); }
         last = format!("Gemini hatası {st}: {}", v["error"]["message"].as_str().unwrap_or(""));
-        if (st == 429 || st == 503) && i < 2 { tokio::time::sleep(Duration::from_secs(2 + i * 2)).await; continue; }
+        if (st == 429 || st == 503) && i < 3 { tokio::time::sleep(Duration::from_secs(2 + i * 2)).await; continue; }
         return Err(last);
     }
     Err(last)
+}
+
+/// Canlı (çift yönlü ses) konuşmayı destekleyen modeller. En yeni sürüm, eşitse önizleme olmayan seçilir.
+pub async fn pick_live_model(key: &str) -> Result<String, String> {
+    let r = reqwest::Client::builder().http1_only().build().map_err(|e| e.to_string())?
+        .get("https://generativelanguage.googleapis.com/v1beta/models").query(&[("pageSize", "1000")])
+        .header("x-goog-api-key", key).timeout(Duration::from_secs(20)).send().await.map_err(|e| format!("Model listesi alınamadı — {}", net_err(&e)))?;
+    if !r.status().is_success() { return Err(format!("Model listesi alınamadı ({})", r.status())); }
+    let v: Value = r.json().await.map_err(|e| e.to_string())?;
+    let ver = |id: &str| -> f32 {
+        let b = id.as_bytes(); let mut i = 0;
+        while i + 2 < b.len() { if b[i].is_ascii_digit() && b[i + 1] == b'.' && b[i + 2].is_ascii_digit() { let mut j = i + 3; while j < b.len() && b[j].is_ascii_digit() { j += 1; } return id[i..j].parse().unwrap_or(0.0); } i += 1; }
+        0.0
+    };
+    let mut ids: Vec<String> = v["models"].as_array().map(|a| a.iter().filter_map(|m| {
+        let id = m["name"].as_str()?.trim_start_matches("models/").to_string();
+        let ok = id.starts_with("gemini-") && m["supportedGenerationMethods"].as_array().map(|x| x.iter().any(|y| y == "bidiGenerateContent")).unwrap_or(false);
+        if ok { Some(id) } else { None }
+    }).collect()).unwrap_or_default();
+    ids.sort_by(|a, b| ver(b).partial_cmp(&ver(a)).unwrap_or(std::cmp::Ordering::Equal).then(a.contains("preview").cmp(&b.contains("preview"))));
+    ids.into_iter().next().ok_or_else(|| "Bu anahtar hiçbir canlı (Live) modele erişemiyor".to_string())
 }

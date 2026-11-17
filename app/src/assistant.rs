@@ -10,6 +10,15 @@ pub async fn assistant_gen(body: Value) -> Result<Value, String> {
     drivenet::gemini::generate(&key, &model, &body).await
 }
 
+/// Canlı konuşma için WebSocket adresi ve model. Anahtar yalnızca oturum süresince arayüz belleğinde tutulur.
+#[tauri::command]
+pub async fn assistant_live_cfg() -> Result<Value, String> {
+    let key = drivenet::gemini::load_key().ok_or_else(|| "Gemini anahtarı yok: Ayarlar > Yapay zekâ bölümünden ekle".to_string())?;
+    let saved = load_settings()["ai"]["live_model"].as_str().unwrap_or("").trim().to_string();
+    let model = if saved.is_empty() { drivenet::gemini::pick_live_model(&key).await? } else { saved };
+    Ok(json!({ "model": model, "url": format!("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key={key}") }))
+}
+
 /// Ctrl+Alt+Boşluk genel kısayolunu açar/kapatır; basılınca pencereyi öne getirip arayüze haber verir.
 /// Çağrılar sıraya konur; kayıt her seferinde önce temizlenip yeniden yapılır (çift kayıt hatası olmaz).
 static HK_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
