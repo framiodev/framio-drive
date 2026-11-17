@@ -410,7 +410,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div>
       <div class="glass panel shr-gen" id="shrGen"><div class="mut" id="shrGenTx" style="margin-bottom:10px"></div><div class="acts" style="margin:0"><button class="btn pri" id="shrGenGo">Gönder</button></div></div>
       <div class="glass panel shr-fo hide"><h2>Yanıt verilecek başlık <span>Forumdaki mevcut bir başlığa yanıt olarak paylaşılır</span></h2>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrQ" placeholder="Başlık ara ya da forum bağlantısını yapıştır"><button class="btn sm" id="shrFind">Ara</button></div>
+        <div style="display:flex;gap:8px;align-items:center"><input id="shrQ" placeholder="Başlık ara ya da forum bağlantısını yapıştır" style="flex:1;margin:0"><button class="btn sm" id="shrFind">Ara</button></div>
         <select id="shrSug" style="margin-top:8px"></select>
         <div id="shrSel" class="mut" style="margin:8px 0 2px"></div></div>
       <div class="glass panel shr-fo hide"><h2>Yanıt <span>Fotoğraflar forumun kendi yükleme penceresiyle eklenir; künye, imza, bilgi ve ortak paylaşım orada seçilir</span></h2>
@@ -2283,7 +2283,7 @@ function shrThumbs(){shrIt.forEach(async x=>{if(x.th||x.thBusy)return;x.thBusy=1
 function shrRender(){
  $('shrItems').innerHTML=shrIt.length?'<div style="display:flex;flex-wrap:wrap;gap:10px">'+shrIt.map((x,i)=>`<div style="width:110px;border:1px solid var(--stroke);border-radius:12px;padding:6px;background:var(--track)"><div style="height:70px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px" title="${esc(x.name)}">${esc(x.name)}</div><button class="btn sm" data-rm="${i}" style="width:100%">Çıkar</button></div>`).join('')+'</div>'
   :'Henüz dosya yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…”, Dosyalar sekmesinden ekle ya da forumdaki “Fotoğraf Yükle” düğmesiyle seç.';
- shrThumbs();const h=$('frHint');if(h)h.textContent=shrIt.length?shrIt.length+' dosya hazır':''}
+ shrThumbs();const h=$('frHint');if(h)h.textContent=(shrIt.length?shrIt.length+' dosya hazır · ':'')+'Kamera simgesi: bilgisayardan fotoğraf seç'}
 $('shrItems').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;shrIt.splice(+b.dataset.rm,1);shrRender()};
 function shrMk(name,src){return {name,src,th:''}}
 function shrPush(name,src){const k=src.key||src.path;if(shrIt.some(x=>(x.src.key||x.src.path)==k))return false;shrIt.push(shrMk(name,src));return true}
