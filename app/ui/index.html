@@ -495,6 +495,13 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
           <div id="asMemList"></div>
           <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap"><input id="asMemIn" placeholder="Yeni not…" style="flex:1;min-width:180px"><button class="btn" id="asMemAdd">Ekle</button><button class="btn danger" id="asMemClr">Tümünü sil</button></div></div>
         <div class="mut" style="margin-top:10px;line-height:1.5">Canlı konuşmada mikrofon oturum boyunca açık kalır ve ses Gemini’ye anlık akıtılır (saklanmaz); bitirmek için ✕’e bas, “görüşürüz” de ya da 90 saniye sessiz kal. Bas-konuş kipinde mikrofon yalnızca sen konuşturunca açılır. Silme, geri yükleme ve yükleme komutlarında her seferinde onay istenir. Uyandırma kelimesi açıkken mikrofon bu bilgisayarda sürekli dinlenir ama ses cihazdan çıkmaz ve saklanmaz; yalnızca kelimen duyulunca asistan açılır ve komutun Gemini’ye gider. Yanlış tetiklenirse hassasiyeti düşür.</div></div>
+      <div class="glass panel"><h2>El hareketiyle fare <span>Kameranla imleci kontrol et (deneysel)</span></h2>
+        <div class="mut" id="hdSt" style="margin:6px 0;line-height:1.5">Kapalı. Başlatınca kamera açılır; görüntü cihazdan çıkmaz ve kaydedilmez. İlk kullanımda el izleme modeli (~10 MB) internetten indirilir.</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap"><select id="hdMode" style="flex:1;min-width:200px"><option value="app">Yalnız bu uygulamanın içinde</option><option value="os">Tüm masaüstü (gerçek fare)</option></select><select id="hdCam" style="flex:1;min-width:200px"></select></div>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap"><span class="mut" style="min-width:96px">Hassasiyet</span><input type="range" id="hdSens" min="0" max="100" value="70" style="flex:1;max-width:260px"><span class="mut" style="min-width:96px">Yumuşatma</span><input type="range" id="hdSmooth" min="0" max="100" value="50" style="flex:1;max-width:260px"></div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center"><select id="hdAnchor" style="flex:1;min-width:200px"><option value="knuckle">İmleç: parmak eklemleri (tıklarken sabit kalır)</option><option value="tip">İmleç: işaret parmağı ucu</option></select><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="hdPip" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Kamera önizlemesi</label></div>
+        <div class="acts"><button class="btn pri" id="hdGo">Başlat</button><button class="btn" id="hdPause">Duraklat</button></div>
+        <div class="mut" style="margin-top:10px;line-height:1.6"><b>Hareketler:</b> imleç = elini kameraya göster ve oynat · <b>tık</b> = baş + işaret parmağını birleştir (basılı tutup sürükle = sürükleme, çabuk iki kez = çift tık) · <b>sağ tık</b> = baş + orta parmağı birleştir · <b>kaydırma</b> = işaret + orta parmak açık, diğerleri kapalı, yukarı/aşağı oynat · <b>duraklat/devam</b> = yumruk yap, 1 saniye tut. “Masaüstü” kipinde Ctrl+Alt+H her yerden aç/kapatır; el 0,4 sn görünmezse basılı tuşlar bırakılır.</div></div>
       <div class="glass panel"><h2>Filigran kitaplığı <span>İmzalarını toplu ekle, klasörle ve adlandır</span></h2>
         <div class="acts" style="margin-top:0"><button class="btn pri" id="wmMg">İmza yöneticisini aç</button><button class="btn" id="wmDirOpen">Klasörü aç</button></div></div>
       <div class="glass panel"><h2>Hesap</h2>
@@ -973,6 +980,7 @@ ASTOOLS.find(x=>x.name=='dosya_bul').parameters.properties.konum=sv_('Yolu bu pa
 ASTOOLS.find(x=>x.name=='dosya_yukle').parameters={type:'OBJECT',properties:{yollar:{type:'ARRAY',items:{type:'STRING'},description:'Bilgisayardaki tam dosya yolları; verilmezse seçme penceresi açılır'}}};
 ASTOOLS.find(x=>x.name=='dosya_bul').parameters.properties.liste=({type:'BOOLEAN',description:'Az sonuç olsa bile ekranda liste olarak göster'});
 ASTOOLS.push(
+ {name:'el_kontrolu',description:'Kamerayla el hareketiyle fare kontrolünü açar/kapatır/duraklatır (ayarlardaki kip kullanılır).',parameters:{type:'OBJECT',properties:{islem:{type:'STRING',enum:['ac','kapat','duraklat','devam']}},required:['islem']}},
  {name:'hatirla',description:'Kullanıcının kalıcı tercihini/notunu hafızaya yazar (örn. "hep 2026 klasörlerine bak", "bana sen diye hitap et"). Yalnızca kullanıcı "hatırla/not al/bundan sonra" derse çağır.',parameters:{type:'OBJECT',properties:{not:sv_('Kısa, kendi başına anlaşılır not')},required:['not']}},
  {name:'unut',description:'Hafızadan, verilen ifadeyi içeren notu siler.',parameters:{type:'OBJECT',properties:{ifade:sv_('Silinecek notta geçen ifade')},required:['ifade']}},
  {name:'hafizayi_goster',description:'Kayıtlı kalıcı notları listeler.'},
@@ -1097,6 +1105,7 @@ async function asstExec(name,a,tok){const em=sel;AS.curTool=name;const step=t=>a
  case'sonuclari_kapat':{if(fRes){resEnd();fSearch='';$('fq').value='';await loadFiles()}return{tamam:true}}
 case'dosya_bul':{need();step('Aranıyor: '+(a.sorgu||a.uzanti||'son değişenler'));{const peek=await asFind(a.sorgu,a.tur,a.uzanti,a.gun,a.konum);if(!peek.length&&String(a.sorgu||'').trim().split(/\s+/).length>=3){const T=String(a.sorgu).trim().split(/\s+/),pr=await invoke('fs_find_path',{email:em,terms:T,kind:a.tur=='dosya'||a.tur=='klasor'?a.tur:null,ext:a.uzanti||null,limit:2000});if(!pr.sifir){await asShowResults(T.join(' · '),{},pr);return Object.assign({sonuc_ekranda:true,yol_aramasi:true,not:'Ad eşleşmedi; terimler klasör yollarında arandı ve ekranda gösterildi. Kısa özet söyle.'},resSummary())}}if(peek.total>=1||a.liste){await asShowResults(a.sorgu,{tur:a.tur,ext:a.uzanti,gun:a.gun,konum:a.konum});return Object.assign({sonuc_ekranda:true,not:'Sonuçlar Dosyalar ekranında klasörlere göre gruplu açıldı; tek tek sayma, kısa özet söyle ve filtre önerisi sun (yıl, tür, klasör).'},resSummary(),{soyle:fRes.all.length+' sonuç bulundu, ekranda gösteriyorum.'})}}
 const r=await asFind(a.sorgu,a.tur,a.uzanti,a.gun,a.konum);if(r.length==1||(r[0]&&(!r[1]||r[0].match-r[1].match>=8)))asFocus(r[0]);return{bulunan:r.slice(0,10).map((y,i)=>Object.assign({no:i+1,kisa_yol:asShort(y),tarih:(y.modified||'').slice(0,10)},asFr(y))),adet:r.length}}
+ case'el_kontrolu':{const i=a.islem;if(i=='ac'){await handStart();return HAND.on?{tamam:true,soyle:'El kontrolü açıldı.'}:{hata:'Başlatılamadı: '+$('hdSt').textContent}}if(i=='kapat'){handStop();return{tamam:true,soyle:'El kontrolü kapatıldı.'}}if(!HAND.on)return{hata:'El kontrolü açık değil'};HAND.paused=(i=='duraklat');handRelease();hdUI();return{tamam:true,soyle:HAND.paused?'Duraklattım.':'Devam ediyor.'}}
  case'hatirla':{const t=String(a.not||'').trim();if(!t)return{hata:'Not boş'};const l=asMemGet();if(!l.some(x=>x.t.toLowerCase()==t.toLowerCase()))l.push({t:t.slice(0,200)});asMemSet(l);return{tamam:true,soyle:'Not aldım.'}}
  case'unut':{const q=String(a.ifade||'').toLowerCase();const l=asMemGet(),k=l.filter(x=>!x.t.toLowerCase().includes(q));asMemSet(k);return{silinen:l.length-k.length,soyle:(l.length-k.length)?'Unuttum.':'Böyle bir not bulamadım.'}}
  case'hafizayi_goster':return{notlar:asMemGet().map(x=>x.t)};
@@ -1147,6 +1156,74 @@ case'kaydir':return asScroll(a);
   step((a.ac?'Açılıyor: ':'Kapatılıyor: ')+x.name);await invoke('ext_set',{id:x.id,on:!!a.ac});await loadExt();return{tamam:true,eklenti:x.name,durum:a.ac?'açık':'kapalı'}}}
  return{hata:'Bilinmeyen araç'}}
 /* --- arayüz bağlama --- */
+
+/* ===== El hareketiyle fare (MediaPipe Hand Landmarker) ===== */
+const HAND={on:false,paused:false,busy:false,cfg:Object.assign({mode:'app',cam:'',sens:70,smooth:50,anchor:'knuckle',pip:true},(()=>{try{return JSON.parse(localStorage.getItem('hand')||'{}')}catch(e){return{}}})()),lm:null,vid:null,stream:null,timer:0,lastT:-1,pinch:false,rp:false,scroll:false,sy:0,lost:0,fistT:0,fistLatch:false,downEl:null,lastClick:{t:0,el:null},fx:null,fy:null,nx:.5,ny:.5,cur:null,pip:null,osBusy:false,tPrev:0};
+const hdSave=()=>{try{localStorage.setItem('hand',JSON.stringify(HAND.cfg))}catch(e){}};
+class HOE{constructor(){this.x=null;this.dx=0;this.t=0}a(c,dt){const tau=1/(2*Math.PI*c);return 1/(1+tau/dt)}
+ f(v,t,mc,b){if(this.x===null){this.x=v;this.t=t;return v}const dt=Math.max(.001,(t-this.t)/1000);this.t=t;const dv=(v-this.x)/dt;this.dx+=this.a(1,dt)*(dv-this.dx);const c=mc+b*Math.abs(this.dx);this.x+=this.a(c,dt)*(v-this.x);return this.x}}
+const hdSt=t=>{$('hdSt').textContent=t};
+function hdUI(){$('hdMode').value=HAND.cfg.mode;$('hdSens').value=HAND.cfg.sens;$('hdSmooth').value=HAND.cfg.smooth;$('hdAnchor').value=HAND.cfg.anchor;$('hdPip').checked=!!HAND.cfg.pip;$('hdGo').textContent=HAND.on?'Durdur':'Başlat';$('hdPause').textContent=HAND.paused?'Devam et':'Duraklat';$('hdPause').disabled=!HAND.on}
+async function hdCams(){try{const d=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind=='videoinput');$('hdCam').innerHTML='<option value="">Varsayılan kamera</option>'+d.map(x=>`<option value="${esc(x.deviceId)}"${x.deviceId==HAND.cfg.cam?' selected':''}>${esc(x.label||'Kamera')}</option>`).join('')}catch(e){}}
+function hdEnsureDom(){if(!HAND.cur){const c=document.createElement('div');c.id='handCur';c.style.cssText='position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:2px solid var(--acc);background:color-mix(in srgb,var(--acc) 22%,transparent);box-shadow:0 0 14px var(--acc);pointer-events:none;z-index:2147483000;display:none;transition:transform .08s,background .1s';document.body.appendChild(c);HAND.cur=c}
+ if(!HAND.pip){const p=document.createElement('canvas');p.width=240;p.height=180;p.style.cssText='position:fixed;left:16px;bottom:16px;width:240px;height:180px;border-radius:14px;border:1px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.4);pointer-events:none;z-index:2147482990;display:none;background:#000';document.body.appendChild(p);HAND.pip=p}}
+async function hdLoadModel(){hdSt('El izleme modeli yükleniyor (ilk seferde ~10 MB indirilir)…');const V='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';const mod=await import(V+'/vision_bundle.mjs');const fs=await mod.FilesetResolver.forVisionTasks(V+'/wasm');const M='https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+ const mk=d=>mod.HandLandmarker.createFromOptions(fs,{baseOptions:{modelAssetPath:M,delegate:d},runningMode:'VIDEO',numHands:1,minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5});
+ try{HAND.lm=await mk('GPU')}catch(e){HAND.lm=await mk('CPU')}}
+async function handStart(){if(HAND.on)return;hdEnsureDom();try{hdSt('Kamera açılıyor…');HAND.stream=await navigator.mediaDevices.getUserMedia({video:Object.assign({width:{ideal:640},height:{ideal:480},frameRate:{ideal:30}},HAND.cfg.cam?{deviceId:{exact:HAND.cfg.cam}}:{}),audio:false});
+  const v=document.createElement('video');v.playsInline=true;v.muted=true;v.srcObject=HAND.stream;await v.play();HAND.vid=v;hdCams();
+  if(!HAND.lm)await hdLoadModel();}catch(e){handStop();hdSt('Başlatılamadı: '+(e.message||e)+(String(e).includes('import')||String(e).includes('fetch')?' — internet bağlantısını kontrol et.':''));toast('El kontrolü başlatılamadı',true);return}
+ HAND.on=true;HAND.paused=false;HAND.fx=new HOE();HAND.fy=new HOE();HAND.lastT=-1;HAND.tPrev=performance.now();HAND.timer=setInterval(handTick,30);
+ if(HAND.cfg.mode=='os')invoke('hand_hotkey',{on:true}).catch(()=>{});
+ HAND.cur.style.display=HAND.cfg.mode=='app'?'block':'none';HAND.pip.style.display=HAND.cfg.pip?'block':'none';hdUI();hdSt('Çalışıyor — '+(HAND.cfg.mode=='os'?'tüm masaüstü (Ctrl+Alt+H ile kapat)':'uygulama içi')+'. Elini kameraya göster.')}
+function handStop(){clearInterval(HAND.timer);HAND.timer=0;handRelease();HAND.on=false;if(HAND.stream)HAND.stream.getTracks().forEach(t=>t.stop());HAND.stream=null;HAND.vid=null;if(HAND.cur)HAND.cur.style.display='none';if(HAND.pip)HAND.pip.style.display='none';invoke('hand_hotkey',{on:false}).catch(()=>{});hdUI();if(!$('hdSt').textContent.startsWith('Başlatılamadı'))hdSt('Kapalı.')}
+function handRelease(){if(HAND.pinch){HAND.pinch=false;hdOut('up',HAND.nx,HAND.ny)}if(HAND.rp){HAND.rp=false;hdOut('rup',HAND.nx,HAND.ny)}HAND.scroll=false}
+function handTick(){if(!HAND.on||HAND.busy)return;const v=HAND.vid;if(!v||v.readyState<2||v.currentTime===HAND.lastT)return;HAND.lastT=v.currentTime;HAND.busy=true;const ts=performance.now();let r=null;try{r=HAND.lm.detectForVideo(v,ts)}catch(e){}HAND.busy=false;handProcess(r&&r.landmarks&&r.landmarks[0],ts)}
+const hdClamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function handProcess(lm,ts){const v=HAND.vid,vw=v.videoWidth,vh=v.videoHeight,dt=Math.min(100,ts-HAND.tPrev);HAND.tPrev=ts;hdDraw(lm);
+ if(!lm){HAND.lost++;if(HAND.lost>13)handRelease();return}HAND.lost=0;
+ const P=i=>({x:lm[i].x*vw,y:lm[i].y*vh}),D=(a,b)=>Math.hypot(P(a).x-P(b).x,P(a).y-P(b).y),sc=D(0,9)||1;
+ const ext=(t,p)=>D(t,0)>D(p,0)*1.12,iE=ext(8,6),mE=ext(12,10),rE=ext(16,14),pE=ext(20,18);
+ const pI=D(4,8)/sc,pM=D(4,12)/sc;
+ // yumruk: 1 sn tut → duraklat/devam
+ if(!iE&&!mE&&!rE&&!pE&&pI>.5){HAND.fistT+=dt;if(HAND.fistT>1000&&!HAND.fistLatch){HAND.fistLatch=true;HAND.paused=!HAND.paused;handRelease();hdUI();hdSt(HAND.paused?'Duraklatıldı (yumruk ile devam ettir).':'Devam ediyor.')}return}
+ HAND.fistT=0;HAND.fistLatch=false;if(HAND.paused)return;
+ // imleç konumu
+ const an=HAND.cfg.anchor=='tip'?{x:lm[8].x,y:lm[8].y}:{x:(lm[5].x+lm[9].x)/2,y:(lm[5].y+lm[9].y)/2};
+ const rw=.95-.6*(HAND.cfg.sens/100),rh=rw*.75,cx=.5,cy=.45;
+ let nx=hdClamp(((1-an.x)-(cx-rw/2))/rw,0,1),ny=hdClamp((an.y-(cy-rh/2))/rh,0,1);
+ const mc=3.2-2.8*(HAND.cfg.smooth/100);nx=HAND.fx.f(nx,ts,mc,1.5);ny=HAND.fy.f(ny,ts,mc,1.5);
+ // kaydırma: işaret+orta açık, yüzük+serçe kapalı
+ if(iE&&mE&&!rE&&!pE&&pI>.55){if(!HAND.scroll){HAND.scroll=true;HAND.sy=ny}else{const d=ny-HAND.sy;if(Math.abs(d)>.006){hdOut('wheel',nx,ny,Math.round(-d*1500));HAND.sy=ny}}hdCursor(HAND.nx,HAND.ny,'scroll');return}
+ HAND.scroll=false;HAND.nx=nx;HAND.ny=ny;hdOut('move',nx,ny);
+ // sol tık: baş+işaret
+ if(!HAND.pinch&&pI<.30){HAND.pinch=true;hdOut('down',nx,ny)}else if(HAND.pinch&&pI>.42){HAND.pinch=false;hdOut('up',nx,ny)}
+ // sağ tık: baş+orta
+ if(!HAND.pinch&&!HAND.rp&&pM<.30&&pI>.5){HAND.rp=true;hdOut('rdown',nx,ny);hdOut('rup',nx,ny)}else if(HAND.rp&&pM>.42)HAND.rp=false;
+ hdCursor(nx,ny,HAND.pinch?'down':'');}
+function hdCursor(nx,ny,st){if(HAND.cfg.mode!='app'||!HAND.cur)return;const c=HAND.cur;c.style.left=(nx*innerWidth)+'px';c.style.top=(ny*innerHeight)+'px';c.style.transform=st=='down'?'scale(.6)':st=='scroll'?'scale(1.3,.8)':'scale(1)';c.style.background=st=='down'?'var(--acc)':'color-mix(in srgb,var(--acc) 22%,transparent)'}
+function hdDraw(lm){if(!HAND.cfg.pip||!HAND.pip)return;const c=HAND.pip,g=c.getContext('2d'),v=HAND.vid;g.save();g.translate(c.width,0);g.scale(-1,1);g.drawImage(v,0,0,c.width,c.height);g.restore();if(!lm){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,c.width,c.height);g.fillStyle='#fff';g.font='13px sans-serif';g.fillText('El görünmüyor',12,22);return}
+ g.strokeStyle='#52e1ff';g.lineWidth=2;const X=i=>(1-lm[i].x)*c.width,Y=i=>lm[i].y*c.height;for(const[a,b]of[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]]){g.beginPath();g.moveTo(X(a),Y(a));g.lineTo(X(b),Y(b));g.stroke()}
+ g.fillStyle=HAND.pinch?'#ff5d5d':'#fff';for(let i=0;i<21;i++){g.beginPath();g.arc(X(i),Y(i),i==4||i==8?4:2.5,0,7);g.fill()}if(HAND.paused){g.fillStyle='rgba(0,0,0,.5)';g.fillRect(0,0,c.width,c.height);g.fillStyle='#fff';g.font='14px sans-serif';g.fillText('Duraklatıldı',12,22)}}
+/* çıkış sürücüleri */
+function hdOut(kind,nx,ny,d){if(HAND.cfg.mode=='os'){if(kind=='move'){if(HAND.osBusy)return;HAND.osBusy=true;invoke('hand_mouse',{kind,x:nx,y:ny,d:0}).finally(()=>{HAND.osBusy=false});return}invoke('hand_mouse',{kind,x:nx,y:ny,d:d||0}).catch(()=>{});return}hdApp(kind,nx*innerWidth,ny*innerHeight,d||0)}
+function hdApp(kind,x,y,d){const el=document.elementFromPoint(x,y);if(!el)return;const mk=(t,o)=>new MouseEvent(t,Object.assign({bubbles:true,cancelable:true,view:window,clientX:x,clientY:y,buttons:HAND.pinch?1:0},o||{}));
+ if(kind=='move'){el.dispatchEvent(mk('mousemove'));return}
+ if(kind=='down'){HAND.downEl=el;el.dispatchEvent(mk('mousedown',{button:0,buttons:1}));const f=el.closest('input,textarea,button,[tabindex]');if(f)try{f.focus()}catch(e){}return}
+ if(kind=='up'){el.dispatchEvent(mk('mouseup',{button:0,buttons:0}));const d0=HAND.downEl;HAND.downEl=null;if(d0&&(d0===el||d0.contains(el)||el.contains(d0))){const t=d0;t.dispatchEvent(mk('click',{button:0,buttons:0,detail:1}));const now=Date.now();if(HAND.lastClick.el===t&&now-HAND.lastClick.t<380){t.dispatchEvent(mk('dblclick',{button:0,detail:2}));HAND.lastClick={t:0,el:null}}else HAND.lastClick={t:now,el:t}}return}
+ if(kind=='rdown'){el.dispatchEvent(mk('mousedown',{button:2,buttons:2}));el.dispatchEvent(mk('contextmenu',{button:2,buttons:2}));return}
+ if(kind=='rup'){el.dispatchEvent(mk('mouseup',{button:2,buttons:0}));return}
+ if(kind=='wheel'){let n=el;while(n&&n!==document.body){const st=getComputedStyle(n);if(n.scrollHeight>n.clientHeight+2&&/(auto|scroll)/.test(st.overflowY)){n.scrollBy({top:d*.9});return}n=n.parentElement}document.scrollingElement.scrollBy({top:d*.9})}}
+/* arayüz */
+$('hdMode').onchange=()=>{HAND.cfg.mode=$('hdMode').value;hdSave();if(HAND.on){handStop();handStart()}};
+$('hdCam').onchange=()=>{HAND.cfg.cam=$('hdCam').value;hdSave();if(HAND.on){handStop();handStart()}};
+$('hdSens').oninput=()=>{HAND.cfg.sens=+$('hdSens').value;hdSave()};$('hdSmooth').oninput=()=>{HAND.cfg.smooth=+$('hdSmooth').value;hdSave()};
+$('hdAnchor').onchange=()=>{HAND.cfg.anchor=$('hdAnchor').value;hdSave()};
+$('hdPip').onchange=()=>{HAND.cfg.pip=$('hdPip').checked;hdSave();if(HAND.pip)HAND.pip.style.display=HAND.on&&HAND.cfg.pip?'block':'none'};
+$('hdGo').onclick=()=>HAND.on?handStop():handStart();
+$('hdPause').onclick=()=>{if(!HAND.on)return;HAND.paused=!HAND.paused;handRelease();hdUI()};
+window.__TAURI__.event.listen('hand-toggle',()=>{HAND.on?handStop():handStart()});
+hdUI();hdCams();
 
 /* ===== Canlı (karşılıklı) konuşma: Gemini Live, WebSocket ===== */
 const LV_VOICES=['Kore','Puck','Charon','Fenrir','Aoede','Leda','Orus','Zephyr','Callirrhoe','Autonoe','Enceladus','Iapetus','Umbriel','Algieba','Despina','Erinome','Algenib','Rasalgethi','Laomedeia','Achernar','Alnilam','Schedar','Gacrux','Pulcherrima','Achird','Zubenelgenubi','Vindemiatrix','Sadachbia','Sadaltager','Sulafat'];

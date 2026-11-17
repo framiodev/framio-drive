@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Framio Drive",
-  "version": "0.38.0",
+  "version": "0.39.0",
   "identifier": "app.framio.drive",
   "build": { "frontendDist": "./ui" },
   "app": {
     "withGlobalTauri": true,
-    "windows": [ { "title": "Framio Drive", "width": 1180, "height": 760, "minWidth": 900, "minHeight": 600 } ],
+    "windows": [ { "title": "Framio Drive", "width": 1180, "height": 760, "minWidth": 900, "minHeight": 600, "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection,CalculateNativeWinOcclusion --disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows" } ],
     "security": { "csp": null }
   },
   "bundle": {

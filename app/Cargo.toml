@@ -21,6 +21,7 @@ drivesync = { path = "../drivesync" }
 drivenet = { path = "../drivenet" }
 drivefs = { path = "../drivefs" }
 base64 = "0.22"
+windows-sys = { version = "0.59", features = ["Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
 tokio = { version = "1", features = ["time", "sync"] }
 
 [features]
