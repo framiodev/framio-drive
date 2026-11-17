@@ -160,7 +160,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .tab:not(.hide){animation:tabin .38s var(--ease) both}
 .panel{transition:transform .3s var(--ease),box-shadow .3s}.panel:hover{transform:translateY(-2px)}
 .btn:active{transform:scale(.96)}.btn{transition:transform .2s var(--ease),background .25s,border-color .25s}
-#frows.noan .fr{animation:none!important}
+#frows.noan .fr{animation:none!important}.hand-hot{outline:2px solid var(--acc)!important;outline-offset:2px;box-shadow:0 0 14px color-mix(in srgb,var(--acc) 55%,transparent)!important}
 .fr{animation:in .35s var(--ease) both;animation-delay:calc(var(--i,0)*18ms)}
 .tabs a{position:relative}.tabs a.on{animation:pop .3s var(--ease) both}
 .info{display:flex;gap:14px;align-items:center;padding:12px 16px;border-radius:18px;margin-bottom:2px;animation:in .5s var(--ease) both;position:relative;overflow:hidden}
@@ -499,7 +499,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div class="mut" id="hdSt" style="margin:6px 0;line-height:1.5">Kapalı. Başlatınca kamera açılır; görüntü cihazdan çıkmaz ve kaydedilmez. İlk kullanımda el izleme modeli (~10 MB) internetten indirilir.</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap"><select id="hdMode" style="flex:1;min-width:200px"><option value="app">Yalnız bu uygulamanın içinde</option><option value="os">Tüm masaüstü (gerçek fare)</option></select><select id="hdCam" style="flex:1;min-width:200px"></select></div>
         <div style="display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap"><span class="mut" style="min-width:96px">Hassasiyet</span><input type="range" id="hdSens" min="0" max="100" value="70" style="flex:1;max-width:260px"><span class="mut" style="min-width:96px">Yumuşatma</span><input type="range" id="hdSmooth" min="0" max="100" value="50" style="flex:1;max-width:260px"></div>
-        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center"><select id="hdAnchor" style="flex:1;min-width:200px"><option value="knuckle">İmleç: parmak eklemleri (tıklarken sabit kalır)</option><option value="tip">İmleç: işaret parmağı ucu</option></select><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="hdPip" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Kamera önizlemesi</label></div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;align-items:center"><select id="hdAnchor" style="flex:1;min-width:200px"><option value="knuckle">İmleç: parmak eklemleri (tıklarken sabit kalır)</option><option value="tip">İmleç: işaret parmağı ucu</option></select><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="hdMag" checked style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Düğmelere yapışma</label><label style="display:flex;gap:8px;align-items:center;cursor:pointer"><input type="checkbox" id="hdPip" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Kamera önizlemesi</label></div>
         <div class="acts"><button class="btn pri" id="hdGo">Başlat</button><button class="btn" id="hdPause">Duraklat</button><button class="btn" id="hdHelp">Görsel rehber</button></div>
         <div class="mut" style="margin-top:10px;line-height:1.6"><b>Hareketler:</b> imleç = elini kameraya göster ve oynat · <b>tık</b> = baş + işaret parmağını birleştir (basılı tutup sürükle = sürükleme, çabuk iki kez = çift tık) · <b>sağ tık</b> = baş + orta parmağı birleştir · <b>kaydırma</b> = işaret + orta parmak açık, diğerleri kapalı, yukarı/aşağı oynat · <b>duraklat/devam</b> = yumruk yap, 1 saniye tut. “Masaüstü” kipinde Ctrl+Alt+H her yerden aç/kapatır; el 0,4 sn görünmezse basılı tuşlar bırakılır.</div></div>
       <div class="glass panel"><h2>Filigran kitaplığı <span>İmzalarını toplu ekle, klasörle ve adlandır</span></h2>
@@ -1159,12 +1159,12 @@ case'kaydir':return asScroll(a);
 /* --- arayüz bağlama --- */
 
 /* ===== El hareketiyle fare (MediaPipe Hand Landmarker) ===== */
-const HAND={on:false,paused:false,busy:false,cfg:Object.assign({mode:'app',cam:'',sens:70,smooth:50,anchor:'knuckle',pip:true},(()=>{try{return JSON.parse(localStorage.getItem('hand')||'{}')}catch(e){return{}}})()),lm:null,vid:null,stream:null,timer:0,lastT:-1,pinch:false,rp:false,scroll:false,sy:0,lost:0,fistT:0,fistLatch:false,downEl:null,lastClick:{t:0,el:null},fx:null,fy:null,nx:.5,ny:.5,cur:null,pip:null,osBusy:false,tPrev:0};
+const HAND={on:false,paused:false,busy:false,cfg:Object.assign({mode:'app',cam:'',sens:75,smooth:55,anchor:'knuckle',pip:true},(()=>{try{return JSON.parse(localStorage.getItem('hand')||'{}')}catch(e){return{}}})()),lm:null,vid:null,stream:null,timer:0,lastT:-1,pinch:false,rp:false,scroll:false,sy:0,lost:0,fistT:0,fistLatch:false,downEl:null,lastClick:{t:0,el:null},fx:null,fy:null,nx:.5,ny:.5,cur:null,pip:null,osBusy:false,tPrev:0};
 const hdSave=()=>{try{localStorage.setItem('hand',JSON.stringify(HAND.cfg))}catch(e){}};
 class HOE{constructor(){this.x=null;this.dx=0;this.t=0}a(c,dt){const tau=1/(2*Math.PI*c);return 1/(1+tau/dt)}
  f(v,t,mc,b){if(this.x===null){this.x=v;this.t=t;return v}const dt=Math.max(.001,(t-this.t)/1000);this.t=t;const dv=(v-this.x)/dt;this.dx+=this.a(1,dt)*(dv-this.dx);const c=mc+b*Math.abs(this.dx);this.x+=this.a(c,dt)*(v-this.x);return this.x}}
 const hdSt=t=>{$('hdSt').textContent=t};
-function hdUI(){$('hdMode').value=HAND.cfg.mode;$('hdSens').value=HAND.cfg.sens;$('hdSmooth').value=HAND.cfg.smooth;$('hdAnchor').value=HAND.cfg.anchor;$('hdPip').checked=!!HAND.cfg.pip;$('hdGo').textContent=HAND.on?'Durdur':'Başlat';$('hdPause').textContent=HAND.paused?'Devam et':'Duraklat';$('hdPause').disabled=!HAND.on}
+function hdUI(){$('hdMode').value=HAND.cfg.mode;$('hdSens').value=HAND.cfg.sens;$('hdSmooth').value=HAND.cfg.smooth;$('hdAnchor').value=HAND.cfg.anchor;$('hdPip').checked=!!HAND.cfg.pip;$('hdMag').checked=HAND.cfg.mag!==false;$('hdGo').textContent=HAND.on?'Durdur':'Başlat';$('hdPause').textContent=HAND.paused?'Devam et':'Duraklat';$('hdPause').disabled=!HAND.on}
 async function hdCams(){try{const d=(await navigator.mediaDevices.enumerateDevices()).filter(x=>x.kind=='videoinput');$('hdCam').innerHTML='<option value="">Varsayılan kamera</option>'+d.map(x=>`<option value="${esc(x.deviceId)}"${x.deviceId==HAND.cfg.cam?' selected':''}>${esc(x.label||'Kamera')}</option>`).join('')}catch(e){}}
 function hdEnsureDom(){if(!HAND.cur){const c=document.createElement('div');c.id='handCur';c.style.cssText='position:fixed;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:2px solid var(--acc);background:color-mix(in srgb,var(--acc) 22%,transparent);box-shadow:0 0 14px var(--acc);pointer-events:none;z-index:2147483000;display:none;transition:transform .08s,background .1s';document.body.appendChild(c);HAND.cur=c}
  if(!HAND.pip){const p=document.createElement('canvas');p.width=240;p.height=180;p.style.cssText='position:fixed;left:16px;bottom:16px;width:240px;height:180px;border-radius:14px;border:1px solid var(--acc);box-shadow:0 8px 30px rgba(0,0,0,.4);pointer-events:none;z-index:2147482990;display:none;background:#000';document.body.appendChild(p);HAND.pip=p}}
@@ -1174,37 +1174,48 @@ async function hdLoadModel(force){hdSt('El izleme modeli yükleniyor (ilk seferd
 async function handStart(){if(HAND.on)return;hdEnsureDom();try{hdSt('Kamera açılıyor…');HAND.stream=await navigator.mediaDevices.getUserMedia({video:Object.assign({width:{ideal:640},height:{ideal:480},frameRate:{ideal:30}},HAND.cfg.cam?{deviceId:{exact:HAND.cfg.cam}}:{}),audio:false});
   const v=document.createElement('video');v.playsInline=true;v.muted=true;v.srcObject=HAND.stream;v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.01;pointer-events:none;z-index:-1';document.body.appendChild(v);await v.play();HAND.vid=v;hdCams();
   if(!HAND.lm)await hdLoadModel();}catch(e){handStop();hdSt('Başlatılamadı: '+(e.message||e)+(String(e).includes('import')||String(e).includes('fetch')?' — internet bağlantısını kontrol et.':''));toast('El kontrolü başlatılamadı',true);return}
- HAND.on=true;HAND.paused=false;HAND.fx=new HOE();HAND.fy=new HOE();HAND.lastT=-1;HAND.tPrev=performance.now();HAND.timer=setInterval(handTick,30);HAND.fr=0;HAND.seen=0;HAND.miss=0;HAND.t0=performance.now();HAND.st=setInterval(()=>{if(!HAND.on)return;const fps=Math.round((HAND.fr||0)/((performance.now()-HAND.t0)/1000));hdSt('Çalışıyor — '+(HAND.cfg.mode=='os'?'tüm masaüstü (Ctrl+Alt+H)':'uygulama içi')+' · '+fps+' kare/sn · '+(HAND.miss>8?'el görünmüyor (rehbere bak)':'el algılandı ✓')+(HAND.paused?' · duraklatıldı':''))},1000);if(!localStorage.getItem('hdseen'))hdGuide(true);
+ HAND.on=true;HAND.paused=false;HAND.fx=new HOE();HAND.fy=new HOE();HAND.lastT=-1;HAND.tPrev=performance.now();HAND.timer=setInterval(handTick,16);HAND.fr=0;HAND.seen=0;HAND.miss=0;HAND.t0=performance.now();HAND.st=setInterval(()=>{if(!HAND.on)return;const fps=Math.round((HAND.fr||0)/((performance.now()-HAND.t0)/1000));hdSt('Çalışıyor — '+(HAND.cfg.mode=='os'?'tüm masaüstü (Ctrl+Alt+H)':'uygulama içi')+' · '+fps+' kare/sn · '+(HAND.miss>8?'el görünmüyor (rehbere bak)':'el algılandı ✓')+(HAND.paused?' · duraklatıldı':''))},1000);if(!localStorage.getItem('hdseen'))hdGuide(true);
  if(HAND.cfg.mode=='os')invoke('hand_hotkey',{on:true}).catch(()=>{});
  HAND.cur.style.display=HAND.cfg.mode=='app'?'block':'none';HAND.pip.style.display=HAND.cfg.pip?'block':'none';hdUI();hdSt('Çalışıyor — '+(HAND.cfg.mode=='os'?'tüm masaüstü (Ctrl+Alt+H ile kapat)':'uygulama içi')+'. Elini kameraya göster.')}
 function handStop(){clearInterval(HAND.timer);clearInterval(HAND.st);HAND.timer=0;handRelease();HAND.on=false;if(HAND.stream)HAND.stream.getTracks().forEach(t=>t.stop());HAND.stream=null;if(HAND.vid&&HAND.vid.parentNode)HAND.vid.remove();HAND.vid=null;if(HAND.cur)HAND.cur.style.display='none';if(HAND.pip)HAND.pip.style.display='none';invoke('hand_hotkey',{on:false}).catch(()=>{});hdUI();if(!$('hdSt').textContent.startsWith('Başlatılamadı'))hdSt('Kapalı.')}
-function handRelease(){if(HAND.pinch){HAND.pinch=false;hdOut('up',HAND.nx,HAND.ny)}if(HAND.rp){HAND.rp=false;hdOut('rup',HAND.nx,HAND.ny)}HAND.scroll=false}
+function handRelease(){HAND.pc=0;HAND.oc=0;HAND.lock=null;if(HAND.pinch){HAND.pinch=false;hdOut('up',HAND.nx,HAND.ny)}if(HAND.rp){HAND.rp=false;hdOut('rup',HAND.nx,HAND.ny)}HAND.scroll=false}
 function handTick(){if(!HAND.on||HAND.busy)return;const v=HAND.vid;if(!v||v.readyState<2||v.currentTime===HAND.lastT)return;HAND.lastT=v.currentTime;HAND.busy=true;const ts=performance.now();let r=null;try{r=HAND.lm.detectForVideo(v,ts)}catch(e){}HAND.busy=false;const h=r&&r.landmarks&&r.landmarks[0];HAND.fr=(HAND.fr||0)+1;if(h){HAND.seen=(HAND.seen||0)+1;HAND.miss=0}else HAND.miss=(HAND.miss||0)+1;
  if(!HAND.seen&&HAND.miss>90&&!HAND.cpu&&!HAND.sw){HAND.sw=true;HAND.cpu=true;hdSt('El bulunamadı — işlemci (CPU) kipine geçiliyor…');hdLoadModel('CPU').then(()=>{HAND.miss=0;HAND.sw=false}).catch(()=>{HAND.sw=false})}
  handProcess(h,ts)}
 const hdClamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 function handProcess(lm,ts){const v=HAND.vid,vw=v.videoWidth,vh=v.videoHeight,dt=Math.min(100,ts-HAND.tPrev);HAND.tPrev=ts;hdDraw(lm);
  if(!lm){HAND.lost++;if(HAND.lost>13)handRelease();return}HAND.lost=0;
- const P=i=>({x:lm[i].x*vw,y:lm[i].y*vh}),D=(a,b)=>Math.hypot(P(a).x-P(b).x,P(a).y-P(b).y),sc=D(0,9)||1;
+ const P=i=>({x:lm[i].x*vw,y:lm[i].y*vh}),D=(a,b)=>Math.hypot(P(a).x-P(b).x,P(a).y-P(b).y),sc=((D(0,9)||1)+(D(5,17)||1)*1.15)/2;
  const ext=(t,p)=>D(t,0)>D(p,0)*1.12,iE=ext(8,6),mE=ext(12,10),rE=ext(16,14),pE=ext(20,18);
  const pI=D(4,8)/sc,pM=D(4,12)/sc;
- // yumruk: 1 sn tut → duraklat/devam
  if(!iE&&!mE&&!rE&&!pE&&pI>.5){HAND.fistT+=dt;if(HAND.fistT>1000&&!HAND.fistLatch){HAND.fistLatch=true;HAND.paused=!HAND.paused;handRelease();hdUI();hdSt(HAND.paused?'Duraklatıldı (yumruk ile devam ettir).':'Devam ediyor.')}return}
  HAND.fistT=0;HAND.fistLatch=false;if(HAND.paused)return;
- // imleç konumu
  const an=HAND.cfg.anchor=='tip'?{x:lm[8].x,y:lm[8].y}:{x:(lm[5].x+lm[9].x)/2,y:(lm[5].y+lm[9].y)/2};
  const rw=.95-.6*(HAND.cfg.sens/100),rh=rw*.75,cx=.5,cy=.45;
- let nx=hdClamp(((1-an.x)-(cx-rw/2))/rw,0,1),ny=hdClamp((an.y-(cy-rh/2))/rh,0,1);
- const mc=3.2-2.8*(HAND.cfg.smooth/100);nx=HAND.fx.f(nx,ts,mc,1.5);ny=HAND.fy.f(ny,ts,mc,1.5);
- // kaydırma: işaret+orta açık, yüzük+serçe kapalı
- if(iE&&mE&&!rE&&!pE&&pI>.55){if(!HAND.scroll){HAND.scroll=true;HAND.sy=ny}else{const d=ny-HAND.sy;if(Math.abs(d)>.006){hdOut('wheel',nx,ny,Math.round(-d*1500));HAND.sy=ny}}hdCursor(HAND.nx,HAND.ny,'scroll');return}
- HAND.scroll=false;HAND.nx=nx;HAND.ny=ny;hdOut('move',nx,ny);
- // sol tık: baş+işaret
- if(!HAND.pinch&&pI<.30){HAND.pinch=true;hdOut('down',nx,ny)}else if(HAND.pinch&&pI>.42){HAND.pinch=false;hdOut('up',nx,ny)}
- // sağ tık: baş+orta
- if(!HAND.pinch&&!HAND.rp&&pM<.30&&pI>.5){HAND.rp=true;hdOut('rdown',nx,ny);hdOut('rup',nx,ny)}else if(HAND.rp&&pM>.42)HAND.rp=false;
- hdCursor(nx,ny,HAND.pinch?'down':'');}
-function hdCursor(nx,ny,st){if(HAND.cfg.mode!='app'||!HAND.cur)return;const c=HAND.cur;c.style.left=(nx*innerWidth)+'px';c.style.top=(ny*innerHeight)+'px';c.style.transform=st=='down'?'scale(.6)':st=='scroll'?'scale(1.3,.8)':'scale(1)';c.style.background=st=='down'?'var(--acc)':'color-mix(in srgb,var(--acc) 22%,transparent)'}
+ let rx=hdClamp(((1-an.x)-(cx-rw/2))/rw,0,1),ry=hdClamp((an.y-(cy-rh/2))/rh,0,1);
+ const mc=3.0-2.6*(HAND.cfg.smooth/100);let nx=HAND.fx.f(rx,ts,mc,6),ny=HAND.fy.f(ry,ts,mc,6);
+ // konum geçmişi (tıklamadan önceki konuma dönebilmek için)
+ const H=HAND.hist||(HAND.hist=[]);H.push({t:ts,x:nx,y:ny});while(H.length>14||(H.length&&ts-H[0].t>400))H.shift();
+ // kaydırma
+ if(iE&&mE&&!rE&&!pE&&pI>.55){if(HAND.pinch||HAND.rp)handRelease();if(!HAND.scroll){HAND.scroll=true;HAND.sy=ny}else{const d=ny-HAND.sy;if(Math.abs(d)>.005){hdOut('wheel',nx,ny,Math.round(-d*1700));HAND.sy=ny}}hdCursor(HAND.nx,HAND.ny,'scroll');return}
+ HAND.scroll=false;
+ // tık algılama: 2 ardışık kare + histerezis; basma anında imleç, parmaklar yaklaşmadan önceki konuma kilitlenir
+ const closing=pI<.30,opening=pI>.42;
+ if(!HAND.pinch){HAND.pc=closing?(HAND.pc||0)+1:0;
+  if(HAND.pc>=2&&!HAND.rp){const old=H.find(q=>ts-q.t<=170)||H[0];HAND.lock={x:old.x,y:old.y};HAND.pinch=true;HAND.nx=old.x;HAND.ny=old.y;hdOut('move',old.x,old.y);hdOut('down',old.x,old.y)}}
+ else if(opening){HAND.oc=(HAND.oc||0)+1;if(HAND.oc>=2){HAND.pinch=false;HAND.oc=0;HAND.pc=0;const px=HAND.lock?HAND.lock.x:nx,py=HAND.lock?HAND.lock.y:ny;HAND.lock=null;hdOut('up',px,py);HAND.nx=px;HAND.ny=py;hdCursor(px,py,'');return}}else HAND.oc=0;
+ if(HAND.pinch&&HAND.lock){const d=Math.hypot((nx-HAND.lock.x)*innerWidth/innerHeight*1.0,ny-HAND.lock.y);if(d>.035)HAND.lock=null}// sürükleme eşiği
+ if(HAND.pinch&&HAND.lock){hdCursor(HAND.lock.x,HAND.lock.y,'down');return}
+ // sağ tık
+ if(!HAND.pinch&&!HAND.rp&&pM<.30&&pI>.5){HAND.rp=true;hdOut('move',HAND.nx,HAND.ny);hdOut('rdown',HAND.nx,HAND.ny);hdOut('rup',HAND.nx,HAND.ny)}else if(HAND.rp&&pM>.42)HAND.rp=false;
+ // mıknatıs: uygulama içi kipte tıklanabilir öğeye hafif çekim
+ if(!HAND.pinch&&HAND.cfg.mode=='app'&&HAND.cfg.mag!==false){const m=hdMagnet(nx*innerWidth,ny*innerHeight);if(m){nx+=(m.x/innerWidth-nx)*.35;ny+=(m.y/innerHeight-ny)*.35}}
+ HAND.nx=nx;HAND.ny=ny;hdOut('move',nx,ny);
+ hdCursor(nx,ny,HAND.pinch?'down':'',hdClamp(1-(pI-.30)/.35,0,1));}
+const HD_CLK='button,a,input,select,textarea,[role=button],.fr,.fgh,summary,label.sw,.cs-btn,[data-t],[onclick]';
+function hdMagnet(x,y){let e=document.elementFromPoint(x,y);if(e&&e.closest(HD_CLK)){HAND.hot=e.closest(HD_CLK);return null}HAND.hot=null;for(let k=0;k<8;k++){const a=k*Math.PI/4,e2=document.elementFromPoint(x+Math.cos(a)*26,y+Math.sin(a)*26),c=e2&&e2.closest(HD_CLK);if(c&&c.id!=='handCur'){const r=c.getBoundingClientRect();if(r.width<600&&r.height<400){HAND.hot=c;return{x:r.left+r.width/2,y:r.top+r.height/2}}}}return null}
+function hdCursor(nx,ny,st,prog){if(HAND.cfg.mode!='app'||!HAND.cur)return;const c=HAND.cur;c.style.left=(nx*innerWidth)+'px';c.style.top=(ny*innerHeight)+'px';c.style.transform=st=='down'?'scale(.55)':st=='scroll'?'scale(1.3,.8)':'scale('+(1-.35*(prog||0))+')';c.style.background=st=='down'?'var(--acc)':'color-mix(in srgb,var(--acc) '+Math.round(22+50*(prog||0))+'%,transparent)';
+ if(HAND.hotPrev!==HAND.hot){if(HAND.hotPrev)HAND.hotPrev.classList.remove('hand-hot');if(HAND.hot)HAND.hot.classList.add('hand-hot');HAND.hotPrev=HAND.hot}}
 function hdDraw(lm){if(!HAND.cfg.pip||!HAND.pip)return;const c=HAND.pip,g=c.getContext('2d'),v=HAND.vid;g.save();g.translate(c.width,0);g.scale(-1,1);g.drawImage(v,0,0,c.width,c.height);g.restore();if(!lm){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,c.width,c.height);g.fillStyle='#fff';g.font='13px sans-serif';g.fillText('El görünmüyor',12,22);return}
  g.strokeStyle='#52e1ff';g.lineWidth=2;const X=i=>(1-lm[i].x)*c.width,Y=i=>lm[i].y*c.height;for(const[a,b]of[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]]){g.beginPath();g.moveTo(X(a),Y(a));g.lineTo(X(b),Y(b));g.stroke()}
  g.fillStyle=HAND.pinch?'#ff5d5d':'#fff';for(let i=0;i<21;i++){g.beginPath();g.arc(X(i),Y(i),i==4||i==8?4:2.5,0,7);g.fill()}if(HAND.paused){g.fillStyle='rgba(0,0,0,.5)';g.fillRect(0,0,c.width,c.height);g.fillStyle='#fff';g.font='14px sans-serif';g.fillText('Duraklatıldı',12,22)}}
@@ -1223,6 +1234,7 @@ $('hdCam').onchange=()=>{HAND.cfg.cam=$('hdCam').value;hdSave();if(HAND.on){hand
 $('hdSens').oninput=()=>{HAND.cfg.sens=+$('hdSens').value;hdSave()};$('hdSmooth').oninput=()=>{HAND.cfg.smooth=+$('hdSmooth').value;hdSave()};
 $('hdAnchor').onchange=()=>{HAND.cfg.anchor=$('hdAnchor').value;hdSave()};
 $('hdPip').onchange=()=>{HAND.cfg.pip=$('hdPip').checked;hdSave();if(HAND.pip)HAND.pip.style.display=HAND.on&&HAND.cfg.pip?'block':'none'};
+$('hdMag').onchange=()=>{HAND.cfg.mag=$('hdMag').checked;hdSave()};
 $('hdGo').onclick=()=>HAND.on?handStop():handStart();
 $('hdPause').onclick=()=>{if(!HAND.on)return;HAND.paused=!HAND.paused;handRelease();hdUI()};
 window.__TAURI__.event.listen('hand-toggle',()=>{HAND.on?handStop():handStart()});
