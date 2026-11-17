@@ -16,7 +16,7 @@ const appShim = {
   setup(b) {
     // 'flarum/forum/app', 'flarum/common/app' ve cekirdek icindeki '../app' benzeri her yol -> uyum katmani
     b.onResolve({ filter: /^flarum\/(forum|common)\/app$/ }, () => ({ path: path.join(shim, 'app.js') }));
-    b.onResolve({ filter: /(^|\/)app$/ }, (a) => (a.importer.includes('vendor/flarum-core') ? { path: path.join(shim, 'app.js') } : undefined));
+    b.onResolve({ filter: /(^|\/)app$/ }, (a) => (a.importer.replace(/\\/g, '/').includes('vendor/flarum-core') ? { path: path.join(shim, 'app.js') } : undefined));
     // 'flarum/common/<x>' -> cekirdek kaynagi
     b.onResolve({ filter: /^flarum\/common\// }, async (a) => b.resolve('./' + a.path.slice('flarum/common/'.length), { resolveDir: core, kind: a.kind }));
   },
