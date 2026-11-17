@@ -499,7 +499,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
     </div>
   </div>
 </main></div>
-<div class="glass asst hide" id="asst"><div class="asH"><div class="orb s-idle" id="asOrb"><i></i><i></i><i></i></div><div class="asT"><b id="asTi">Hazır</b><small id="asSub">Ctrl+Alt+Boşluk ile konuş ya da yaz</small></div><button class="upB" id="asX" title="Kapat">✕</button></div>
+<div class="glass asst hide" id="asst"><div class="asH"><div class="orb s-idle" id="asOrb"><i></i><i></i><i></i></div><div class="asT"><b id="asTi">Hazır</b><small id="asSub">Ctrl+Alt+Boşluk ile konuş ya da yaz</small></div><div class="asBtns"><button class="upB" id="asMin" title="Küçült (köşede minik küre olarak kalır)">▁</button></div><button class="upB" id="asX" title="Kapat">✕</button></div>
 <div class="asLog" id="asLog"></div>
 <div class="asConf hide" id="asConf"><div id="asCq"></div><div class="asBt"><button class="btn pri sm" id="asYes">Evet</button><button class="btn sm" id="asNo">Hayır</button></div></div>
 <div class="asIn"><input id="asIn" placeholder="Ya da komutu yaz…" autocomplete="off"><button class="btn pri sm asbtn" id="asGo" title="Dinle / gönder"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button></div></div>
@@ -840,16 +840,40 @@ const asCss=document.createElement('style');asCss.textContent=`
 .asS{align-self:flex-start;font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px;animation:uplog .35s var(--ease) both}.asS::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--acc)}
 .asConf{border:1px solid color-mix(in srgb,var(--acc) 40%,var(--stroke));background:color-mix(in srgb,var(--acc) 8%,transparent);border-radius:14px;padding:10px 12px;animation:pop .35s var(--ease) both}.asConf div{font-size:13.5px;line-height:1.45;margin-bottom:8px}.asBt{display:flex;gap:8px}
 .asIn{display:flex;gap:8px}.asIn input{flex:1;margin:0!important}
-.asMeter{height:8px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:10px;max-width:320px}.asMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--acc));transition:width .08s linear}`;document.head.appendChild(asCss);
+.asMeter{height:8px;border-radius:6px;background:var(--track);overflow:hidden;margin-top:10px;max-width:320px}.asMeter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--acc));transition:width .08s linear}
+/* ---- Jarvis katmanı ---- */
+.asst{inset:0;right:0;top:0;width:auto;max-width:none;max-height:none;border-radius:0;padding:0;z-index:90;align-items:center;justify-content:center;gap:0;border:0;overflow:hidden;
+ background:radial-gradient(ellipse at 50% 40%,color-mix(in srgb,var(--acc) 18%,rgba(4,8,18,.78)),rgba(3,6,14,.93) 72%);backdrop-filter:blur(24px) saturate(1.35);transition:opacity .35s,transform .45s var(--ease),border-radius .35s}
+.asst::before,.asst::after{content:"";position:absolute;width:64px;height:64px;border:2px solid color-mix(in srgb,var(--acc) 70%,transparent);pointer-events:none;opacity:.7}
+.asst::before{left:28px;top:28px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}.asst::after{right:28px;bottom:28px;border-left:0;border-top:0;border-radius:0 0 14px 0}
+.asst .asH{flex-direction:column;gap:6px;text-align:center;margin-bottom:10px}.asst .asT b{font-size:22px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}.asst .asT small{font-size:13px;white-space:normal;max-width:70vw;margin:0 auto}
+.asst .orb{width:min(30vh,230px);height:min(30vh,230px);transition:width .4s var(--ease),height .4s var(--ease)}
+.asst .orb::before{inset:22%}.asst .orb i{inset:8%;border-width:2px}
+.asst .orb::after{content:"";position:absolute;inset:-6%;border-radius:50%;border:1px dashed color-mix(in srgb,var(--acc) 45%,transparent);animation:asspin 24s linear infinite}
+.asst .orb i:nth-child(3){opacity:.35;inset:-2%;border-style:dotted;animation:asspin 40s linear infinite reverse}
+.asst .asH>.upB{position:absolute;right:26px;top:22px;font-size:18px}
+.asBtns{position:absolute;right:70px;top:22px;display:flex;gap:8px}
+.asst .asLog{width:min(680px,90vw);max-height:30vh;padding:4px 6px;mask-image:linear-gradient(transparent,#000 14px)}
+.asst .asM{max-width:80%;font-size:14.5px;backdrop-filter:blur(6px)}
+.asst .asConf{width:min(520px,90vw);text-align:center;margin-top:8px}
+.asst .asIn{width:min(680px,90vw);margin-top:14px}.asst .asIn input{border-radius:999px;padding-left:18px}
+.asst.mini{inset:auto 22px 22px auto;width:76px;height:76px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--acc) 22%,rgba(4,8,18,.85)),rgba(4,8,18,.6));box-shadow:0 8px 30px rgba(0,0,0,.4);cursor:pointer;backdrop-filter:blur(14px)}
+.asst.mini::before,.asst.mini::after,.asst.mini .asT,.asst.mini .asLog,.asst.mini .asConf,.asst.mini .asIn,.asst.mini .asH>.upB,.asst.mini .asBtns{display:none}
+.asst.mini .asH{margin:0}.asst.mini .orb{width:64px;height:64px}
+@media(max-height:560px){.asst .orb{width:110px;height:110px}.asst .asLog{max-height:22vh}}`;document.head.appendChild(asCss);
 const AS={state:'idle',tok:0,hist:[],seen:{},cfg:Object.assign({speak:true,voice:'',mic:'',mode:'live',liveVoice:'Kore'},JSON.parse(localStorage.getItem('asst')||'{}')),stopRec:null,conf:null,onLvl:null};
 const MICI='<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
 const asCfgSave=()=>localStorage.setItem('asst',JSON.stringify(AS.cfg));
 const asStateTxt={idle:['Hazır','Ctrl+Alt+Boşluk ile konuş ya da yaz'],listen:['Dinliyorum…','Konuş; susunca gönderirim'],think:['Düşünüyorum…',''],speak:['Konuşuyor',''],confirm:['Onayını bekliyorum','Evet / Hayır de ya da düğmeye bas'],err:['Bir sorun oldu','']};
-function asstState(s,sub){AS.state=s;if(window._wkOn)invoke('wake_pause',{on:s!='idle'}).catch(()=>{});const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
+function asstState(s,sub){AS.state=s;if(s!='idle'){$('asst').classList.remove('mini');clearTimeout(asIdleT)}else asIdleArm();if(window._wkOn)invoke('wake_pause',{on:s!='idle'}).catch(()=>{});const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
 function asstLevel(r){const v=Math.min(.12,r*1.4);if(AS.state=='listen')$('asOrb').style.setProperty('--lvl',v.toFixed(3));if(AS.onLvl)AS.onLvl(r)}
 function asstSay(who,text){const l=$('asLog'),d=document.createElement('div');d.className=who=='step'?'asS':'asM '+who;d.textContent=text;l.appendChild(d);while(l.children.length>40)l.firstChild.remove();l.scrollTop=l.scrollHeight}
 function asstWarm(){if(sel&&EXT.assistant)invoke('fs_index_warm',{email:sel}).catch(()=>{})}
-function asstOpen(){$('asst').classList.remove('hide');asstWarm()}
+function asstOpen(){$('asst').classList.remove('hide','mini');asstWarm();asIdleArm()}
+let asIdleT=0;function asIdleArm(){try{asIdleArm_()}catch(e){}}
+function asIdleArm_(){clearTimeout(asIdleT);if(AS.state=='idle'&&!LIVE.on&&!$('asst').classList.contains('hide')&&!$('asst').classList.contains('mini')&&!$('asIn').value)asIdleT=setTimeout(()=>{if(AS.state=='idle'&&!LIVE.on&&document.activeElement!==$('asIn'))$('asst').classList.add('mini')},20000)}
+$('asMin').onclick=()=>$('asst').classList.add('mini');
+$('asst').addEventListener('click',e=>{const a=$('asst');if(a.classList.contains('mini')){a.classList.remove('mini');asIdleArm()}else if(e.target===a)a.classList.add('mini')});
 function asstCancel(){AS.tok++;try{speechSynthesis.cancel()}catch(e){}if(AS.conf)AS.conf.fin(false);if(AS.stopRec)AS.stopRec()}
 function asstClose(){liveStop('');asstCancel();$('asst').classList.add('hide');asstState('idle')}
 function asstToggle(){if($('asst').classList.contains('hide'))asstOpen();
