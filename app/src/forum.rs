@@ -288,7 +288,8 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
         let mut code = str_of(&it["bbcode"]);
         if code.is_empty() {
             let _ = app.emit("forum-share", json!({ "i": i, "total": total, "msg": format!("Yükleniyor: {name}") }));
-            code = forum_upload_one(id.clone(), it["src"].clone(), name.clone(), wm.clone()).await?;
+            let wmi = { let w = str_of(&it["watermark"]); if w.is_empty() { wm.clone() } else { w } };
+            code = forum_upload_one(id.clone(), it["src"].clone(), name.clone(), wmi).await?;
         } else {
             let _ = app.emit("forum-share", json!({ "i": i, "total": total, "msg": format!("Hazır: {name}") }));
         }
