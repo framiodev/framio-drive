@@ -349,6 +349,15 @@ fn word_hit(text: &str, tok: &str, fuzzy: bool) -> bool {
     }
     false
 }
+/// Bir terimin bir yol parçasıyla eşleşme kalitesi: tam ad 3, adın başında 2, bütün sözcük olarak içinde 1, bulanık 0.5.
+fn seg_score(seg: &str, term: &str, toks: &[String]) -> f32 {
+    if seg == term { return 3.0; }
+    if seg.starts_with(term) && seg[term.len()..].starts_with(' ') { return 2.0; }
+    let words: Vec<&str> = seg.split(' ').collect();
+    if toks.iter().all(|t| words.contains(&t.as_str())) { return 1.0; }
+    if toks.iter().all(|t| word_hit(seg, t, false)) { return 0.7; }
+    if toks.iter().all(|t| word_hit(seg, t, true)) { 0.5 } else { 0.0 }
+}
 fn path_text(ix: &Index, i: usize, memo: &mut Vec<Option<String>>, depth: u8) -> String {
     if let Some(t) = &memo[i] { return t.clone(); }
     let e = &ix.ents[i];
@@ -363,7 +372,7 @@ fn path_text(ix: &Index, i: usize, memo: &mut Vec<Option<String>>, depth: u8) ->
 /// Yol-farkında arama: her terim (örn. "2026", "Ankara", "Mercedes-Benz", "Yeni Kasa", "16") dosyanın adında
 /// ya da üst klasör zincirindeki herhangi bir adda geçmelidir. Betimleyici isteklerde ("2026 Ankara Turismo fotoğrafları") kullanılır.
 #[tauri::command]
-pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String>, ext: Option<String>, limit: Option<usize>) -> Result<Value, String> {
+pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String>, ext: Option<String>, limit: Option<usize>, genis: Option<bool>) -> Result<Value, String> {
     let em = email.to_lowercase();
     let ix = ensure(&em, false).await?;
     let tf: Vec<Vec<String>> = terms.iter().map(|t| fold(t)).filter(|t| !t.is_empty()).map(|t| t.split(' ').filter(|x| !FILLER.contains(x)).map(String::from).collect::<Vec<_>>()).filter(|v: &Vec<String>| !v.is_empty()).collect();
@@ -389,11 +398,34 @@ pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String
         let set: std::collections::HashSet<usize> = hits.iter().copied().collect();
         hits.retain(|i| !ix.ents[*i].parents.first().and_then(|p| ix.pos.get(p)).map(|pi| set.contains(pi)).unwrap_or(false));
     }
+    // Katman süzgeci: her terim için eldeki en iyi yol-parçası eşleşmesinden 1 puandan fazla düşük olanlar elenir
+    // (örn. "Ankara" tam klasör adıyken "Ankara - Antalya Yolu" içindeki geçiş elenir).
+    let mut elenen = 0usize; let mut ornek: Vec<String> = vec![];
+    if !hits.is_empty() && !genis.unwrap_or(false) && tf.len() >= 1 {
+        let terms_j: Vec<String> = tf.iter().map(|g| g.join(" ")).collect();
+        let mut sc: Vec<(usize, Vec<(f32, String)>)> = vec![];
+        for &i in &hits {
+            let names = loose_path(&ix, &ix.ents[i]);
+            let folded: Vec<String> = names.iter().map(|n| fold(n)).collect();
+            let per: Vec<(f32, String)> = terms_j.iter().enumerate().map(|(k, tj)| {
+                let mut best = (0.0f32, String::new());
+                for (si, f) in folded.iter().enumerate() { let v = seg_score(f, tj, &tf[k]); if v > best.0 { best = (v, names[si].clone()); } }
+                best }).collect();
+            sc.push((i, per));
+        }
+        let maxk: Vec<f32> = (0..tf.len()).map(|k| sc.iter().map(|(_, p)| p[k].0).fold(0.0, f32::max)).collect();
+        let mut keep = vec![];
+        for (i, p) in sc {
+            if (0..tf.len()).all(|k| p[k].0 + 1.0 >= maxk[k]) { keep.push(i); }
+            else { elenen += 1; if ornek.len() < 3 { if let Some(k) = (0..tf.len()).find(|k| p[*k].0 + 1.0 < maxk[*k]) { let o = p[k].1.clone(); if !ornek.contains(&o) { ornek.push(o); } } } }
+        }
+        hits = keep;
+    }
     let mut counts = vec![];
     if hits.is_empty() { for (k, g) in tf.iter().enumerate() { counts.push(json!({ "terim": g.join(" "), "eslesen": pass(true, Some(k)).len() })); } }
     hits.sort_by(|a, b| texts[*a].cmp(&texts[*b]));
     let n = limit.unwrap_or(2000).clamp(1, 5000);
     let total = hits.len();
-    Ok(json!({ "indexed": ix.ents.len(), "total": total, "bulaniklik": fuzzy_used, "sifir": total == 0, "terim_sayilari": counts,
+    Ok(json!({ "indexed": ix.ents.len(), "total": total, "bulaniklik": fuzzy_used, "sifir": total == 0, "terim_sayilari": counts, "elenen": elenen, "elenen_ornek": ornek,
         "results": hits.iter().take(n).map(|i| { let mut r = row(&ix, &ix.ents[*i], 100.0); r["match"] = json!(100.0); r["used"] = json!(0); r }).collect::<Vec<_>>() }))
 }
