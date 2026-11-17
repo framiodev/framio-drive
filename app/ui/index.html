@@ -310,6 +310,32 @@ select option{background:#222;color:#fff}
 .wmpos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:108px}.wmpos b{height:24px;border-radius:7px;background:var(--track);cursor:pointer;transition:background .2s,transform .2s var(--ease)}.wmpos b:hover{transform:scale(1.08)}.wmpos b.on{background:var(--acc)}
 @media (max-width:760px){.wmg{grid-template-columns:1fr}}
 #asstBtn.wk{box-shadow:0 0 0 2px var(--acc)}
+/* --- özel açılır liste (select / datalist yerine) --- */
+.cs-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;text-align:left;background:var(--track);color:var(--text);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:inherit;margin-bottom:6px;outline:none;cursor:pointer;transition:border-color .18s,box-shadow .18s,background .18s;min-height:40px}
+.cs-btn:hover{border-color:color-mix(in srgb,var(--acc) 45%,transparent)}
+.cs-btn:focus-visible,.cs-btn.open{border-color:var(--acc);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 22%,transparent)}
+.cs-btn[disabled]{opacity:.5;cursor:not-allowed}
+.cs-btn .cs-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-btn .cs-t.ph{color:var(--mut)}
+.cs-btn svg{flex:none;width:16px;height:16px;stroke:var(--mut);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .22s var(--ease)}
+.cs-btn.open svg{transform:rotate(180deg)}
+input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:16px}
+.cs-pop{position:fixed;z-index:99999;min-width:180px;max-height:300px;display:flex;flex-direction:column;border-radius:16px;padding:6px;background:color-mix(in srgb,var(--bg) 90%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.4);backdrop-filter:blur(22px) saturate(1.4);border:1px solid rgba(128,128,128,.28);box-shadow:var(--shadow),0 2px 8px rgba(0,0,0,.12);opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top center;transition:opacity .16s,transform .2s var(--ease);pointer-events:none}
+.cs-pop.up{transform-origin:bottom center;transform:translateY(6px) scale(.98)}
+.cs-pop.show{opacity:1;transform:none;pointer-events:auto}
+.cs-pop .cs-q{flex:none;margin:2px 2px 6px;padding:8px 10px;font-size:13px;border-radius:10px}
+.cs-pop .cs-l{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.cs-it{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;cursor:pointer;color:var(--text);line-height:1.25}
+.cs-it .cs-m{flex:1;min-width:0}
+.cs-it .cs-m b{display:block;font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-it .cs-m small{display:block;color:var(--mut);font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cs-it.act{background:color-mix(in srgb,var(--acc) 16%,transparent)}
+.cs-it.sel b{color:var(--acc2)}
+.cs-it.dis{opacity:.4;cursor:default}
+.cs-it .ck{flex:none;width:16px;height:16px;stroke:var(--acc2);fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0}
+.cs-it.sel .ck{opacity:1}
+.cs-g{padding:8px 12px 4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.cs-e{padding:12px;color:var(--mut);font-size:13px;text-align:center}
 </style></head><body>
 <div class="blobs"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/></linearGradient></defs></svg>
@@ -1741,4 +1767,75 @@ $('forumList').onclick=async e=>{if(e.target.id=='frmAdd'){const n=await ask('Fo
  loadForums()};
 loadForums();
 applyTheme();refresh();setInterval(refresh,1500);
+
+/* Özel açılır liste: <select> ve <input list> yerine tasarıma uygun, aranabilir, klavyeyle gezilebilir menü */
+(()=>{
+const CHEV='<svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',CK='<svg class="ck" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const E=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+/* programatik .value / .selectedIndex atamaları da tetikleyiciyi güncellesin */
+for(const k of['value','selectedIndex']){const d=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,k);
+ Object.defineProperty(HTMLSelectElement.prototype,k,{configurable:true,get(){return d.get.call(this)},set(v){d.set.call(this,v);if(this._cs)this._cs()}})}
+let pop=null,cur=null;
+function close(){if(!pop)return;const p=pop;pop=null;p.classList.remove('show');if(cur&&cur.btn)cur.btn.classList.remove('open');cur=null;setTimeout(()=>p.remove(),180);document.removeEventListener('mousedown',outside,true);window.removeEventListener('resize',close);window.removeEventListener('blur',close);document.removeEventListener('scroll',onScroll,true)}
+function outside(e){if(pop&&!pop.contains(e.target)&&!(cur&&cur.anchor.contains(e.target)))close()}
+function onScroll(e){if(pop&&!pop.contains(e.target))close()}
+/* items: [{v,t,s,dis,sel}|{g}] */
+function open(anchor,items,o){close();
+ const p=document.createElement('div');p.className='cs-pop';
+ const many=items.filter(x=>!x.g).length>9&&!o.noSearch;
+ p.innerHTML=(many?'<input class="cs-q" placeholder="Ara…" autocomplete="off">':'')+'<div class="cs-l"></div>';
+ const L=p.querySelector('.cs-l'),Q=p.querySelector('.cs-q');let act=-1,vis=[];
+ function draw(f){f=(f||'').toLocaleLowerCase('tr');vis=[];let h='',pg=null;
+  items.forEach(x=>{if(x.g){pg=x;return}
+   if(f&&!((x.t||'')+' '+(x.s||'')+' '+(x.v||'')).toLocaleLowerCase('tr').includes(f))return;
+   if(pg){h+=`<div class="cs-g">${E(pg.g)}</div>`;pg=null}
+   h+=`<div class="cs-it${x.sel?' sel':''}${x.dis?' dis':''}" data-i="${vis.length}"><div class="cs-m"><b>${E(x.t||x.v||'—')}</b>${x.s?`<small>${E(x.s)}</small>`:''}</div>${CK}</div>`;vis.push(x)});
+  L.innerHTML=h||'<div class="cs-e">Sonuç yok</div>';act=Math.max(0,vis.findIndex(x=>x.sel));if(!vis.length)act=-1;mark(true)}
+ function mark(sc){L.querySelectorAll('.cs-it').forEach((n,i)=>n.classList.toggle('act',i==act));const n=L.querySelector('.cs-it.act');if(n&&sc)n.scrollIntoView({block:'nearest'})}
+ function pick(i){const x=vis[i];if(!x||x.dis)return;close();o.pick(x)}
+ L.onmousemove=e=>{const n=e.target.closest('.cs-it');if(n&&!n.classList.contains('dis')){const i=+n.dataset.i;if(i!=act){act=i;mark()}}};
+ L.onclick=e=>{const n=e.target.closest('.cs-it');if(n)pick(+n.dataset.i)};
+ p.onkeydown=e=>{if(e.key=='Escape'){e.preventDefault();e.stopPropagation();close();if(o.focus)o.focus.focus()}
+  else if(e.key=='ArrowDown'){e.preventDefault();if(vis.length){act=(act+1)%vis.length;mark(true)}}
+  else if(e.key=='ArrowUp'){e.preventDefault();if(vis.length){act=(act-1+vis.length)%vis.length;mark(true)}}
+  else if(e.key=='Enter'){e.preventDefault();pick(act)}};
+ if(Q)Q.oninput=()=>draw(Q.value);
+ document.body.appendChild(p);pop=p;cur={anchor,btn:o.btn};if(o.btn)o.btn.classList.add('open');
+ draw(o.filter||'');
+ const r=anchor.getBoundingClientRect(),vh=innerHeight,vw=innerWidth,w=Math.min(Math.max(r.width,220),vw-16);
+ p.style.width=w+'px';p.style.left=Math.max(8,Math.min(r.left,vw-w-8))+'px';
+ const need=Math.min(300,p.offsetHeight||300),below=vh-r.bottom-10,above=r.top-10;
+ if(below<need&&above>below){p.classList.add('up');p.style.bottom=(vh-r.top+6)+'px';p.style.maxHeight=Math.min(300,above)+'px'}
+ else{p.style.top=(r.bottom+6)+'px';p.style.maxHeight=Math.min(300,below)+'px'}
+ requestAnimationFrame(()=>p.classList.add('show'));
+ document.addEventListener('mousedown',outside,true);window.addEventListener('resize',close);window.addEventListener('blur',close);document.addEventListener('scroll',onScroll,true);
+ if(Q)setTimeout(()=>Q.focus(),30);else{p.tabIndex=-1;p.focus({preventScroll:true})}
+ mark(true)}
+function fire(el){el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+/* <select> */
+function enhSel(s){if(s._cs||s.multiple||s.size>1)return;
+ const b=document.createElement('button');b.type='button';b.className='cs-btn '+(s.className||'');if(s.getAttribute('style'))b.setAttribute('style',s.getAttribute('style'));
+ b.innerHTML='<span class="cs-t"></span>'+CHEV;s.style.display='none';s.after(b);
+ const upd=()=>{const o=s.options[s.selectedIndex],t=b.querySelector('.cs-t');t.textContent=o?o.textContent:'';t.classList.toggle('ph',!o||!o.value);b.disabled=s.disabled;b.title=s.title||'';b.classList.toggle('hide',s.classList.contains('hide'))};
+ s._cs=upd;upd();
+ new MutationObserver(upd).observe(s,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','class','title'],characterData:true});
+ const show=()=>{if(s.disabled)return;const items=[];let gl=null;
+  [...s.children].forEach(c=>{if(c.tagName=='OPTGROUP'){items.push({g:c.label});[...c.children].forEach(o=>items.push({v:o.value,t:o.textContent,dis:o.disabled,sel:o.selected}))}else if(c.tagName=='OPTION')items.push({v:c.value,t:c.textContent,dis:c.disabled,sel:c.selected})});
+  open(b,items,{btn:b,focus:b,pick:x=>{s.value=x.v;upd();fire(s)}})};
+ b.onclick=()=>pop&&cur&&cur.btn===b?close():show();
+ b.onkeydown=e=>{if(['ArrowDown','ArrowUp','Enter',' '].includes(e.key)){e.preventDefault();show()}};
+ const lab=s.id&&document.querySelector(`label[for="${s.id}"]`);if(lab)lab.onclick=e=>{e.preventDefault();b.focus()}}
+/* <input list> */
+function enhCombo(i){if(i._cs||!i.getAttribute('list'))return;i._cs=1;const id=i.getAttribute('list');i.removeAttribute('list');i.classList.add('cs-combo');i.autocomplete='off';
+ const show=filter=>{const dl=document.getElementById(id);if(!dl)return;const v=i.value.trim();
+  const items=[...dl.options].map(o=>({v:o.value,t:o.value,s:o.label&&o.label!=o.value?o.label:(o.textContent&&o.textContent!=o.value?o.textContent:''),sel:o.value==v}));
+  if(!items.length)return;open(i,items,{noSearch:true,filter,focus:i,pick:x=>{i.value=x.v;fire(i)}})};
+ i.addEventListener('focus',()=>show(''));i.addEventListener('click',()=>{if(!pop)show('')});
+ i.addEventListener('input',()=>{const dl=document.getElementById(id);if(!dl)return;const v=i.value.trim();const exact=[...dl.options].some(o=>o.value==v);show(exact?'':v)});
+ i.addEventListener('keydown',e=>{if(e.key=='ArrowDown'&&!pop){e.preventDefault();show('')}else if(pop&&['ArrowDown','ArrowUp','Enter','Escape'].includes(e.key)){e.preventDefault();pop.dispatchEvent(new KeyboardEvent('keydown',{key:e.key,bubbles:false}));pop.onkeydown&&pop.onkeydown(e)}})}
+function scan(r){(r.querySelectorAll?r.querySelectorAll('select,input[list]'):[]).forEach(n=>n.tagName=='SELECT'?enhSel(n):enhCombo(n));if(r.tagName=='SELECT')enhSel(r);else if(r.tagName=='INPUT')enhCombo(r)}
+scan(document);
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType==1)scan(n)}))).observe(document.body,{childList:true,subtree:true});
+})();
+
 </script></body></html>
