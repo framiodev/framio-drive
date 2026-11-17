@@ -114,8 +114,8 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .pc{padding:2px 9px;border-radius:999px;font-size:12px;font-weight:500;background:var(--glass2);border:1px solid var(--stroke);white-space:nowrap;transition:background .2s}
 .pth>.pc:last-of-type{background:color-mix(in srgb,var(--acc) 18%,transparent);border-color:color-mix(in srgb,var(--acc) 40%,var(--stroke));font-weight:650}
 .ps{font-style:normal;opacity:.4;font-size:12px}
-.pmid{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 5px;max-width:0;opacity:0;overflow:hidden;transition:max-width .55s var(--ease),opacity .35s}
-.pth.o .pmid{max-width:100%;opacity:1;overflow:visible}
+.pmid{display:inline-flex;flex-wrap:nowrap;white-space:nowrap;align-items:center;gap:4px 5px;max-width:0;max-height:26px;opacity:0;overflow:hidden;transition:max-width .55s var(--ease),opacity .35s}
+.pth.o .pmid{max-width:100%;max-height:none;flex-wrap:wrap;white-space:normal;opacity:1;overflow:visible}
 .fgm{display:inline-flex;padding:2px 10px;border-radius:999px;background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc);cursor:pointer;font-size:12px;transition:background .2s,transform .2s}.fgm:hover{background:color-mix(in srgb,var(--acc) 32%,transparent)}.fgm:active{transform:scale(.94)}
 .fgm b{font-weight:700}.fgm .t-o{display:none}.pth.o .fgm .t-o{display:inline}.pth.o .fgm .t-c{display:none}
 .fgh>b{display:inline-block;transition:transform .25s var(--ease)}
@@ -1281,18 +1281,19 @@ function liveSetup(){const gc={responseModalities:['AUDIO'],speechConfig:{voiceC
  const st={model:'models/'+LIVE.model,systemInstruction:{parts:[{text:liveSys()}]},tools:[{functionDeclarations:liveTools()}],inputAudioTranscription:{},outputAudioTranscription:{},contextWindowCompression:{slidingWindow:{}},sessionResumption:LIVE.handle?{handle:LIVE.handle}:{}};
  if(LIVE.layout==0)st.generationConfig=gc;else{st.responseModalities=gc.responseModalities;st.speechConfig=gc.speechConfig}
  return{setup:st}}
-async function liveStart(){if(LIVE.on)return;LIVE.on=true;LIVE.ready=false;LIVE.tries=0;AS.tok++;asstState('think','Bağlanıyorum…');
+async function liveStart(){if(LIVE.on)return;LIVE.on=true;LIVE.ready=false;LIVE.tries=0;LIVE.msgSeen={};AS.tok++;asstState('think','Bağlanıyorum…');
  try{LIVE.cfg=await invoke('assistant_live_cfg');LIVE.model=LIVE.cfg.model}catch(e){LIVE.on=false;return asstFail(e)}
- liveConnect()}
-function liveConnect(){const ws=new WebSocket(LIVE.cfg.url);LIVE.ws=ws;let opened=false;
+ const w=2800-(Date.now()-(LIVE.stopAt||0));if(w>0)await new Promise(r=>setTimeout(r,w));// sunucu önceki oturumu bırakana kadar bekle
+ if(!LIVE.on)return;liveConnect()}
+function liveConnect(){clearTimeout(LIVE.rt);if(LIVE.ws&&LIVE.ws.readyState<2){const o=LIVE.ws;LIVE.ws=null;try{o.close(1000)}catch(e){}}const ws=new WebSocket(LIVE.cfg.url);LIVE.ws=ws;let opened=false;
  ws.onopen=()=>{opened=true;ws.send(JSON.stringify(liveSetup()))};
  ws.onmessage=async ev=>{try{const txt=typeof ev.data=='string'?ev.data:await ev.data.text();liveMsg(JSON.parse(txt))}catch(e){console.error(e)}};
  ws.onerror=()=>{};
  ws.onclose=ev=>{if(LIVE.ws!==ws)return;const r=String(ev.reason||'');
-  if(!LIVE.ready){asstSay('step',`Canlı bağlantı yanıtı: kod ${ev.code}${r?' – '+r:''}`);
-   if(LIVE.on&&LIVE.tries<3&&opened){LIVE.tries++;const dup=/already connected/i.test(r);if(!dup)LIVE.layout=LIVE.layout?0:1;LIVE.ws=null;return setTimeout(()=>{if(LIVE.on)liveConnect()},dup?3500:1500)}
+  if(!LIVE.ready){const dup=/already connected/i.test(r),key=dup?'dup':ev.code+r;if(!(LIVE.msgSeen=LIVE.msgSeen||{})[key]){LIVE.msgSeen[key]=1;asstSay('step',dup?'Önceki canlı oturum henüz kapanmadı; birkaç saniye bekleyip yeniden deniyorum…':`Canlı bağlantı yanıtı: kod ${ev.code}${r?' – '+r:''}`)}
+   if(LIVE.on&&LIVE.tries<(dup?6:3)&&opened){LIVE.tries++;if(!dup)LIVE.layout=LIVE.layout?0:1;LIVE.ws=null;clearTimeout(LIVE.rt);return LIVE.rt=setTimeout(()=>{if(LIVE.on)liveConnect()},dup?3000+LIVE.tries*2500:1500)}
    LIVE.on=false;liveCleanup();return asstFail(new Error('Canlı bağlantı kurulamadı'+(opened?` (kod ${ev.code}${r?': '+r:''})`:' (ağ ya da güvenlik duvarı engelliyor olabilir)')+'. Ayarlardan “Bas-konuş” kipine geçebilir ya da “Bağlantıyı test et”i çalıştırabilirsin.'))}
-  if(LIVE.on&&LIVE.handle&&ev.code!=1000){asstSay('step','Bağlantı yenileniyor…');LIVE.ready=false;return setTimeout(()=>{if(LIVE.on)liveConnect()},2500)}
+  if(LIVE.on&&LIVE.handle&&ev.code!=1000){asstSay('step','Bağlantı yenileniyor…');LIVE.ready=false;clearTimeout(LIVE.rt);return LIVE.rt=setTimeout(()=>{if(LIVE.on)liveConnect()},2500)}
   liveStop(r)}}
 async function liveMic(){if(LIVE.stream)return;
  const stream=await navigator.mediaDevices.getUserMedia({audio:Object.assign({echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},AS.cfg.mic?{deviceId:{exact:AS.cfg.mic}}:{})});
@@ -1331,7 +1332,7 @@ function liveCtx(){return{sekme:tab,klasor_yolu:fPath.map(p=>p.name).join(' / ')
 function liveCleanup(){clearTimeout(LIVE.idle);liveInterrupt();try{if(LIVE.pr){LIVE.pr.onaudioprocess=null;LIVE.pr.disconnect()}if(LIVE.src)LIVE.src.disconnect()}catch(e){}
  if(LIVE.stream)LIVE.stream.getTracks().forEach(t=>t.stop());if(LIVE.ctxIn)LIVE.ctxIn.close().catch(()=>{});if(LIVE.ctxOut)LIVE.ctxOut.close().catch(()=>{});
  LIVE.stream=LIVE.ctxIn=LIVE.ctxOut=LIVE.pr=LIVE.src=null;LIVE.curUser=LIVE.curAi='';LIVE.bMe=LIVE.bAi=null}
-function liveStop(msg){if(!LIVE.on&&!LIVE.ws)return;const ws=LIVE.ws;LIVE.on=false;LIVE.ready=false;LIVE.ws=null;LIVE.handle=null;try{if(ws)ws.close(1000)}catch(e){}liveCleanup();
+function liveStop(msg){if(!LIVE.on&&!LIVE.ws)return;clearTimeout(LIVE.rt);LIVE.stopAt=Date.now();const ws=LIVE.ws;LIVE.on=false;LIVE.ready=false;LIVE.ws=null;LIVE.handle=null;try{if(ws)ws.close(1000)}catch(e){}liveCleanup();
  if(msg)asstSay('step',msg);asstState('idle')}
 function awApply(){const on=!!(EXT.assistant&&AS.cfg.wake);if(!on&&!window._wkOn)return;window._wkOn=on;$('asstBtn').classList.toggle('wk',on);
  invoke('wake_set',{on,sens:AS.cfg.wakeSens||3}).catch(e=>{window._wkOn=false;$('asstBtn').classList.remove('wk');AS.cfg.wake=false;asCfgSave();$('awOn').checked=false;toast(String(e),true)})}
@@ -1383,7 +1384,7 @@ $('asDiag').onclick=async()=>{const b=$('asDiag');b.disabled=true;asstOpen();liv
    say((res.ok?'✓ ':'✗ ')+'Canlı bağlantı, düzen '+(lay?'B (düz)':'A (generationConfig)')+' — '+res.ms+' ms'+(res.ok?'':` (kod ${res.code||'-'}${res.reason?': '+res.reason:''}${res.opened?'':', bağlantı açılamadı'})`));
    if(res.ok){LIVE.layout=lay;localStorage.setItem('asLiveLayout',String(lay));break}await new Promise(r=>setTimeout(r,3500))}}
  catch(e){say('✗ Canlı test: '+e)}
- say('Test bitti.');b.disabled=false};
+ say('Test bitti.');LIVE.stopAt=Date.now();b.disabled=false};
 $('asX').onclick=asstClose;$('asGo').onclick=asstToggle;$('asstBtn').onclick=asstToggle;
 function asLocal(t){let x=t.replace(/İ/g,'i').toLowerCase().replace(/[.!?,]+$/,'').trim().replace(/\s+/g,' ');x=x.replace(/\s+(?:bul(?:up)?(?:\s+ve)?|ara(?:yıp)?(?:\s+ve)?)\s+(aç|göster)$/,' $1');if(/\s(ve|sonra|ardından|ayrıca|ile birlikte)\s/.test(x))return null;let m;
  if(/^(?:son (?:yaptığın )?(?:işlemi )?)?geri al(?:ır mısın)?$/.test(x)||/^son işlemi geri al$/.test(x))return['geri_al',{}];
