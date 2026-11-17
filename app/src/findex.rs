@@ -75,7 +75,7 @@ fn assemble(root: String, token: String, ents: Vec<Ent>) -> Index {
 }
 fn disk_path(email: &str) -> PathBuf {
     let safe: String = email.chars().map(|c| if c.is_alphanumeric() { c } else { '_' }).collect();
-    data_dir().join(format!("findex_{safe}.json"))
+    data_dir().join(format!("findex2_{safe}.json"))
 }
 fn save_disk(email: &str, ix: &Index) {
     let files: Vec<Value> = ix.ents.iter().map(|e| json!([e.id, e.name, e.mime, e.parents, e.modified])).collect();
@@ -145,11 +145,21 @@ fn rel_path(ix: &Index, e: &Ent) -> Option<Vec<String>> {
     }
     None
 }
+/// Kökü bilinmeyen (ortak sürücü / benimle paylaşılan) öğelerde de elde olan üst zinciri verir.
+fn loose_path(ix: &Index, e: &Ent) -> Vec<String> {
+    let mut parts = vec![e.name.clone()]; let mut cur = e;
+    for _ in 0..64 {
+        let Some(p) = cur.parents.first() else { break };
+        let Some(&i) = ix.pos.get(p) else { break };
+        cur = &ix.ents[i]; parts.push(cur.name.clone());
+    }
+    parts.reverse(); parts
+}
 fn row(ix: &Index, e: &Ent, sc: f32) -> Value {
     let rp = rel_path(ix, e);
     let folder = rp.as_ref().map(|p| p[..p.len() - 1].join("\\")).unwrap_or_default();
     json!({ "id": e.id, "name": e.name, "folder": e.folder, "mime": e.mime, "score": (sc * 10.0).round() / 10.0, "modified": e.modified,
-            "dir": if rp.is_some() { json!(folder) } else { Value::Null }, "path": rp.map(|p| p.join("\\")), "parent": e.parents.first() })
+            "dir": if rp.is_some() { json!(folder) } else { Value::Null }, "path": rp.map(|p| p.join("\\")), "parent": e.parents.first(), "loose": loose_path(ix, e).join("\\") })
 }
 
 fn now_secs() -> u64 { std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0) }
@@ -244,7 +254,7 @@ pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Optio
         if let Some(c) = &cutoff { if e.modified.as_str() < c.as_str() { continue; } }
         let base = if qc.is_empty() { 50.0 } else { score(&qs, &qc, &qt, e) };
         if base < 45.0 { continue; }
-        if !konum_f.is_empty() { match rel_path(&ix, e) { Some(p) => { if p.len() < 2 || !fold(&p[..p.len() - 1].join(" ")).contains(&konum_f) { continue; } } None => continue } }
+        if !konum_f.is_empty() { { let p = loose_path(&ix, e); if p.len() < 2 || !fold(&p[..p.len() - 1].join(" ")).contains(&konum_f) { continue; } } }
         v.push((base + usage_boost(usage.get(&e.id), now), i, base));
     }
     // takma ad: tam eşleşme en üstte

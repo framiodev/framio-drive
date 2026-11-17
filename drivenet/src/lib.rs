@@ -107,7 +107,9 @@ impl Drive {
                 ("q", "trashed=false".to_string()),
                 ("fields", "nextPageToken,files(id,name,mimeType,parents,modifiedTime)".into()),
                 ("pageSize", "1000".into()),
-                ("corpora", "user".into()),
+                ("corpora", "allDrives".into()),
+                ("includeItemsFromAllDrives", "true".into()),
+                ("supportsAllDrives", "true".into()),
             ]);
             if let Some(p) = &page { req = req.query(&[("pageToken", p)]); }
             let r = req.send().await?;
@@ -154,7 +156,7 @@ impl Drive {
 
     /// Değişiklik akışının başlangıç işareti (bundan sonrası "yeni" sayılır).
     pub async fn changes_start_token(&self) -> Result<String, Error> {
-        let r = self.http.get(format!("{API}/changes/startPageToken")).bearer_auth(&self.token).send().await?;
+        let r = self.http.get(format!("{API}/changes/startPageToken")).bearer_auth(&self.token).query(&[("supportsAllDrives", "true")]).send().await?;
         if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
         let v: serde_json::Value = r.json().await?;
         v["startPageToken"].as_str().map(String::from).ok_or(Error::Protocol("startPageToken yok"))
@@ -165,7 +167,7 @@ impl Drive {
         let mut out = vec![]; let mut page = token.to_string();
         loop {
             let r = self.http.get(format!("{API}/changes")).bearer_auth(&self.token).query(&[
-                ("pageToken", page.as_str()), ("pageSize", "500"), ("includeRemoved", "true"), ("spaces", "drive"),
+                ("pageToken", page.as_str()), ("pageSize", "500"), ("includeRemoved", "true"), ("spaces", "drive"), ("includeItemsFromAllDrives", "true"), ("supportsAllDrives", "true"),
                 ("fields", "nextPageToken,newStartPageToken,changes(removed,fileId,file(id,name,mimeType,trashed,size,md5Checksum,parents,modifiedTime))"),
             ]).send().await?;
             if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }

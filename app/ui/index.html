@@ -970,18 +970,18 @@ const asNote=it=>{(Array.isArray(it)?it:[it]).forEach(x=>{if(x&&x.id)AS.seen[x.i
 const asRows=l=>l.map(x=>({id:x.id,ad:x.name,klasor:!!x.folder,tur:x.mime||''}));
 const asFr=x=>({id:x.id,ad:x.name,klasor:!!x.folder,yol:x.path||x.dir||'(paylaşılan/yol yok)',skor:x.score});
 function asFocus(x){AS.focus={id:x.id,name:x.name,path:x.path,folder:!!x.folder,mime:x.mime||''};AS.seen[x.id]={name:x.name,folder:!!x.folder,mime:x.mime||''}}
-async function asFind(q,tur,ext,gun,konum){const r=await invoke('fs_find',{email:sel,q:String(q||''),limit:30,kind:tur=='dosya'||tur=='klasor'?tur:null,ext:ext?String(ext):null,gun:gun?Number(gun):null,konum:konum?String(konum):null});asNote(r.results);return r.results}
+async function asFind(q,tur,ext,gun,konum){const r0=await invoke('fs_find',{email:sel,q:String(q||''),limit:40,kind:tur=='dosya'||tur=='klasor'?tur:null,ext:ext?String(ext):null,gun:gun?Number(gun):null,konum:konum?String(konum):null});const r=r0.results;r.indexed=r0.indexed;r.total=r0.total;asNote(r);return r}
 async function asResolve(a,step){let x=null;
  if(a.id&&AS.pend&&AS.pend.list.find(y=>y.id==a.id))x=AS.pend.list.find(y=>y.id==a.id);
  else if(a.id&&AS.focus&&AS.focus.id==a.id)x=AS.focus;
  else if(a.id){const l=await invoke('fs_find',{email:sel,q:(AS.seen[a.id]||{}).name||a.id,limit:30});x=(l.results||[]).find(y=>y.id==a.id)||(AS.seen[a.id]?{id:a.id,name:AS.seen[a.id].name,folder:AS.seen[a.id].folder,mime:AS.seen[a.id].mime}:null);if(!x)return{sonuc:{hata:'Bu id tanınmıyor'}}}
  else if(a.sorgu){step('Aranıyor: '+a.sorgu);const r=await asFind(a.sorgu,a.tur,null,null,a.konum);if(!r.length)return{sonuc:{hata:'Eşleşen dosya bulunamadı',ipucu:'Yazımı farklı dene, konum/tur filtresini kaldır ya da bilgisayarda_ara kullan'}};
-  const top=r[0].match,cl=r.filter(y=>y.match>=top-8);
-  if(top<140&&cl.length>1){const L=cl.slice(0,6);AS.pend={name:AS.curTool,args:a,list:L};asChoices(L);return{sonuc:{belirsiz:true,toplam_eslesen:cl.length,adaylar:L.map((y,i)=>Object.assign({no:i+1,kisa_yol:asShort(y),tarih:(y.modified||'').slice(0,10),sik_kullanilan:y.used},asFr(y))),not:'Aynı/benzer adlı birden çok öğe var. Kullanıcıya adayları kısa yolları ve numaralarıyla sesli say ve hangisi olduğunu sor; cevabına göre secenek_sec(no) çağır. ASLA kendi başına seçme.'}}}
+  const top=r[0].match,cl=r.filter(y=>y.match>=top-15);asstSay('step','Dizinde '+r.indexed+' öğe tarandı, '+r.total+' eşleşme, '+cl.length+' güçlü aday');
+  if(top<140&&cl.length>1){const L=cl.slice(0,10);AS.pend={name:AS.curTool,args:a,list:L};asChoices(L);return{sonuc:{belirsiz:true,toplam_eslesen:cl.length,tum_eslesme:r.total,dizindeki_oge:r.indexed,adaylar:L.map((y,i)=>Object.assign({no:i+1,kisa_yol:asShort(y),tarih:(y.modified||'').slice(0,10),sik_kullanilan:y.used},asFr(y))),not:'Aynı/benzer adlı birden çok öğe var (toplam sayıyı söyle; liste en fazla 10 aday gösterir). Yıl/üst klasör gibi bir ayrıntı sorarak aramayı konum parametresiyle daralt. Kullanıcıya adayları kısa yolları ve numaralarıyla sesli say ve hangisi olduğunu sor; cevabına göre secenek_sec(no) çağır. ASLA kendi başına seçme.'}}}
   AS.pend=null;x=r[0]}
  else if(AS.focus)x=AS.focus;else return{sonuc:{hata:'Hangi dosya? Henüz bir dosya konuşulmadı'}};
  return{x}}
-const asShort=y=>{const p=String(y.path||y.dir||'').split('/').filter(Boolean);return p.slice(-3).join(' / ')||'(yol yok)'};
+const asShort=y=>{const p=String(y.loose||y.path||y.dir||'').split('/').filter(Boolean);return p.slice(-3).join(' / ')||'(yol yok)'};
 function asChoices(L){const d=document.createElement('div');d.className='asM ai';d.textContent='Birden çok eşleşme var, hangisi?';L.forEach((y,i)=>{const b=document.createElement('button');b.className='btn';b.style.cssText='display:block;margin:4px 0;text-align:left;width:100%';b.textContent=(i+1)+'. '+y.name+' — '+asShort(y)+(y.modified?' · '+y.modified.slice(0,10):'');b.onclick=async()=>{try{const o=await asPick(i+1);asstSay('ai',(o&&(o.soyle||o.tamam))||'Tamam.')}catch(e){asstSay('ai','Hata: '+(e.message||e))}};d.appendChild(b)});$('asLog').appendChild(d);$('asLog').scrollTop=1e9}
 async function asPick(no){const p=AS.pend;if(!p)return{hata:'Bekleyen seçim yok'};const y=p.list[no-1];if(!y)return{hata:'Geçersiz numara, 1-'+p.list.length};const a=Object.assign({},p.args,{id:y.id});delete a.sorgu;const n=p.name;return await asstExec(n,a,AS.tok)}
 const asNm=id=>(AS.seen[id]&&AS.seen[id].name)||id;
