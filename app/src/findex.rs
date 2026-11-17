@@ -332,3 +332,68 @@ pub fn local_find(q: String, limit: Option<usize>) -> Result<Value, String> {
     let n = limit.unwrap_or(8).clamp(1, 25);
     Ok(json!({ "total": found.len(), "results": found.iter().take(n).map(|(sc, p, name, size)| json!({ "path": p, "name": name, "size": size, "score": (sc * 10.0).round() / 10.0 })).collect::<Vec<_>>() }))
 }
+
+fn word_hit(text: &str, tok: &str, fuzzy: bool) -> bool {
+    let b = text.as_bytes();
+    let numeric = tok.chars().all(|c| c.is_ascii_digit());
+    let short = tok.chars().count() <= 2;
+    if text.match_indices(tok).any(|(i, _)| {
+        let before = i == 0 || if numeric { !b[i - 1].is_ascii_digit() } else if short { b[i - 1] == b' ' } else { true };
+        let end = i + tok.len();
+        let after = end >= b.len() || if numeric { !b[end].is_ascii_digit() } else if short { b[end] == b' ' } else { true };
+        before && after
+    }) { return true; }
+    if fuzzy && !numeric && tok.chars().count() >= 5 {
+        let tc: Vec<char> = tok.chars().collect();
+        return text.split(' ').any(|w| { let wc: Vec<char> = w.chars().collect(); wc.len() >= 4 && (wc.len() as i32 - tc.len() as i32).abs() <= 1 && lev(&tc, &wc) <= 1 });
+    }
+    false
+}
+fn path_text(ix: &Index, i: usize, memo: &mut Vec<Option<String>>, depth: u8) -> String {
+    if let Some(t) = &memo[i] { return t.clone(); }
+    let e = &ix.ents[i];
+    let parent = if depth < 64 { e.parents.first().and_then(|p| ix.pos.get(p)).copied() } else { None };
+    let mut t = match parent { Some(pi) => path_text(ix, pi, memo, depth + 1), None => String::new() };
+    if !t.is_empty() { t.push(' '); }
+    t.push_str(&fold(&e.name));
+    memo[i] = Some(t.clone());
+    t
+}
+
+/// Yol-farkında arama: her terim (örn. "2026", "Ankara", "Mercedes-Benz", "Yeni Kasa", "16") dosyanın adında
+/// ya da üst klasör zincirindeki herhangi bir adda geçmelidir. Betimleyici isteklerde ("2026 Ankara Turismo fotoğrafları") kullanılır.
+#[tauri::command]
+pub async fn fs_find_path(email: String, terms: Vec<String>, kind: Option<String>, ext: Option<String>, limit: Option<usize>) -> Result<Value, String> {
+    let em = email.to_lowercase();
+    let ix = ensure(&em, false).await?;
+    let tf: Vec<Vec<String>> = terms.iter().map(|t| fold(t)).filter(|t| !t.is_empty()).map(|t| t.split(' ').filter(|x| !FILLER.contains(x)).map(String::from).collect::<Vec<_>>()).filter(|v: &Vec<String>| !v.is_empty()).collect();
+    if tf.is_empty() { return Err("En az bir terim gerekli".into()); }
+    let exts: Vec<String> = ext.unwrap_or_default().split(',').map(|x| x.trim().trim_start_matches('.').to_lowercase()).filter(|x| !x.is_empty()).collect();
+    let kind = kind.unwrap_or_default();
+    let mut memo: Vec<Option<String>> = vec![None; ix.ents.len()];
+    let texts: Vec<String> = (0..ix.ents.len()).map(|i| path_text(&ix, i, &mut memo, 0)).collect();
+    let pass = |fuzzy: bool, only: Option<usize>| -> Vec<usize> {
+        let mut out = vec![];
+        for (i, e) in ix.ents.iter().enumerate() {
+            match kind.as_str() { "dosya" if e.folder => continue, "klasor" if !e.folder => continue, _ => {} }
+            if !exts.is_empty() { let l = e.name.to_lowercase(); if !exts.iter().any(|x| l.ends_with(&format!(".{x}"))) { continue; } }
+            let ok = match only { Some(k) => tf[k].iter().all(|t| word_hit(&texts[i], t, fuzzy)), None => tf.iter().all(|g| g.iter().all(|t| word_hit(&texts[i], t, fuzzy))) };
+            if ok { out.push(i); }
+        }
+        out
+    };
+    let mut hits = pass(false, None);
+    let mut fuzzy_used = false;
+    if hits.is_empty() { hits = pass(true, None); fuzzy_used = !hits.is_empty(); }
+    if kind == "klasor" {
+        let set: std::collections::HashSet<usize> = hits.iter().copied().collect();
+        hits.retain(|i| !ix.ents[*i].parents.first().and_then(|p| ix.pos.get(p)).map(|pi| set.contains(pi)).unwrap_or(false));
+    }
+    let mut counts = vec![];
+    if hits.is_empty() { for (k, g) in tf.iter().enumerate() { counts.push(json!({ "terim": g.join(" "), "eslesen": pass(true, Some(k)).len() })); } }
+    hits.sort_by(|a, b| texts[*a].cmp(&texts[*b]));
+    let n = limit.unwrap_or(2000).clamp(1, 5000);
+    let total = hits.len();
+    Ok(json!({ "indexed": ix.ents.len(), "total": total, "bulaniklik": fuzzy_used, "sifir": total == 0, "terim_sayilari": counts,
+        "results": hits.iter().take(n).map(|i| { let mut r = row(&ix, &ix.ents[*i], 100.0); r["match"] = json!(100.0); r["used"] = json!(0); r }).collect::<Vec<_>>() }))
+}
