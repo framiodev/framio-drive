@@ -132,7 +132,7 @@ input:focus{border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(-
 .ubar{width:220px;height:8px;border-radius:9px;background:var(--track);overflow:hidden;flex:none}.ubar i{display:block;height:100%;width:0;border-radius:9px;background:linear-gradient(90deg,var(--acc),var(--acc2));transition:width .8s var(--ease)}
 .tab.scroll{overflow:auto;display:flex;flex-direction:column;gap:14px}.tab.scroll.fr input.ck{width:16px;height:16px;padding:0;margin:0;accent-color:var(--acc)}
 .seg{display:flex;border:1px solid var(--stroke);border-radius:10px;overflow:hidden}.seg b{padding:5px 10px;cursor:pointer;font-weight:500;color:var(--mut);background:var(--glass)}.seg b.on{background:var(--glass2);color:var(--text)}
-#frows.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cw),1fr));gap:12px;padding:6px}
+#frows.g{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--cw),1fr));grid-auto-rows:max-content;align-content:start;align-items:start;gap:12px;padding:6px}#frows.g .fgh{align-self:start;height:auto;min-height:0}
 #frows.g.m{--cw:170px;--ch:118px}#frows.g.x{--cw:270px;--ch:200px}
 #frows.g .fr{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:8px;position:relative}
 #frows.g .fr .ck{position:absolute;left:14px;top:14px;z-index:2}
