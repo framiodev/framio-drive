@@ -363,6 +363,37 @@ impl Drive {
         Ok(())
     }
 
+    /// Yalnız taşır; önceki üst klasörün id'sini döndürür (geri almak için).
+    pub async fn move_only(&self, id: &str, new_parent: &str) -> Result<String, Error> {
+        let cur = self.file_meta(id).await?;
+        let old = cur.parents.first().cloned().unwrap_or_default();
+        if old == new_parent { return Ok(old); }
+        let r = self.http.patch(format!("{API}/files/{id}")).bearer_auth(&self.token)
+            .query(&[("addParents", new_parent), ("removeParents", old.as_str()), ("supportsAllDrives", "true")])
+            .json(&serde_json::json!({})).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        Ok(old)
+    }
+
+    /// Yalnız yeniden adlandırır; eski adı döndürür.
+    pub async fn rename_only(&self, id: &str, new_name: &str) -> Result<String, Error> {
+        let cur = self.file_meta(id).await?;
+        let r = self.http.patch(format!("{API}/files/{id}")).bearer_auth(&self.token).query(&[("supportsAllDrives", "true")])
+            .json(&serde_json::json!({ "name": new_name })).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        Ok(cur.name)
+    }
+
+    /// Dosyayı (klasör değil) hedef klasöre kopyalar; yeni id'yi döndürür.
+    pub async fn copy_file(&self, id: &str, dest: &str, name: Option<&str>) -> Result<String, Error> {
+        let mut body = serde_json::json!({ "parents": [dest] });
+        if let Some(n) = name { body["name"] = serde_json::json!(n); }
+        let r = self.http.post(format!("{API}/files/{id}/copy")).bearer_auth(&self.token).query(&[("supportsAllDrives", "true"), ("fields", "id")]).json(&body).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let v: serde_json::Value = r.json().await?;
+        Ok(v["id"].as_str().unwrap_or_default().to_string())
+    }
+
     /// Tek dosyanın üst verisi (md5, boyut, değişim zamanı).
     pub async fn file_meta(&self, id: &str) -> Result<DriveFile, Error> {
         let r = self.http.get(format!("{API}/files/{id}")).bearer_auth(&self.token)

@@ -37,6 +37,11 @@ jobs:
         shell: pwsh
         run: node .github/scripts/check-ui.js
 
+      - name: Sesli asistan komut testi
+        if: steps.chk.outputs.skip != 'true'
+        shell: pwsh
+        run: node .github/scripts/eval-commands.js
+
       - name: WinFsp kur (gelistirici dosyalariyla)
         if: steps.chk.outputs.skip != 'true'
         shell: pwsh
