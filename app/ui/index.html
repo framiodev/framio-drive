@@ -405,17 +405,18 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
       <div class="glass panel"><h2>Paylaş <span>Önce ne paylaşacağını ekle, sonra nereye göndereceğini seç</span></h2>
         <div id="shrDest" class="shr-dest"></div>
         <div id="shrFSel" class="shr-fo hide"><div class="mut" id="shrNo" style="margin-bottom:8px"></div><select id="shrForum"></select></div>
-        <div class="mut" style="margin:10px 0 6px">Dosyalar</div>
+        <div id="shrFiles"><div class="mut" style="margin:10px 0 6px">Dosyalar</div>
         <div id="shrItems" class="mut" style="margin-bottom:8px"></div>
-        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div></div>
       <div class="glass panel shr-gen" id="shrGen"><div class="mut" id="shrGenTx" style="margin-bottom:10px"></div><div class="acts" style="margin:0"><button class="btn pri" id="shrGenGo">Gönder</button></div></div>
       <div class="glass panel shr-fo hide"><h2>Yanıt verilecek başlık <span>Forumdaki mevcut bir başlığa yanıt olarak paylaşılır</span></h2>
         <div style="display:flex;gap:8px;align-items:center"><input id="shrQ" placeholder="Başlık ara ya da forum bağlantısını yapıştır" style="flex:1;margin:0"><button class="btn sm" id="shrFind">Ara</button></div>
         <select id="shrSug" style="margin-top:8px"></select>
         <div id="shrSel" class="mut" style="margin:8px 0 2px"></div></div>
       <div class="glass panel shr-fo hide"><h2>Yanıt <span>Fotoğraflar forumun kendi yükleme penceresiyle eklenir; künye, imza, bilgi ve ortak paylaşım orada seçilir</span></h2>
-        <div class="mcomp"><textarea id="frText" rows="7" placeholder="Yanıtını yaz… Fotoğraflar eklenince künye kodları buraya yerleşir"></textarea></div>
-        <div class="acts" style="margin-top:10px"><span id="frUp" class="fl-scope" style="background:transparent;display:inline-block"></span><button class="btn" id="frAddItems">Listedeki dosyaları forum penceresine aç</button><span class="mut" id="frHint"></span></div></div>
+        <div style="border:1px solid var(--stroke);border-radius:14px;background:var(--track);overflow:hidden">
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--stroke)"><span id="frUp" class="fl-scope" style="background:transparent;display:inline-block;min-width:36px;min-height:32px"></span><span class="mut" id="frHint"></span></div>
+          <div class="mcomp"><textarea id="frText" rows="8" placeholder="Yanıtını yaz… Fotoğraf Yükle ile eklenen fotoğrafların künye kodları buraya yerleşir"></textarea></div></div></div>
       <div class="glass panel shr-fo hide"><h2>Zamanlama <span>Hemen yayınla, planla ya da taslak olarak kaydet</span></h2>
         <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option><option value="draft">Taslak olarak kaydet</option></select><input id="shrAt" type="datetime-local" class="hide"></div></div>
       <div class="glass panel shr-fo hide"><h2>Gönder</h2>
@@ -1427,7 +1428,6 @@ const HLP={
  mbAdd:['Seçilenleri ekle','Seçili sayfaları uygulamaya ekler.','Önce sayfaları işaretle.'],
  shrQ:['Başlık ara','Yanıt vereceğin başlığı arar; forum bağlantısı da yapıştırabilirsin.','Birkaç kelime yaz ya da başlığın bağlantısını yapıştır.'],
  frText:['Yanıt','Forumda başlığa yazılacak yanıt metni.','Fotoğraf ekleyince künye kodları buraya yerleşir; metni dilediğin gibi düzenle.'],
- frAddItems:['Dosyaları forum penceresine aç','Listedeki dosyaları forumun İmza penceresine gönderir.','Drive ya da bilgisayardan eklediğin dosyalar forumdaki yükleme akışına girer.']
 };
 const HLP_SKIP=new Set(['asYes','asNo','asIn','asMin','asX','hdGuideX','hdGuideGo','upd','vsl','mAppId','mSecret','mToken','mSave','mLong','mRef','mClr','mQ','mAsk','mWeb','pfSel','pfNew','pfDup','pfDel','pfName','pfPrompt','pfAddF','pfFile','pfFolder','pfReq','pfUnk','pfUnkV','pfSave','fall','forg','fdoc','fnew','freload','freveal','ftempty','shrForum','shrPath','shrAdd','shrGenGo','shrSug','shrRoute','shrFind','shrAi','shrWhen','shrAt','shrGo','shrOpen']);
 let hlpEl=null,hlpT=0;
@@ -2283,7 +2283,7 @@ function shrThumbs(){shrIt.forEach(async x=>{if(x.th||x.thBusy)return;x.thBusy=1
 function shrRender(){
  $('shrItems').innerHTML=shrIt.length?'<div style="display:flex;flex-wrap:wrap;gap:10px">'+shrIt.map((x,i)=>`<div style="width:110px;border:1px solid var(--stroke);border-radius:12px;padding:6px;background:var(--track)"><div style="height:70px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px" title="${esc(x.name)}">${esc(x.name)}</div><button class="btn sm" data-rm="${i}" style="width:100%">Çıkar</button></div>`).join('')+'</div>'
   :'Henüz dosya yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…”, Dosyalar sekmesinden ekle ya da forumdaki “Fotoğraf Yükle” düğmesiyle seç.';
- shrThumbs();const h=$('frHint');if(h)h.textContent=(shrIt.length?shrIt.length+' dosya hazır · ':'')+'Kamera simgesi: bilgisayardan fotoğraf seç'}
+ shrThumbs();const h=$('frHint');if(h)void h}
 $('shrItems').onclick=e=>{const b=e.target.closest('[data-rm]');if(!b)return;shrIt.splice(+b.dataset.rm,1);shrRender()};
 function shrMk(name,src){return {name,src,th:''}}
 function shrPush(name,src){const k=src.key||src.path;if(shrIt.some(x=>(x.src.key||x.src.path)==k))return false;shrIt.push(shrMk(name,src));return true}
@@ -2295,7 +2295,7 @@ let shrDest='mail',shrHasForum=false;
 const shrDests=()=>[['mail','E-posta'],['copy','Panoya kopyala'],['show','Klasörde göster']].concat(shrHasForum?[['forum','Forum']]:[]);
 function shrDestRender(){if(!shrDests().some(d=>d[0]==shrDest))shrDest='mail';
  $('shrDest').innerHTML=shrDests().map(d=>`<button class="btn sm${d[0]==shrDest?' on':''}" data-d="${d[0]}">${d[1]}</button>`).join('')+(shrHasForum||!EXT.forum?'':'<button class="btn sm" data-d="addforum">+ Forum ekle</button>');
- const f=shrDest=='forum';document.querySelectorAll('.shr-fo').forEach(x=>x.classList.toggle('hide',!f));$('shrGen').classList.toggle('hide',f);
+ const f=shrDest=='forum';document.querySelectorAll('.shr-fo').forEach(x=>x.classList.toggle('hide',!f));$('shrFiles').classList.toggle('hide',f);$('shrGen').classList.toggle('hide',f);
  $('shrGenTx').textContent={mail:'Seçili dosyaların bağlantıları ve adları, varsayılan posta uygulamanda hazır bir iletiye yazılır.',copy:'Seçili dosyaların bağlantıları (Drive) ya da yolları panoya kopyalanır.',show:'Bilgisayardaki ilk dosya Gezgin’de seçili olarak gösterilir.'}[shrDest]||''}
 function shrLinkOf(x){const s=x.src;if(s.kind=='drive')return 'https://drive.google.com/file/d/'+s.key+'/view'+(s.email?'?authuser='+encodeURIComponent(s.email):'');return s.path}
 $('shrDest').onclick=e=>{const d=e.target.dataset.d;if(!d)return;if(d=='addforum'){setTab('set');toast('Ayarlar > Forumlar bölümünden forum ekleyebilirsin');return}shrDest=d;shrDestRender();if(d=='forum')shrInit()};
@@ -2315,19 +2315,20 @@ async function shrLoadMeta(){const id=shrFo();if(!id)return;
  await frConfigure()}
 $('shrForum').onchange=()=>{shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';$('shrSel').textContent='';frFid='';shrLoadMeta()};
 /* Forum paketini seçili forum + başlıkla yapılandır (oturum kullanıcısı, başlığın etiketleri, ağ desteği) */
-async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id||!m.base)return;
- if(typeof FramioForumPort=='undefined'){toast('Forum eklentisi yüklenemedi',true);return}
+function frMount(){if(frMounted)return true;try{if(typeof FramioForumPort=='undefined')throw new Error('forum-port.js yüklenemedi');FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true;return true}catch(e){$('frHint').textContent='Yükleme düğmesi kurulamadı: '+(e&&e.message||e);return false}}
+async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id)return;if(!frMount())return;
+ if(!m.base){$('frHint').textContent='Forum bilgisi alınamadı';return}
  let tags=[];if(t){try{tags=(await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})).map(x=>x.slug)}catch(e){}}
  if(shrFo()!==id||shrTopic!==t)return;
- await FramioForumPort.configure({id,base:m.base,attrs:m.attrs||{},user:m.user,discussion:t?{id:t.discussion_id,title:t.title,tags}:null});frFid=id;
- if(!frMounted){FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true}}
+ try{await FramioForumPort.configure({id,base:m.base,attrs:m.attrs||{},user:m.user,discussion:t?{id:t.discussion_id,title:t.title,tags}:null});frFid=id;$('frHint').textContent='Fotoğraf Yükle: bilgisayardan fotoğraf seç';frFlush()}
+ catch(e){$('frHint').textContent='Forum hazırlanamadı: '+(e&&e.message||e)}}
 function frInsert(t){const a=$('frText'),s=a.selectionStart==null?a.value.length:a.selectionStart,e=a.selectionEnd==null?s:a.selectionEnd,pre=a.value.slice(0,s),post=a.value.slice(e);
  const ins=(pre&&!pre.endsWith('\n')?'\n':'')+t+(post&&!post.startsWith('\n')?'\n':'');a.value=pre+ins+post;const c=pre.length+ins.length;a.setSelectionRange(c,c);a.focus()}
 /* Listedeki (Drive/yerel) dosyalar: baytları Rust'tan alınıp File yapılır, forumun kendi İmza penceresi açılır */
-$('frAddItems').onclick=async()=>{if(!shrIt.length){toast('Önce listeye dosya ekle',true);return}if(!frFid){toast('Önce forum ve başlık seç',true);return}
- const btn=$('frAddItems');btn.disabled=true;try{
+let frFlushing=false;
+async function frFlush(){if(frFlushing||!shrIt.length||shrDest!='forum'||!frFid)return;frFlushing=true;try{
   const files=[];for(const x of shrIt){const b=await invoke('forum_file_bytes',{src:x.src,name:x.name});const ext=(x.name.split('.').pop()||'jpg').toLowerCase();files.push(new File([b],x.name,{type:ext=='png'?'image/png':ext=='webp'?'image/webp':'image/jpeg'}))}
-  FramioForumPort.addFiles(files);shrIt=[];shrRender()}catch(e){toast(String(e),true)}btn.disabled=false};
+  shrIt=[];shrRender();FramioForumPort.addFiles(files)}catch(e){toast(String(e&&e.message||e),true)}frFlushing=false}
 /* Başlık seçimi: arama ya da forum bağlantısı */
 function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.length?shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join(''):'<option value="">Başlık bulunamadı</option>';
  shrTopic=shrSugList[0]||null;if(shrSugList.length)$('shrSug').value=0;shrTopicSet()}
