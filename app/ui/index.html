@@ -2,12 +2,13 @@
 <html lang="tr" data-theme="dark"><head><meta charset="utf-8"><title>Framio Drive</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-:root{--ease:cubic-bezier(.22,.8,.24,1);--acc:#b3122b;--acc2:color-mix(in srgb,var(--acc),#fff 30%);--danger:#ff9a3c;--warn:#f2c14b;--ok:#3ddc97}
+@font-face{font-family:'Inter';src:url('fonts/InterVariable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
+:root{--ease:cubic-bezier(.22,.8,.24,1);--acc:#c8102e;--fs-xs:12px;--fs-sm:13px;--fs-md:14px;--fs-lg:16px;--fs-xl:20px;--fs-2xl:28px;--acc2:color-mix(in srgb,var(--acc),#fff 30%);--danger:#ff9a3c;--warn:#f2c14b;--ok:#3ddc97}
 html[data-theme=dark]{--bg:#040304;--text:#f4ecee;--mut:#a39499;--glass:rgba(255,255,255,.05);--glass2:rgba(255,255,255,.085);--stroke:rgba(255,255,255,.1);--shadow:0 10px 40px rgba(0,0,0,.6);--b1:color-mix(in srgb,var(--acc) 38%,#000);--b2:color-mix(in srgb,var(--acc) 20%,#000);--b3:color-mix(in srgb,var(--acc) 52%,#000);--onacc:#fff;--track:rgba(255,255,255,.08)}
 html[data-theme=light]{--bg:#f7efef;--text:#2a171b;--mut:#7d6469;--glass:rgba(255,255,255,.58);--glass2:rgba(255,255,255,.82);--stroke:rgba(255,255,255,.9);--shadow:0 10px 36px rgba(150,50,60,.16);--b1:color-mix(in srgb,var(--acc) 32%,#fff);--b2:color-mix(in srgb,var(--acc) 18%,#fff);--b3:color-mix(in srgb,var(--acc) 26%,#ffe9e0);--onacc:#fff;--track:rgba(42,23,27,.08)}
-*{box-sizing:border-box}
+*{box-sizing:border-box}button,input,select,textarea{font-family:inherit}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;overflow:hidden;transition:background .6s var(--ease),color .4s;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font:14px/1.5 "Inter","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;font-feature-settings:"calt","cv11","ss03";font-variant-numeric:tabular-nums;letter-spacing:-.006em;overflow:hidden;transition:background .6s var(--ease),color .4s;-webkit-font-smoothing:antialiased}
 .blobs{position:fixed;inset:0;overflow:hidden;z-index:0;pointer-events:none}
 .blobs i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.62;transition:background .8s}
 .blobs i:nth-child(1){width:520px;height:520px;background:var(--b1);left:-120px;top:-100px;animation:d1 22s ease-in-out infinite alternate}
@@ -18,9 +19,9 @@ body{background:var(--bg);color:var(--text);font:14px/1.45 "Segoe UI Variable Te
 .glass{background:var(--glass);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border:1px solid var(--stroke);border-radius:22px;box-shadow:var(--shadow)}
 aside{width:272px;display:flex;flex-direction:column;padding:18px 14px;flex:none}
 .brand{display:flex;align-items:center;gap:10px;padding:2px 8px 16px;font-weight:650;font-size:16px;letter-spacing:.2px}
-.logo{width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,var(--acc),var(--acc2));display:grid;place-items:center;box-shadow:0 6px 18px color-mix(in srgb,var(--acc) 55%,transparent)}
-.logo svg{width:22px;height:22px;fill:none;stroke:var(--onacc);stroke-width:2.2}.logo .dt{fill:var(--onacc);stroke:none}.logo .arc{stroke-dasharray:13 28.5;opacity:0;transform-origin:12px 12px}
-body.syncing .logo .arc{opacity:1;animation:spin 1.1s linear infinite}body.syncing .logo .rg{opacity:.35}@keyframes spin{to{transform:rotate(360deg)}}
+.logo{width:34px;height:34px;border-radius:10px;background:#0b0b0f;border:1px solid rgba(225,29,46,.5);display:grid;place-items:center;box-shadow:0 6px 20px rgba(225,29,46,.35),inset 0 0 0 1px rgba(255,255,255,.03);transition:box-shadow .3s,transform .3s}.logo:hover{box-shadow:0 8px 26px rgba(225,29,46,.6),inset 0 0 0 1px rgba(255,255,255,.05);transform:scale(1.05)}
+.logo svg{width:26px;height:26px;fill:none;overflow:visible}.logo .rg{stroke:rgba(225,29,46,.28);stroke-width:2.1}.logo .arc{stroke:#e11d2e;stroke-width:2.1;stroke-linecap:round;stroke-dasharray:34 18.8;transform-origin:12px 12px;animation:spin 7s linear infinite;filter:drop-shadow(0 0 2.5px rgba(225,29,46,.8))}.logo .fg{fill:#fff;stroke:none}
+body.syncing .logo .arc{animation-duration:1.1s}body.syncing .logo .rg{opacity:.5}@keyframes spin{to{transform:rotate(360deg)}}
 .sec{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--mut);margin:6px 10px 8px}
 #accs{flex:1;overflow:auto;margin:0 -4px;padding:0 4px}
 .acc{display:flex;align-items:center;gap:11px;padding:10px;border-radius:14px;cursor:pointer;border:1px solid transparent;transition:background .25s,transform .25s var(--ease),border-color .25s;animation:in .5s var(--ease) both}
@@ -353,19 +354,19 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
 <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/></linearGradient></defs></svg>
 <div class="app">
 <aside class="glass">
-  <div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="6.6"/><circle class="arc" cx="12" cy="12" r="6.6"/><circle class="dt" cx="12" cy="12" r="1.9"/></svg></div>Framio Drive</div>
+  <div class="brand"><div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="8.4"/><circle class="arc" cx="12" cy="12" r="8.4"/><path class="fg" d="M9.2 7.6H15.6V9.5H11.3V11.5H14.8V13.4H11.3V16.4H9.2Z"/></svg></div>Framio Drive</div>
   <div class="sec">Hesaplar</div>
   <div id="accs"></div>
   <button class="btn pri" id="add" style="justify-content:center;margin-top:10px"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Google ile hesap ekle</button>
 </aside>
 <main>
   <div id="setup" class="center hide"><div class="glass hello">
-    <div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="6.6"/><circle class="arc" cx="12" cy="12" r="6.6"/><circle class="dt" cx="12" cy="12" r="1.9"/></svg></div>
+    <div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="8.4"/><circle class="arc" cx="12" cy="12" r="8.4"/><path class="fg" d="M9.2 7.6H15.6V9.5H11.3V11.5H14.8V13.4H11.3V16.4H9.2Z"/></svg></div>
     <h1>Hoş geldin</h1><p>Başlamak için Google Cloud'da oluşturduğun istemci bilgilerini bir kez gir. Yalnızca bu bilgisayarda saklanır.</p>
     <input id="cid" placeholder="Client ID" autocomplete="off"><input id="csec" type="password" placeholder="Client Secret" autocomplete="off">
     <button class="btn pri" id="savec" style="width:100%;justify-content:center">Kaydet ve devam et</button></div></div>
   <div id="empty" class="center hide"><div class="glass hello">
-    <div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="6.6"/><circle class="arc" cx="12" cy="12" r="6.6"/><circle class="dt" cx="12" cy="12" r="1.9"/></svg></div>
+    <div class="logo"><svg viewBox="0 0 24 24"><circle class="rg" cx="12" cy="12" r="8.4"/><circle class="arc" cx="12" cy="12" r="8.4"/><path class="fg" d="M9.2 7.6H15.6V9.5H11.3V11.5H14.8V13.4H11.3V16.4H9.2Z"/></svg></div>
     <h1 id="emptyT">Bir hesap seç</h1><p id="emptyP">Soldan bir hesap seç ya da Google ile yeni hesap ekle. Drive'ın bilgisayarında bir klasör gibi görünecek.</p></div></div>
   <div id="view" class="hide" style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
     <div class="top"><h1 id="title"></h1><span class="pill" id="pill"><i></i><span id="pillT"></span></span><div class="sp"></div>
