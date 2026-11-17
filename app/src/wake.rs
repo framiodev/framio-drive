@@ -96,7 +96,7 @@ pub fn wake_build(name: String) -> Result<Value, String> {
     if name.is_empty() { return Err("Kelimeye bir ad ver".into()); }
     let samples = ENROLL.lock().unwrap().clone();
     if samples.len() < 3 { return Err("En az 3 örnek kaydetmelisin".into()); }
-    let bufs: Vec<(String, Vec<u8>)> = samples.iter().enumerate().map(|(i, s)| (format!("ornek{}", i + 1), wav_bytes(s))).collect();
+    let bufs: HashMap<String, Vec<u8>> = samples.iter().enumerate().map(|(i, s)| (format!("ornek{}", i + 1), wav_bytes(s))).collect();
     let w = WakewordRef::new_from_sample_buffers(name.clone(), None, None, bufs, 16).map_err(|e| format!("Kelime oluşturulamadı: {e}"))?;
     std::fs::create_dir_all(wake_dir()).map_err(|e| e.to_string())?;
     w.save_to_file(&word_path().display().to_string()).map_err(|e| format!("Kelime kaydedilemedi: {e}"))?;
