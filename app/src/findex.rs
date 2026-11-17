@@ -221,7 +221,7 @@ pub async fn fs_index_warm(email: String, force: Option<bool>) -> Result<Value, 
 /// Bulanık ad arama. Sorgu boş olabilir (yalnızca uzantı/tarih filtresiyle "son değişenler").
 /// kind: dosya|klasor, ext: "pdf,jpg", gun: son N günde değişen. Takma adlar ve kullanım sıklığı sıralamayı etkiler.
 #[tauri::command]
-pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Option<String>, ext: Option<String>, gun: Option<u32>) -> Result<Value, String> {
+pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Option<String>, ext: Option<String>, gun: Option<u32>, konum: Option<String>) -> Result<Value, String> {
     let em = email.to_lowercase();
     let ix = ensure(&em, false).await?;
     let qf = fold(&q);
@@ -236,22 +236,26 @@ pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Optio
     let kind = kind.unwrap_or_default();
     let now = now_secs();
     let usage = usage_map(&em);
-    let mut v: Vec<(f32, usize)> = vec![];
+    let konum_f = fold(&konum.unwrap_or_default());
+    let mut v: Vec<(f32, usize, f32)> = vec![];
     for (i, e) in ix.ents.iter().enumerate() {
         match kind.as_str() { "dosya" if e.folder => continue, "klasor" if !e.folder => continue, _ => {} }
         if !exts.is_empty() { let l = e.name.to_lowercase(); if !exts.iter().any(|x| l.ends_with(&format!(".{x}"))) { continue; } }
         if let Some(c) = &cutoff { if e.modified.as_str() < c.as_str() { continue; } }
         let base = if qc.is_empty() { 50.0 } else { score(&qs, &qc, &qt, e) };
         if base < 45.0 { continue; }
-        v.push((base + usage_boost(usage.get(&e.id), now), i));
+        if !konum_f.is_empty() { match rel_path(&ix, e) { Some(p) => { if p.len() < 2 || !fold(&p[..p.len() - 1].join(" ")).contains(&konum_f) { continue; } } None => continue } }
+        v.push((base + usage_boost(usage.get(&e.id), now), i, base));
     }
     // takma ad: tam eşleşme en üstte
     let alias_hit = if alias_key.is_empty() { None } else { load_settings()["assistant"]["alias"][&em][&alias_key].as_str().and_then(|id| ix.pos.get(id).copied()) };
-    if let Some(i) = alias_hit { v.retain(|(_, j)| *j != i); v.push((150.0, i)); }
+    if let Some(i) = alias_hit { v.retain(|(_, j, _)| *j != i); v.push((150.0, i, 150.0)); }
     v.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal)
         .then_with(|| if qc.is_empty() { ix.ents[b.1].modified.cmp(&ix.ents[a.1].modified) } else { ix.ents[a.1].name.len().cmp(&ix.ents[b.1].name.len()) }));
     let n = limit.unwrap_or(8).clamp(1, 30);
-    Ok(json!({ "indexed": ix.ents.len(), "alias": alias_hit.is_some(), "results": v.iter().take(n).map(|(s, i)| row(&ix, &ix.ents[*i], *s)).collect::<Vec<_>>() }))
+    let used = |id: &str| usage.get(id).map(|u| u.0).unwrap_or(0);
+    Ok(json!({ "indexed": ix.ents.len(), "alias": alias_hit.is_some(), "total": v.len(), "results": v.iter().take(n).map(|(s, i, b)| {
+        let mut r = row(&ix, &ix.ents[*i], *s); r["match"] = json!((*b * 10.0).round() / 10.0); r["used"] = json!(used(&ix.ents[*i].id)); r }).collect::<Vec<_>>() }))
 }
 
 /// Gezgin eylemleri (sanal sürücü bağlıysa): "reveal" dosyayı klasöründe seçili gösterir,
@@ -276,4 +280,35 @@ pub async fn fs_explorer(app: State<'_, App>, email: String, id: String, mode: S
         _ => return Err("Bilinmeyen mod".into()),
     }
     Ok(json!({ "path": full, "dir": dir }))
+}
+
+/// Bilgisayardaki (Masaüstü, İndirilenler, Belgeler, Resimler, Videolar, Müzik) dosyaları ada göre bulanık arar.
+#[tauri::command]
+pub fn local_find(q: String, limit: Option<usize>) -> Result<Value, String> {
+    let home = std::env::var("USERPROFILE").map_err(|_| "Kullanıcı klasörü bulunamadı".to_string())?;
+    let qf = fold(&q);
+    let qt: Vec<String> = numwords(qf.split(' ').filter(|t| !t.is_empty() && !FILLER.contains(t)).map(|s| s.to_string()).collect());
+    let qs = qt.join(" "); let qc = qs.replace(' ', "");
+    if qc.is_empty() { return Err("Aranacak ad boş".into()); }
+    let mut found: Vec<(f32, String, String, u64)> = vec![];
+    let (mut seen, cap) = (0usize, 40000usize);
+    for sub in ["Desktop", "Downloads", "Documents", "Pictures", "Videos", "Music"] {
+        let mut stack = vec![(std::path::PathBuf::from(&home).join(sub), 0u8)];
+        while let Some((dir, depth)) = stack.pop() {
+            let Ok(rd) = std::fs::read_dir(&dir) else { continue };
+            for en in rd.flatten() {
+                seen += 1; if seen > cap { break; }
+                let name = en.file_name().to_string_lossy().to_string();
+                if name.starts_with('.') || name.eq_ignore_ascii_case("node_modules") { continue; }
+                let Ok(md) = en.metadata() else { continue };
+                if md.is_dir() { if depth < 4 { stack.push((en.path(), depth + 1)); } continue; }
+                let e = mk_ent(String::new(), name.clone(), "file".into(), vec![], String::new());
+                let sc = score(&qs, &qc, &qt, &e);
+                if sc >= 55.0 { found.push((sc, en.path().display().to_string(), name, md.len())); }
+            }
+        }
+    }
+    found.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
+    let n = limit.unwrap_or(8).clamp(1, 25);
+    Ok(json!({ "total": found.len(), "results": found.iter().take(n).map(|(sc, p, name, size)| json!({ "path": p, "name": name, "size": size, "score": (sc * 10.0).round() / 10.0 })).collect::<Vec<_>>() }))
 }
