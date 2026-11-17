@@ -552,8 +552,8 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
     </div>
   </div>
 </main></div>
-<div class="glass asst hide" id="asst"><div class="asH"><div class="orb s-idle" id="asOrb"><i></i><i></i><i></i></div><div class="asT"><b id="asTi">Hazır</b><small id="asSub">Ctrl+Alt+Boşluk ile konuş ya da yaz</small></div><div class="asBtns"><button class="upB" id="asMin" title="Küçült (köşede minik küre olarak kalır)">▁</button></div><button class="upB" id="asX" title="Kapat">✕</button></div>
-<div class="asLog" id="asLog"></div>
+<div class="glass asst hide" id="asst"><div class="asH"><div class="orb s-idle" id="asOrb"><canvas id="asCv"></canvas><i></i><i></i><i></i></div><div class="asT"><b id="asTi">Hazır</b><small id="asSub">Ctrl+Alt+Boşluk ile konuş ya da yaz</small></div><div class="asBtns"><button class="upB" id="asFull" title="Tam ekran asistan (Esc ile çık)">⤢</button><button class="upB" id="asMin" title="Küçült (köşede minik küre olarak kalır)">▁</button></div><button class="upB" id="asX" title="Kapat">✕</button></div>
+<div class="asBr"></div><div class="asLog" id="asLog"></div>
 <div class="asConf hide" id="asConf"><div id="asCq"></div><div class="asBt"><button class="btn pri sm" id="asYes">Evet</button><button class="btn sm" id="asNo">Hayır</button></div></div>
 <div class="asIn"><input id="asIn" placeholder="Ya da komutu yaz…" autocomplete="off"><button class="btn pri sm asbtn" id="asGo" title="Dinle / gönder"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg></button></div></div>
 <div class="toasts" id="toasts"></div>
@@ -932,6 +932,21 @@ const asCss=document.createElement('style');asCss.textContent=`
 #asst.mini{position:fixed;right:22px;bottom:22px;left:auto;top:auto;width:84px;height:84px;padding:0;cursor:pointer;z-index:90;align-items:center;justify-content:center;border-radius:50%}
 #asst.mini::before,#asst.mini::after,#asst.mini .asT,#asst.mini .asLog,#asst.mini .asConf,#asst.mini .asIn,#asst.mini .asH>.upB,#asst.mini .asBtns{display:none}
 #asst.mini .asH{margin:0}#asst.mini .orb{width:76px;height:76px;margin:0}
+#asst .orb{width:min(26vh,200px);height:min(26vh,200px)}
+#asCv{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;display:none}
+#asst.gl #asCv{display:block}
+#asst.gl .orb{background:radial-gradient(circle,#040406 0,#07080b 68%,transparent 70%)}
+#asst.gl .orb::before,#asst.gl .orb::after,#asst.gl .orb i{display:none}
+#asst>.asBr{position:absolute;inset:16px;pointer-events:none;display:none;z-index:0;background:linear-gradient(var(--acc),var(--acc)) 0 0/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 0/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 0/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 0/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 100%/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 0 100%/2px 30px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/30px 2px no-repeat,linear-gradient(var(--acc),var(--acc)) 100% 100%/2px 30px no-repeat}
+#asst.full{position:fixed;inset:0;width:auto;height:auto;max-width:none;z-index:2147483000;border-radius:0;border:0;padding:30px 24px 24px;align-items:center;background:#06070a;backdrop-filter:none;-webkit-backdrop-filter:none;--text:#f2f2f4;--mut:#9a9aa8;--stroke:rgba(255,255,255,.13);--glass2:rgba(255,255,255,.05);--track:rgba(255,255,255,.08);color:#f2f2f4}
+#asst.full>.asBr{display:block}
+#asst.full .asH{margin:1vh 0 0}
+#asst.full .orb{width:min(54vh,540px);height:min(54vh,540px)}
+#asst.full .asT b{font-size:16px;letter-spacing:.38em}
+#asst.full .asT small{font-size:13.5px}
+#asst.full .asLog,#asst.full .asIn,#asst.full .asConf{width:min(740px,100%)}
+#asst.full .asLog{border-top:1px solid var(--stroke)}
+#asst.full .asIn input{background:rgba(255,255,255,.06);color:#f2f2f4;border-color:rgba(255,255,255,.16)}
 @media(max-width:1400px){body.as-dock aside{display:none}}
 @media(max-width:1020px){#asst:not(.mini){position:fixed;right:14px;top:14px;bottom:14px;z-index:90;height:auto}}`;document.head.appendChild(asCss);
 const AS={state:'idle',tok:0,hist:[],seen:{},cfg:Object.assign({speak:true,voice:'',mic:'',mode:'live',liveVoice:'Kore'},JSON.parse(localStorage.getItem('asst')||'{}')),stopRec:null,conf:null,onLvl:null};
@@ -939,12 +954,12 @@ const MICI='<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx=
 const asCfgSave=()=>localStorage.setItem('asst',JSON.stringify(AS.cfg));
 const asStateTxt={idle:['Hazır','Ctrl+Alt+Boşluk ile konuş ya da yaz'],listen:['Dinliyorum…','Konuş; susunca gönderirim'],think:['Düşünüyorum…',''],speak:['Konuşuyor',''],confirm:['Onayını bekliyorum','Evet / Hayır de ya da düğmeye bas'],err:['Bir sorun oldu','']};
 function asstState(s,sub){AS.state=s;if(s!='idle'){$('asst').classList.remove('mini');clearTimeout(asIdleT)}else asIdleArm();if(window._wkOn)invoke('wake_pause',{on:s!='idle'}).catch(()=>{});const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
-function asstLevel(r){const v=Math.min(.12,r*1.4);if(AS.state=='listen')$('asOrb').style.setProperty('--lvl',v.toFixed(3));if(AS.onLvl)AS.onLvl(r)}
+function asstLevel(r){const v=Math.min(.12,r*1.4);if(AS.state=='listen'){$('asOrb').style.setProperty('--lvl',v.toFixed(3));RX.lvlIn=Math.min(1,v/.12)}if(AS.onLvl)AS.onLvl(r)}
 function asstSay(who,text){const l=$('asLog'),d=document.createElement('div');d.className=who=='step'?'asS':'asM '+who;d.textContent=text;l.appendChild(d);while(l.children.length>40)l.firstChild.remove();l.scrollTop=l.scrollHeight}
 function asstWarm(){if(sel&&EXT.assistant)invoke('fs_index_warm',{email:sel}).catch(()=>{})}
-function asstOpen(){$('asst').classList.remove('hide','mini');asstWarm();asIdleArm()}
+function asstOpen(){$('asst').classList.remove('hide','mini');asstWarm();asIdleArm();try{asBoot()}catch(e){}}
 let asIdleT=0;function asIdleArm(){try{asIdleArm_()}catch(e){}}
-function asIdleArm_(){clearTimeout(asIdleT);if(AS.state=='idle'&&!LIVE.on&&!$('asst').classList.contains('hide')&&!$('asst').classList.contains('mini')&&!$('asIn').value)asIdleT=setTimeout(()=>{if(AS.state=='idle'&&!LIVE.on&&document.activeElement!==$('asIn'))$('asst').classList.add('mini')},20000)}
+function asIdleArm_(){clearTimeout(asIdleT);if(AS.state=='idle'&&!LIVE.on&&!$('asst').classList.contains('hide')&&!$('asst').classList.contains('mini')&&!$('asst').classList.contains('full')&&!$('asIn').value)asIdleT=setTimeout(()=>{if(AS.state=='idle'&&!LIVE.on&&document.activeElement!==$('asIn'))$('asst').classList.add('mini')},20000)}
 $('asMin').onclick=()=>$('asst').classList.add('mini');
 document.querySelector('.app').appendChild($('asst'));
 new MutationObserver(()=>{const a=$('asst');document.body.classList.toggle('as-dock',!a.classList.contains('hide')&&!a.classList.contains('mini'))}).observe($('asst'),{attributes:true,attributeFilter:['class']});
@@ -1368,6 +1383,7 @@ const HLP={
  apSize:['Boyut','Arayüzü büyütür ya da küçültür.','Yüksek çözünürlükte okunabilirlik için artır.'],
  apAcc:['Vurgu rengi','Marka/vurgu rengini değiştirir.','Renk tekerleği açılır; istediğin tonu seç.'],
  setQ:['Ayarlarda ara','Ayar adlarında ve açıklamalarında arar.','Birkaç harf yaz; eşleşen bölümler gelir.'],
+ asFull:['Tam ekran asistan','Asistanı tüm ekranı kaplayan Jarvis görünümüne alır.','Tıkla; çıkmak için Esc ya da aynı düğme.'],
  provAdd:['Sağlayıcı ekle','Yeni bir yapay zekâ ya da ses sağlayıcısı ekler.','Hazır şablonu seç (OpenRouter, NVIDIA, Groq, Ollama, VoiceStudio, ElevenLabs…), anahtarını yapıştır, Kaydet.'],
  provPreset:['Hazır şablon','Sık kullanılan sağlayıcıların adresini otomatik doldurur.','Listeden seç; adres ve ad kendiliğinden gelir.'],
  provName:['Sağlayıcı adı','Listede görünecek ad.','İstediğin gibi adlandır.'],
@@ -1427,6 +1443,59 @@ function hlpInit(){for(const id of Object.keys(HLP)){const el=document.getElemen
 document.addEventListener('scroll',hlpHide,true);
 window.HLP_IDS=()=>Object.keys(HLP);
 hlpInit();setTimeout(hlpInit,1500);
+
+/* ===== Jarvis reaktörü (WebGL2 kutupsal shader; kırmızı-siyah) ===== */
+const RXF=`#version 300 es
+precision highp float;in vec2 vUv;out vec4 o;
+uniform vec3 uColor,uHot;uniform float uLevel,uPhase,uOpen,uZoom,uIntensity;
+vec2 hash(vec2 p){p=vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3)));return -1.+2.*fract(sin(p)*43758.5453123);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);return mix(mix(dot(hash(i),f),dot(hash(i+vec2(1,0)),f-vec2(1,0)),u.x),mix(dot(hash(i+vec2(0,1)),f-vec2(0,1)),dot(hash(i+vec2(1,1)),f-vec2(1,1)),u.x),u.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.02;a*=.5;}return v;}
+float band(float r,float r0,float w){return exp(-pow((r-r0)/w,2.));}
+#define TAU 6.28318530718
+void main(){
+ vec2 p=(vUv*2.-1.)*uZoom;float r=length(p),a=atan(p.y,p.x);vec2 ring=vec2(cos(a),sin(a));
+ float wob=fbm(ring*2.6+vec2(uPhase*.22,0.))*.055,grain=fbm(ring*9.-vec2(uPhase*.4,0.))*.02;
+ float R=.74+wob+grain+uLevel*.03;
+ float erode=smoothstep(-.25,.35,fbm(ring*5.+vec2(uPhase*.5,3.)));
+ float outer=band(r,R,.03)*(.45+erode*.6),wall=band(r,R-.055,.02)*.5,edge=band(r,R+.004,.007)*(.5+uLevel*.45);
+ float speck=pow(max(fbm(ring*46.+vec2(uPhase*.15,11.)),0.),3.);
+ float dust=speck*band(r,R+.028,.055)*(1.4+uLevel);
+ float sweepA=mod(uPhase*.55,TAU);float dA=mod(a-sweepA+TAU+3.14159,TAU)-3.14159;
+ float wake=smoothstep(-2.6,-.15,dA)*(1.-smoothstep(0.,.22,dA));
+ float radar=wake*band(r,R-.02,.075)*(.55+uLevel*.45);
+ float lines=band(r,.615,.0035)*.45+band(r,.56,.003)*.28+band(r,.47,.0035)*.36;
+ float m1=(sin(a*96.+uPhase*.6)*.5+.5)*(sin(r*210.)*.5+.5),m2=(sin(a*60.-uPhase*.4)*.5+.5)*(sin(r*150.-uPhase)*.5+.5);
+ float core=smoothstep(.4,.36,r);
+ float coreTex=core*(.04+mix(m1,m2,.5)*.12)*(.55+uLevel*.9),coreEdge=band(r,.385,.01)*(.55+uLevel*.5);
+ float pulse=band(r,fract(uPhase*.08)*.4,.02)*core*.45,bloom=exp(-r*3.4)*(.16+uLevel*.34);
+ float v=outer+wall+edge+coreEdge+dust+radar+lines+coreTex+pulse+bloom;
+ vec3 col=mix(uColor,uHot,clamp(edge*1.3+radar*.7+pulse*.5+dust*.4,0.,1.));
+ v*=smoothstep(0.,.35,uOpen-r*.45);v*=uIntensity;
+ o=vec4(min(col*v,vec3(1.)),min(v,1.));}`;
+const RX={ok:false,gl:null,U:{},phase:0,lvl:0,lvlIn:0,open:0,last:0,c:[.88,.09,.18],h:[1,.82,.84],booted:0};
+const RXS={idle:['#e0182d','#ffd0d5',1,1],listen:['#ff2a3d','#ffe0e3',1.5,1.1],think:['#c8102e','#ffffff',3.4,1.15],speak:['#ff2a3d','#ffe0e3',1.9,1.15],confirm:['#e8a33a','#ffeccc',1.3,1.05],err:['#ff5a5a','#ffd0d0',.6,.9]};
+const rxHex=h=>[1,3,5].map(i=>parseInt(h.substr(i,2),16)/255);
+function rxInit(){try{const cv=$('asCv'),gl=cv.getContext('webgl2',{alpha:true,premultipliedAlpha:true,antialias:true});if(!gl)return;
+ const mk=(t,src)=>{const sh=gl.createShader(t);gl.shaderSource(sh,src);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(sh));return sh};
+ const pr=gl.createProgram();gl.attachShader(pr,mk(gl.VERTEX_SHADER,'#version 300 es\nin vec2 p;out vec2 vUv;void main(){vUv=p*.5+.5;gl_Position=vec4(p,0.,1.);}'));gl.attachShader(pr,mk(gl.FRAGMENT_SHADER,RXF));gl.linkProgram(pr);if(!gl.getProgramParameter(pr,gl.LINK_STATUS))throw new Error('link');
+ gl.useProgram(pr);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);const l=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(l);gl.vertexAttribPointer(l,2,gl.FLOAT,false,0,0);
+ ['uColor','uHot','uLevel','uPhase','uOpen','uZoom','uIntensity'].forEach(n=>RX.U[n]=gl.getUniformLocation(pr,n));gl.uniform1f(RX.U.uZoom,1.06);
+ RX.gl=gl;RX.ok=true;$('asst').classList.add('gl');requestAnimationFrame(rxFrame)}catch(e){RX.ok=false;$('asst').classList.remove('gl')}}
+function rxFrame(t){requestAnimationFrame(rxFrame);if(!RX.ok)return;const a=$('asst');if(a.classList.contains('hide')||document.hidden)return;
+ const dt=Math.min(.05,((t-RX.last)/1000)||.016);RX.last=t;const cv=$('asCv'),gl=RX.gl,d=Math.min(2,devicePixelRatio||1),w=Math.round(cv.clientWidth*d);if(!w)return;
+ if(cv.width!=w){cv.width=cv.height=w;gl.viewport(0,0,w,w)}
+ const S=RXS[AS.state]||RXS.idle;let tg=AS.state=='speak'?.36+.3*Math.abs(Math.sin(t/230))+.12*Math.sin(t/97):AS.state=='think'?.28:AS.state=='listen'?RX.lvlIn:.07+.05*Math.sin(t/900);
+ RX.lvl+=(tg-RX.lvl)*Math.min(1,dt*8);RX.phase+=dt*(.5+RX.lvl*.7)*S[2];RX.open+=(1-RX.open)*Math.min(1,dt*2.2);
+ const tc=rxHex(S[0]),th=rxHex(S[1]),k=Math.min(1,dt*3);for(let i=0;i<3;i++){RX.c[i]+=(tc[i]-RX.c[i])*k;RX.h[i]+=(th[i]-RX.h[i])*k}
+ gl.uniform3fv(RX.U.uColor,RX.c);gl.uniform3fv(RX.U.uHot,RX.h);gl.uniform1f(RX.U.uLevel,RX.lvl);gl.uniform1f(RX.U.uPhase,RX.phase);gl.uniform1f(RX.U.uOpen,RX.open);gl.uniform1f(RX.U.uIntensity,S[3]);
+ gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT);gl.drawArrays(gl.TRIANGLES,0,3)}
+function asBoot(){if(RX.booted)return;RX.booted=1;RX.open=0;const L=['ÇEKİRDEK BAŞLATILIYOR','SES DEVRESİ ÇEVRİMİÇİ','ARAÇLAR YÜKLENİYOR'];L.forEach((x,i)=>setTimeout(()=>{if(AS.state=='idle')$('asSub').textContent=x+'…'},i*520));setTimeout(()=>{if(AS.state=='idle')$('asSub').textContent=asStateTxt.idle[1]},L.length*520+200)}
+function asFullSet(on){const a=$('asst');a.classList.toggle('full',on);if(on)a.classList.remove('mini');$('asFull').textContent=on?'⤡':'⤢'}
+$('asFull').onclick=()=>asFullSet(!$('asst').classList.contains('full'));
+addEventListener('keydown',e=>{if(e.key=='Escape'&&$('asst').classList.contains('full')){asFullSet(false);e.stopPropagation()}},true);
+new MutationObserver(()=>{if($('asst').classList.contains('hide'))asFullSet(false)}).observe($('asst'),{attributes:true,attributeFilter:['class']});
+rxInit();
 
 /* ===== Çoklu yapay zekâ / ses sağlayıcıları ===== */
 let PV={providers:[],roles:{}};const PVR=()=>PV.roles||{};
