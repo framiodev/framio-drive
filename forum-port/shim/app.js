@@ -53,5 +53,9 @@ app.configure = function (f) {
   app.composer.body.attrs = {};
   if (app._discussion) app.composer.body.attrs.discussion = app._discussion;
 };
+app.setDiscussion = function (d) {
+  app._discussion = d ? new FDiscussion(d) : null;
+  if (app._discussion) app.composer.body.attrs.discussion = app._discussion; else delete app.composer.body.attrs.discussion;
+};
 export default app;
 export { FUser, FDiscussion };

@@ -3,9 +3,13 @@ import './net.js';
 import ModalManager from '../vendor/flarum-core/js/src/common/components/ModalManager';
 import AlertManager from '../vendor/flarum-core/js/src/common/components/AlertManager';
 import UploadButton from '../vendor/upload-exif/forum/components/UploadButton.js';
+import AttributeModal, { prefetchAi } from '../vendor/upload-exif/forum/components/AttributeModal.js';
+import WatermarkModal from '../vendor/upload-exif/forum/components/WatermarkModal.js';
+import TopicModal from './TopicModal.js';
 import CrosspostModal from '../vendor/crosspost/forum/components/CrosspostModal.tsx';
 
-let root = null, btn = null;
+let root = null, btn = null, hooks = {};
+let wrapped = false;
 const themed = [];
 const applyTheme = () => themed.forEach((e) => e.setAttribute('data-theme', document.documentElement.dataset.theme || 'dark'));
 
@@ -39,10 +43,30 @@ export async function configure(f) {
 }
 
 /** Forumun kendi "Fotoğraf Yükle" bileşenini verilen elemana basar */
-export function mountUpload(el, hooks) {
+/** Ana uygulama: başlık seçimi için kancalar { suggest(files), search(q), pick(item), onTopic(d) } */
+export function setHooks(h) { hooks = h || {}; }
+function wrapModal() {
+  if (wrapped) return; wrapped = true;
+  const orig = app.modal.show.bind(app.modal);
+  app.modal.show = (cls, attrs, stack) => {
+    // Yeni yükleme akışı: başlık her seferinde İmza'dan sonra (Künye'den önce) sorulur
+    if (cls === WatermarkModal) { app.setDiscussion(null); if (hooks.onTopic) hooks.onTopic(null); }
+    if (cls === AttributeModal && !app._discussion && hooks.pick) {
+      orig(TopicModal, {
+        hooks, files: attrs.files,
+        onpick: (d) => { app.setDiscussion(d); if (hooks.onTopic) hooks.onTopic(d); setTimeout(() => orig(cls, attrs, stack), 0); },
+        oncancel: () => { if (attrs.oncancel) attrs.oncancel(); },
+      });
+      return;
+    }
+    return orig(cls, attrs, stack);
+  };
+}
+export function mountUpload(el, h) {
   ensureRoot();
   el.classList.add('fl-scope'); themed.push(el); applyTheme();
-  app._onInsert = hooks.onInsert;
+  app._onInsert = h.onInsert;
+  wrapModal();
   m.mount(el, { view: () => m(UploadButton, { editor: app.composer.editor, oncreate: (v) => { btn = v.state; } }) });
 }
 
@@ -51,6 +75,11 @@ export function addFiles(files) {
   btn.process({ target: { files: Array.from(files) } });
 }
 
+export function openTopic() {
+  wrapModal();
+  app.modal.show(TopicModal, { hooks, files: [], onpick: (d) => { app.setDiscussion(d); if (hooks.onTopic) hooks.onTopic(d); }, oncancel: () => {} });
+}
+export const resolveAi = (file) => { const p = prefetchAi(file); return p ? p.then((r) => (r && r.data) || {}).catch(() => ({})) : Promise.resolve({}); };
 export const getPostAs = () => app.composer.body.attrs.framioPostAs || null;
 export const clearPostAs = () => { delete app.composer.body.attrs.framioPostAs; };
 export const getCrosspostIntent = () => window.__framioCrosspostIntent || null;

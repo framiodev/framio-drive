@@ -409,10 +409,8 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div id="shrItems" class="mut" style="margin-bottom:8px"></div>
         <div style="display:grid;grid-template-columns:1fr auto;gap:8px"><input id="shrPath" placeholder="Bilgisayardaki görselin yolu (sağ tık ile de eklenir)" style="margin:0"><button class="btn sm" id="shrAdd">Ekle</button></div></div></div>
       <div class="glass panel shr-gen" id="shrGen"><div class="mut" id="shrGenTx" style="margin-bottom:10px"></div><div class="acts" style="margin:0"><button class="btn pri" id="shrGenGo">Gönder</button></div></div>
-      <div class="glass panel shr-fo hide"><h2>Yanıt verilecek başlık <span>Forumdaki mevcut bir başlığa yanıt olarak paylaşılır</span></h2>
-        <div style="display:flex;gap:8px;align-items:center"><input id="shrQ" placeholder="Başlık ara ya da forum bağlantısını yapıştır" style="flex:1;margin:0"><button class="btn sm" id="shrFind">Ara</button></div>
-        <select id="shrSug" style="margin-top:8px"></select>
-        <div id="shrSel" class="mut" style="margin:8px 0 2px"></div></div>
+      <div class="glass panel shr-fo hide"><h2>Başlık <span>Fotoğraf eklenince İmza’dan sonra yapay zekâ başlık önerir; buradan da değiştirebilirsin</span></h2>
+        <div style="display:flex;gap:8px;align-items:center"><div id="shrSel" class="mut" style="flex:1">Henüz başlık seçilmedi.</div><button class="btn sm" id="shrPick">Başlığı seç / değiştir</button></div></div>
       <div class="glass panel shr-fo hide"><h2>Yanıt <span>Fotoğraflar forumun kendi yükleme penceresiyle eklenir; künye, imza, bilgi ve ortak paylaşım orada seçilir</span></h2>
         <div style="border:1px solid var(--stroke);border-radius:14px;background:var(--track);overflow:hidden">
           <div style="display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid var(--stroke)"><span id="frUp" class="fl-scope" style="background:transparent;display:inline-block;min-width:36px;min-height:32px"></span><span class="mut" id="frHint"></span></div>
@@ -1426,7 +1424,7 @@ const HLP={
  mbScan:['Sayfaları tara','Hesabına bağlı sayfaları listeler.','Giriş bilgilerini kaydettikten sonra kullan.'],
  mbAll:['Tümünü seç','Listedeki tüm sayfaları seçer.','Sonra “Seçilenleri ekle”.'],
  mbAdd:['Seçilenleri ekle','Seçili sayfaları uygulamaya ekler.','Önce sayfaları işaretle.'],
- shrQ:['Başlık ara','Yanıt vereceğin başlığı arar; forum bağlantısı da yapıştırabilirsin.','Birkaç kelime yaz ya da başlığın bağlantısını yapıştır.'],
+ shrPick:['Başlığı seç / değiştir','Yanıt vereceğin başlığı seçer.','Fotoğraf eklenince yapay zekâ başlık önerir; burada değiştirebilirsin.'],
  frText:['Yanıt','Forumda başlığa yazılacak yanıt metni.','Fotoğraf ekleyince künye kodları buraya yerleşir; metni dilediğin gibi düzenle.'],
 };
 const HLP_SKIP=new Set(['asYes','asNo','asIn','asMin','asX','hdGuideX','hdGuideGo','upd','vsl','mAppId','mSecret','mToken','mSave','mLong','mRef','mClr','mQ','mAsk','mWeb','pfSel','pfNew','pfDup','pfDel','pfName','pfPrompt','pfAddF','pfFile','pfFolder','pfReq','pfUnk','pfUnkV','pfSave','fall','forg','fdoc','fnew','freload','freveal','ftempty','shrForum','shrPath','shrAdd','shrGenGo','shrSug','shrRoute','shrFind','shrAi','shrWhen','shrAt','shrGo','shrOpen']);
@@ -2276,7 +2274,7 @@ async function pollOrg(){const l=await invoke('take_askorg');if(l.length){$('org
 /* ---------- Forumda paylaş: forumun kendi yükleme eklentisi (forum-port) ----------
    Fotoğraf yükleme, imza, künye, bilgi, özelleştirme ve ortak paylaşım pencereleri forumdaki eklentinin aynı kaynak kodudur
    (FramioForumPort). Uygulama yalnızca başlık seçimi, yanıt kutusu ve gönderimi yönetir. */
-let shrIt=[],shrMeta={},shrMetaAt={},shrBusy=false,shrTopic=null,shrUrl='',shrSugList=[],frMounted=false,frFid='';
+let shrIt=[],shrMeta={},shrMetaAt={},shrBusy=false,shrTopic=null,shrUrl='',frMounted=false,frFid='';
 const shrFo=()=>$('shrForum').value;
 const shrM=()=>shrMeta[shrFo()]||{};
 function shrThumbs(){shrIt.forEach(async x=>{if(x.th||x.thBusy)return;x.thBusy=1;try{x.th=await invoke('forum_thumb',{src:x.src,name:x.name});shrRender()}catch(e){x.thBusy=0}})}
@@ -2313,9 +2311,9 @@ async function shrInit(){let fl=[],all=[];try{all=await invoke('forum_list');fl=
 async function shrLoadMeta(){const id=shrFo();if(!id)return;
  if(!shrMeta[id]||Date.now()-(shrMetaAt[id]||0)>300000){try{shrMeta[id]=await invoke('forum_meta',{id});shrMetaAt[id]=Date.now()}catch(e){toast(String(e),true);return}}
  await frConfigure()}
-$('shrForum').onchange=()=>{shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';$('shrSel').textContent='';frFid='';shrLoadMeta()};
+$('shrForum').onchange=()=>{shrTopic=null;$('shrSel').textContent='Henüz başlık seçilmedi.';frFid='';shrLoadMeta()};
 /* Forum paketini seçili forum + başlıkla yapılandır (oturum kullanıcısı, başlığın etiketleri, ağ desteği) */
-function frMount(){if(frMounted)return true;try{if(typeof FramioForumPort=='undefined')throw new Error('forum-port.js yüklenemedi');FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true;return true}catch(e){$('frHint').textContent='Yükleme düğmesi kurulamadı: '+(e&&e.message||e)+' | '+String(e&&e.stack||'').split('\n').slice(1,5).map(x=>x.trim().replace(/\(.*[\\/]/,'(')).join(' ← ');return false}}
+function frMount(){if(frMounted)return true;try{if(typeof FramioForumPort=='undefined')throw new Error('forum-port.js yüklenemedi');FramioForumPort.setHooks(frHooks());FramioForumPort.mountUpload($('frUp'),{onInsert:frInsert});frMounted=true;return true}catch(e){$('frHint').textContent='Yükleme düğmesi kurulamadı: '+(e&&e.message||e)+' | '+String(e&&e.stack||'').split('\n').slice(1,5).map(x=>x.trim().replace(/\(.*[\\/]/,'(')).join(' ← ');return false}}
 async function frConfigure(){const id=shrFo(),m=shrM(),t=shrTopic;if(!id)return;if(!frMount())return;
  if(!m.base){$('frHint').textContent='Forum bilgisi alınamadı';return}
  let tags=[];if(t){try{tags=(await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})).map(x=>x.slug)}catch(e){}}
@@ -2329,18 +2327,15 @@ let frFlushing=false;
 async function frFlush(){if(frFlushing||!shrIt.length||shrDest!='forum'||!frFid)return;frFlushing=true;try{
   const files=[];for(const x of shrIt){const b=await invoke('forum_file_bytes',{src:x.src,name:x.name});const ext=(x.name.split('.').pop()||'jpg').toLowerCase();files.push(new File([b],x.name,{type:ext=='png'?'image/png':ext=='webp'?'image/webp':'image/jpeg'}))}
   shrIt=[];shrRender();FramioForumPort.addFiles(files)}catch(e){toast(String(e&&e.message||e),true)}frFlushing=false}
-/* Başlık seçimi: arama ya da forum bağlantısı */
-function shrSug(list){shrSugList=list||[];$('shrSug').innerHTML=shrSugList.length?shrSugList.map((s,i)=>`<option value="${i}">${esc(s.title)}</option>`).join(''):'<option value="">Başlık bulunamadı</option>';
- shrTopic=shrSugList[0]||null;if(shrSugList.length)$('shrSug').value=0;shrTopicSet()}
-function shrTopicSet(){$('shrSel').textContent=shrTopic?'Yanıt verilecek: '+shrTopic.title:'';frConfigure()}
-$('shrSug').onchange=()=>{shrTopic=shrSugList[+$('shrSug').value]||null;shrTopicSet()};
-async function shrFindRun(){const q=$('shrQ').value.trim();if(!q)return;const id=shrFo();
- try{const mm=q.match(/\/d\/(\d+)/);
-  if(mm){const r=await invoke('forum_req',{id,method:'GET',path:'/api/discussions/'+mm[1]});shrSug([{discussion_id:mm[1],title:r.data.attributes.title,url:r.data.attributes.shareUrl}])}
-  else shrSug(await invoke('forum_find_topic',{id,q}))}catch(e){toast(String(e),true)}}
-$('shrFind').onclick=shrFindRun;
-$('shrQ').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(shrQt);shrFindRun()}};
-let shrQt=0,shrQn=0;$('shrQ').oninput=()=>{clearTimeout(shrQt);const q=$('shrQ').value.trim();if(q.length<2||/\/d\/\d+/.test(q))return;shrQt=setTimeout(async()=>{const n=++shrQn;try{const r=await invoke('forum_find_topic',{id:shrFo(),q});if(n==shrQn)shrSug(r)}catch(e){}},300)};
+/* Başlık seçimi: forumun yükleme akışında İmza'dan sonra (Künye'den önce) açılan pencere; kancalar forum-port'a verilir */
+function frHooks(){return {
+ suggest:async files=>{if(!files||!files.length)return [];const f=(await FramioForumPort.resolveAi(files[0]))||{};try{return await invoke('forum_route',{id:shrFo(),fields:f,hint:files[0].name})||[]}catch(e){return []}},
+ search:async q=>{const id=shrFo(),mm=q.match(/\/d\/(\d+)/);
+  if(mm){const r=await invoke('forum_req',{id,method:'GET',path:'/api/discussions/'+mm[1]});return [{discussion_id:mm[1],title:r.data.attributes.title,url:r.data.attributes.shareUrl}]}
+  return await invoke('forum_find_topic',{id,q})},
+ pick:async it=>{let tags=[];try{tags=(await invoke('forum_topic_tags',{id:shrFo(),discussionId:String(it.discussion_id)})).map(x=>x.slug)}catch(e){}return {id:it.discussion_id,title:it.title,tags}},
+ onTopic:d=>{shrTopic=d?{discussion_id:d.id,title:d.title}:null;$('shrSel').textContent=d?'Yanıt verilecek: '+d.title:'Henüz başlık seçilmedi.'}}}
+$('shrPick').onclick=()=>{if(!frFid){toast('Forum hazırlanıyor, birazdan dene',true);return}FramioForumPort.openTopic()};
 $('shrWhen').onchange=()=>$('shrAt').classList.toggle('hide',$('shrWhen').value!='later');
 /* Gönder: yalnız yanıt. Yayın/taslak/zamanlama forumun uçlarıyla; yayın sonrası ortak paylaşım niyeti uygulanır */
 $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo(),t=shrTopic,text=$('frText').value.trim();
@@ -2355,7 +2350,7 @@ $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo(),t=shrTopic,text=
    const r=await P.request({method:'POST',url:P.apiUrl()+'/posts',body:{data:{type:'posts',attributes:attrs,relationships:rel}}});
    const n=r&&r.data&&r.data.attributes&&r.data.attributes.number;shrUrl=m_url(t,n);P.clearPostAs();await P.applyCrosspost(r);
    $('shrMsg').textContent='Paylaşıldı ✓';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
-  $('shrBar').style.width='100%';$('frText').value=''}
+  $('shrBar').style.width='100%';$('frText').value='';shrTopic=null;$('shrSel').textContent='Henüz başlık seçilmedi.';frFid='';frConfigure()}
  catch(e){$('shrBar').style.width='0';$('shrMsg').textContent='';toast(e&&e.response?'Gönderilemedi (HTTP '+e.status+')':String(e&&e.message||e),true)}
  shrBusy=false;$('shrGo').disabled=false};
 const m_url=(t,n)=>(shrM().base||'')+'/d/'+t.discussion_id+(n?'/'+n:'');
