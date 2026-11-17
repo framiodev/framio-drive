@@ -309,6 +309,7 @@ select option{background:#222;color:#fff}
 .wmctl{display:flex;flex-direction:column;gap:8px}.wmctl input[type=range]{width:100%;margin:0;padding:0;accent-color:var(--acc)}.wmctl label{display:flex;justify-content:space-between}
 .wmpos{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:108px}.wmpos b{height:24px;border-radius:7px;background:var(--track);cursor:pointer;transition:background .2s,transform .2s var(--ease)}.wmpos b:hover{transform:scale(1.08)}.wmpos b.on{background:var(--acc)}
 @media (max-width:760px){.wmg{grid-template-columns:1fr}}
+#asstBtn.wk{box-shadow:0 0 0 2px var(--acc)}
 </style></head><body>
 <div class="blobs"><i></i><i></i><i></i></div>
 <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--acc)"/><stop offset="1" style="stop-color:var(--acc2)"/></linearGradient></defs></svg>
@@ -445,7 +446,12 @@ select option{background:#222;color:#fff}
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><select id="asVoice" style="flex:1;min-width:180px"></select><select id="asMicSel" style="flex:1;min-width:180px"></select></div>
         <div class="acts"><button class="btn pri" id="asOpen">Asistanı aç</button><button class="btn" id="asTest">Mikrofonu dene</button></div>
         <div class="asMeter hide"><i id="asMeter"></i></div>
-        <div class="mut" style="margin-top:10px;line-height:1.5">Mikrofon yalnızca sen konuşturunca açılır; ses sadece o sırada Gemini’ye gönderilir ve saklanmaz. Silme, geri yükleme ve yükleme komutlarında her seferinde onay istenir. Uyandırma kelimesi (kendi kelimeni kaydetme) sonraki sürümde gelecek.</div></div>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(128,128,128,.25)"><b>Uyandırma kelimesi</b>
+          <div class="mut" id="awSt" style="margin:6px 0;line-height:1.5"></div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><input id="awName" placeholder="Kelimeni yaz (örn. Hey Framio)" style="flex:1;min-width:180px"><button class="btn" id="awRec">Örnek kaydet</button><button class="btn pri" id="awBuild" disabled>Kelimeyi oluştur</button><button class="btn" id="awReset">Örnekleri sıfırla</button></div>
+          <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="awOn" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Uyandırma kelimesiyle dinle</label>
+          <div style="display:flex;gap:10px;align-items:center;margin-top:8px"><span class="mut">Hassasiyet</span><input type="range" id="awSens" min="1" max="5" value="3" style="flex:1;max-width:240px"><span class="mut" id="awSensV">3</span><button class="btn danger hide" id="awDel">Kelimeyi sil</button></div></div>
+        <div class="mut" style="margin-top:10px;line-height:1.5">Mikrofon yalnızca sen konuşturunca açılır; ses sadece o sırada Gemini’ye gönderilir ve saklanmaz. Silme, geri yükleme ve yükleme komutlarında her seferinde onay istenir. Uyandırma kelimesi açıkken mikrofon bu bilgisayarda sürekli dinlenir ama ses cihazdan çıkmaz ve saklanmaz; yalnızca kelimen duyulunca asistan açılır ve komutun Gemini’ye gider. Yanlış tetiklenirse hassasiyeti düşür.</div></div>
       <div class="glass panel"><h2>Filigran kitaplığı <span>İmzalarını toplu ekle, klasörle ve adlandır</span></h2>
         <div class="acts" style="margin-top:0"><button class="btn pri" id="wmMg">İmza yöneticisini aç</button><button class="btn" id="wmDirOpen">Klasörü aç</button></div></div>
       <div class="glass panel"><h2>Hesap</h2>
@@ -718,7 +724,7 @@ const XIC={assistant:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M
 const xIc=x=>x.builtin&&XIC[x.id]?`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${XIC[x.id]}</svg>`:esc((x.name||'?').trim().charAt(0).toUpperCase());
 async function loadExt(){let l=[];try{l=await invoke('ext_list')}catch(e){}EXT={};l.forEach(x=>EXT[x.id]=x.enabled);
  $('forumPanel').classList.toggle('hide',!EXT.forum);
- $('asstBtn').classList.toggle('hide',!EXT.assistant);$('asstPanel').classList.toggle('hide',!EXT.assistant);if(window._hkOn!==!!EXT.assistant){window._hkOn=!!EXT.assistant;if(EXT.assistant)setTimeout(asstWarm,4000);invoke('assistant_hotkey',{on:!!EXT.assistant}).catch(e=>{window._hkOn=null;if(EXT.assistant)toast(String(e),true)});}if(!EXT.assistant&&!$('asst').classList.contains('hide'))asstClose();
+ $('asstBtn').classList.toggle('hide',!EXT.assistant);$('asstPanel').classList.toggle('hide',!EXT.assistant);if(window._hkOn!==!!EXT.assistant){window._hkOn=!!EXT.assistant;if(EXT.assistant)setTimeout(asstWarm,4000);setTimeout(awApply,500);invoke('assistant_hotkey',{on:!!EXT.assistant}).catch(e=>{window._hkOn=null;if(EXT.assistant)toast(String(e),true)});}if(!EXT.assistant&&!$('asst').classList.contains('hide'))asstClose();
  const mt=document.querySelector('#tabs a[data-t=meta]');if(mt){mt.classList.toggle('hide',!EXT.meta);if(!EXT.meta&&tab=='meta')setTab('files')}
  const on=l.filter(x=>x.enabled).length,tp=l.filter(x=>!x.builtin).length;
  $('extSum').textContent=`${l.length} eklenti · ${on} etkin`+(tp?` · ${tp} üçüncü taraf`:'')}
@@ -810,7 +816,7 @@ const AS={state:'idle',tok:0,hist:[],seen:{},cfg:Object.assign({speak:true,voice
 const MICI='<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>';
 const asCfgSave=()=>localStorage.setItem('asst',JSON.stringify(AS.cfg));
 const asStateTxt={idle:['Hazır','Ctrl+Alt+Boşluk ile konuş ya da yaz'],listen:['Dinliyorum…','Konuş; susunca gönderirim'],think:['Düşünüyorum…',''],speak:['Konuşuyor',''],confirm:['Onayını bekliyorum','Evet / Hayır de ya da düğmeye bas'],err:['Bir sorun oldu','']};
-function asstState(s,sub){AS.state=s;const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
+function asstState(s,sub){AS.state=s;if(window._wkOn)invoke('wake_pause',{on:s!='idle'}).catch(()=>{});const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
 function asstLevel(r){const v=Math.min(.12,r*1.4);if(AS.state=='listen')$('asOrb').style.setProperty('--lvl',v.toFixed(3));if(AS.onLvl)AS.onLvl(r)}
 function asstSay(who,text){const l=$('asLog'),d=document.createElement('div');d.className=who=='step'?'asS':'asM '+who;d.textContent=text;l.appendChild(d);while(l.children.length>40)l.firstChild.remove();l.scrollTop=l.scrollHeight}
 function asstWarm(){if(sel&&EXT.assistant)invoke('fs_index_warm',{email:sel}).catch(()=>{})}
@@ -953,6 +959,21 @@ case'dosya_bul':{need();step('Aranıyor: '+(a.sorgu||a.uzanti||'son değişenler
   step((a.ac?'Açılıyor: ':'Kapatılıyor: ')+x.name);await invoke('ext_set',{id:x.id,on:!!a.ac});await loadExt();return{tamam:true,eklenti:x.name,durum:a.ac?'açık':'kapalı'}}}
  return{hata:'Bilinmeyen araç'}}
 /* --- arayüz bağlama --- */
+function awApply(){const on=!!(EXT.assistant&&AS.cfg.wake);if(!on&&!window._wkOn)return;window._wkOn=on;$('asstBtn').classList.toggle('wk',on);
+ invoke('wake_set',{on,sens:AS.cfg.wakeSens||3}).catch(e=>{window._wkOn=false;$('asstBtn').classList.remove('wk');AS.cfg.wake=false;asCfgSave();$('awOn').checked=false;toast(String(e),true)})}
+async function awRefresh(msg){let s;try{s=await invoke('wake_status')}catch(e){return}
+ $('awSt').textContent=msg||(s.has_word?`Kayıtlı kelime: “${s.name}”.`:(s.samples?`${s.samples} örnek kaydedildi (en az 3, ideali 5).`:'Henüz kelime yok. Kelimeni sessiz ortamda, normal sesinle 3-5 kez kaydet.'));
+ $('awBuild').disabled=s.samples<3;$('awDel').classList.toggle('hide',!s.has_word);$('awOn').disabled=!s.has_word;$('awOn').checked=!!AS.cfg.wake&&s.has_word;$('awSens').value=AS.cfg.wakeSens||3;$('awSensV').textContent=AS.cfg.wakeSens||3}
+function asstBeep(){try{const c=new(window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+.12);setTimeout(()=>c.close(),400)}catch(e){}}
+$('awRec').onclick=async()=>{const b=$('awRec');b.disabled=true;$('awSt').textContent='Dinliyorum… şimdi kelimeni söyle';let m;try{const r=await invoke('wake_record_sample');m=`Örnek ${r.count} alındı (${r.ms} ms). ${r.count<3?'Birkaç kez daha söyle.':'Yeterli; “Kelimeyi oluştur”a basabilirsin ya da bir-iki örnek daha ekle.'}`}catch(e){m=String(e)}b.disabled=false;awRefresh(m)};
+$('awBuild').onclick=async()=>{const n=$('awName').value.trim();if(!n){toast('Kelimene bir ad yaz',true);return}try{await invoke('wake_build',{name:n});toast('Kelime oluşturuldu');awRefresh()}catch(e){toast(String(e),true)}};
+$('awReset').onclick=async()=>{await invoke('wake_clear_samples');awRefresh()};
+$('awDel').onclick=async()=>{await invoke('wake_clear_word');AS.cfg.wake=false;asCfgSave();window._wkOn=false;$('asstBtn').classList.remove('wk');awRefresh()};
+$('awOn').onchange=()=>{AS.cfg.wake=$('awOn').checked;asCfgSave();awApply()};
+$('awSens').oninput=()=>{$('awSensV').textContent=$('awSens').value};
+$('awSens').onchange=()=>{AS.cfg.wakeSens=+$('awSens').value;asCfgSave();if(window._wkOn){window._wkOn=false;awApply()}};
+window.__TAURI__.event.listen('assistant-wake',()=>{if(EXT.assistant&&AS.cfg.wake&&AS.state=='idle'){asstBeep();asstOpen();asstStart()}});
+awRefresh();
 $('asX').onclick=asstClose;$('asGo').onclick=asstToggle;$('asstBtn').onclick=asstToggle;
 function asLocal(t){const x=t.toLocaleLowerCase('tr').replace(/[.!?]+$/,'').trim();let m;
  if(/^çöp kutusunu? (aç|göster)$/.test(x))return['cop_kutusunu_goster',{}];
