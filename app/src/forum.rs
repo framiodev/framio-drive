@@ -318,17 +318,49 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
         }
         blocks.push((set_alt(&code, &str_of(&it["alt"])), str_of(&it["kunye"])));
     }
-    // Hepsinin künyesi aynıysa görseller art arda, sonda tek künye; farklıysa her görselin altında kendi künyesi
+    // Forumdaki finishProcess ile aynı birleştirme: künye (tek/birden çok), fotoğrafa özel Info, gönderi geneli "Meraklısına Info"
+    let infos = req["info"].as_array().cloned().unwrap_or_default();
+    let photo_infos: Vec<&Value> = infos.iter().filter(|x| x["scope"] == "photos" && x["photos"].as_array().map(|a| !a.is_empty()).unwrap_or(false)).collect();
+    let last_photo = |x: &Value| x["photos"].as_array().map(|a| a.iter().filter_map(|v| v.as_i64()).max().unwrap_or(-1)).unwrap_or(-1);
+    let general = infos.iter().filter(|x| x["scope"] != "photos").map(|x| str_of(&x["formatted"])).filter(|t| !t.is_empty()).collect::<Vec<_>>().join("\n>\n");
     let same = blocks.iter().all(|b| b.1 == blocks[0].1);
-    let content = if same {
+    let mut content = if same {
         let k = &blocks[0].1;
-        format!("{}{}\n", blocks.iter().map(|b| b.0.clone()).collect::<Vec<_>>().join("\n"), if k.is_empty() { String::new() } else { format!("\n\n{k}") })
+        let mut t = blocks.iter().map(|b| b.0.clone()).collect::<Vec<_>>().join("\n");
+        if !k.is_empty() { t.push('\n'); t.push_str(k); }
+        for x in &photo_infos { t.push_str("\n\n"); t.push_str(&str_of(&x["formatted"])); }
+        t
     } else {
-        format!("{}\n", blocks.iter().map(|b| if b.1.is_empty() { b.0.clone() } else { format!("{}\n{}", b.0, b.1) }).collect::<Vec<_>>().join("\n\n"))
+        blocks.iter().enumerate().map(|(i, b)| {
+            let mut t = if b.1.is_empty() { b.0.clone() } else { format!("{}\n{}", b.0, b.1) };
+            for x in photo_infos.iter().filter(|x| last_photo(x) == i as i64) { t.push_str("\n\n"); t.push_str(&str_of(&x["formatted"])); }
+            t
+        }).collect::<Vec<_>>().join("\n\n")
     };
+    if general.trim().is_empty() { content.push('\n'); }
+    else {
+        content.push_str("\n\n> **Meraklısına Info**\n>\n");
+        content.push_str(&general.split('\n').map(|l| format!("> {l}")).collect::<Vec<_>>().join("\n"));
+        content.push('\n');
+    }
+    // Müzik / konum: görsellerin özel verisi (forumda yayın sırasında PATCH edilir)
+    for (i, it) in items.iter().enumerate() {
+        if it["music"].is_null() && it["gps"].is_null() { continue; }
+        let iid = attr_of(&blocks[i].0, "id");
+        if iid.is_empty() { continue; }
+        let _ = drivenet::forum::call(&base, &tok, "PATCH", &format!("/api/framio-media/image/{iid}/custom-data"), Some(json!({ "custom_music": it["music"], "custom_gps": it["gps"] }))).await;
+    }
     let label = items.iter().filter_map(|i| i["alt"].as_str()).find(|a| !a.is_empty()).map(|s| s.to_string()).unwrap_or_else(|| name_of(&items));
     let publish_at = str_of(&req["publish_at"]);
     let learn_all = |topic: &str| items.iter().map(|it| json!({ "plate": it["fields"]["plate"], "brand": it["fields"]["brand"], "model": it["fields"]["model"], "company": it["fields"]["company"], "discussion_id": topic })).collect::<Vec<_>>();
+    if req["draft"].as_bool() == Some(true) {
+        let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Taslak kaydediliyor…" }));
+        let title = str_of(&req["draftTitle"]);
+        let d = drivenet::forum::call(&base, &tok, "POST", "/api/drafts", Some(json!({ "data": { "type": "drafts", "attributes": {
+            "title": if title.is_empty() { label.clone() } else { title }, "content": content,
+            "relationships": { "discussion": { "data": { "type": "discussions", "id": topic } } }, "extra": {} } } }))).await?;
+        return Ok(json!({ "draft": true, "id": d["data"]["id"], "count": total }));
+    }
     if !publish_at.is_empty() {
         let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Zamanlanıyor…" }));
         let r = drivenet::forum::call(&base, &tok, "POST", "/api/framio-assistant/schedule", Some(json!({ "items": [{

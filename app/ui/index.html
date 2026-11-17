@@ -419,7 +419,7 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div id="shrForm"></div>
         <div class="acts"><button class="btn" id="shrAi">Yapay zekâ ile yeniden oku</button><button class="btn" id="shrCopy">Künyeyi diğer karelere uygula</button><span class="mut" id="shrAiMsg"></span></div></div>
       <div class="glass panel shr-fo hide"><h2>Zamanlama ve ağ <span>Hemen yayınla ya da planla; istersen ağdaki diğer forumlara da aktar</span></h2>
-        <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option></select><input id="shrAt" type="datetime-local" class="hide"></div>
+        <div style="display:grid;grid-template-columns:200px 1fr;gap:8px"><select id="shrWhen"><option value="now">Hemen yayınla</option><option value="later">Zamanla</option><option value="draft">Taslak olarak kaydet</option></select><input id="shrAt" type="datetime-local" class="hide"></div>
         <div class="mut" style="margin:8px 0 4px">Ağa aktar (başlık seçilince gelir)</div><div id="shrNodes" class="mut">Henüz başlık seçilmedi.</div></div>
       <div class="glass panel shr-fo hide"><h2>Gönderi</h2>
         <div class="mut" style="margin:0 0 4px">Gönderi önizlemesi</div><pre id="shrPrev" style="white-space:pre-wrap;background:var(--track);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;font:12.5px Consolas,monospace;margin:0 0 10px"></pre>
@@ -2509,11 +2509,12 @@ const KMCSS=`.KmCap{display:flex;gap:6px;margin:10px 0}.KmCap button{flex:1;heig
 .KmAi{margin-bottom:12px}.KmAi-top{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted-color);margin-bottom:5px}.KmAi-bar{height:6px;border-radius:99px;background:var(--control-bg);overflow:hidden}.KmAi-bar i{display:block;height:100%;background:var(--primary-color);transition:width .3s}
 .KmBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.KmBtns .btn{height:42px;font-weight:700}.KmBtns .full{grid-column:1/3}
 .KmBack{margin-top:8px;border:0;background:none;color:var(--muted-color);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;width:100%}
+.KmChip{padding:6px 12px;border-radius:999px;border:1px solid var(--control-bg);background:var(--body-bg);color:var(--muted-color);font:inherit;font-size:12px;font-weight:600;cursor:pointer}.KmChip.on{background:var(--text-color);color:var(--bg)}
 .KmBox{margin-top:14px;padding:10px 12px;border:1px solid var(--control-bg);border-radius:10px;font-size:12px}`;
 function kmOpen(){if(shrDest!='forum'||document.querySelector('.KunyeModal')||!shrIt.length)return;
  if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
  if(!document.getElementById('kmCss')){const s=document.createElement('style');s.id='kmCss';s.textContent=KMCSS;document.head.appendChild(s)}
- shrNoK=false;KM={one:false,box:document.createElement('div')};KM.box.className='modal';document.body.appendChild(KM.box);
+ shrNoK=false;KM={one:shrOneMode,box:document.createElement('div')};KM.box.className='modal';document.body.appendChild(KM.box);
  KM.key=e=>{if(e.key=='Escape'){kmClose();e.stopPropagation()}};document.addEventListener('keydown',KM.key,true);
  KM.box.addEventListener('click',kmClick);KM.box.addEventListener('input',shrFormIn);KM.box.addEventListener('change',shrFormCh);
  kmRender()}
@@ -2533,20 +2534,93 @@ function kmRender(){if(!KM)return;const n=shrIt.length;if(!n){kmClose();return}i
  ${n>1?`<div class="KmCap"><button data-a="kone" class="${KM.one?'on':''}">Tek Açıklama</button><button data-a="kmany" class="${KM.one?'':'on'}">Birden Çok</button></div>`:''}
  <div class="WmPick-strip"><div class="WmPick-thumbs" id="kmStrip">${kmThumbs()}</div></div></div>
  <div class="Watermark-Right"><div class="KmAi" id="kmAi">${kmAiHtml()}</div><div id="kmForm"></div>
- ${typeof shrCustOpen=='function'?`<div class="KmBox"><b>Gönderi Özelleştirme</b><div style="margin-top:6px"><button class="btn sm" data-a="kcust">Müzik · Konum…</button></div></div>`:''}
+ ${typeof shrCustOpen=='function'?`<div class="KmBox"><b>Gönderi Özelleştirme</b><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"><button class="btn sm" data-a="kcust">Müzik · Konum…</button>${shrCustTags().map(t=>`<span class="KmChip on">${esc(t)}</span>`).join('')}</div></div>`:''}
  <div class="KmBtns">${hasX?'<button class="btn" data-a="kcross">Ortak Paylaş</button>':''}${hasI?'<button class="btn" data-a="kinfo">Info Ekle</button>':''}<button class="btn" data-a="knok">Künye Ekleme</button><button class="btn pri" data-a="kok">Bilgileri Onayla</button></div>
  <button class="KmBack" data-a="kback">Yüklemeyi İptal Et ve Geri Dön</button></div></div></div>`;
  shrFormRender()}
 async function kmClick(e){const b=e.target.closest('[data-a]');if(!b||!KM)return;const a=b.dataset.a;
  if(a=='kclose')return kmClose();
  if(a=='ksel'){shrSelI=+b.dataset.i;return kmRender()}
- if(a=='kone'){KM.one=true;const s=shrIt[shrSelI];if(s)shrIt.forEach(z=>{if(z!==s)['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){z.f[k]=s.f[k];z.dirty[k]=1}})});shrPrevUp();return kmRender()}
- if(a=='kmany'){KM.one=false;return kmRender()}
+ if(a=='kone'){KM.one=shrOneMode=true;const s=shrIt[shrSelI];if(s)shrIt.forEach(z=>{if(z!==s)['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){z.f[k]=s.f[k];z.dirty[k]=1}})});shrPrevUp();return kmRender()}
+ if(a=='kmany'){KM.one=shrOneMode=false;return kmRender()}
  if(a=='knok'){shrNoK=true;kmClose();shrPrevUp();return toast('Künye eklenmeyecek')}
  if(a=='kok'){shrNoK=false;kmClose();shrPrevUp();return toast('Künye onaylandı')}
  if(a=='kinfo')return shrInfoOpen();if(a=='kcross')return shrCrossOpen();if(a=='kcust')return shrCustOpen();
  if(a=='kback'){const id=shrFo();for(const x of shrIt){const m=x.up&&x.up.bbcode&&/\bid="?(\d+)/.exec(x.up.bbcode);if(m){try{await invoke('forum_req',{id,method:'DELETE',path:'/api/framio-media/image/'+m[1]})}catch(er){}}x.up=null;x.wmDone=0;x.asked=0}
   kmClose();shrWmOpen(shrIt.slice())}}
+
+/* ---- v0.48: Info Ekle, Gönderi Özelleştirme (müzik/konum), Ortak Paylaş (ağa aktar) modalları ---- */
+let shrInfo=[],shrCust={music:null,gps:null,per:null},shrOneMode=false,SUB=null;
+function subOpen(cls,title,body,foot){if(SUB)subClose();if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
+ if(!document.getElementById('kmCss')){const s=document.createElement('style');s.id='kmCss';s.textContent=KMCSS;document.head.appendChild(s)}
+ const b=document.createElement('div');b.className='modal';b.innerHTML=`<div class="glass WatermarkModal ${cls}" style="max-width:760px;width:min(760px,94vw)"><div class="WmHead"><div class="WmTitle">${title}</div><button class="WmX" data-s="x">✕</button></div><div style="padding:16px 20px;overflow:auto;max-height:72vh" id="subBody"></div></div>`;
+ document.body.appendChild(b);SUB={box:b,cls,foot};b.addEventListener('click',e=>{const t=e.target.closest('[data-s]');if(t&&t.dataset.s=='x')foot&&foot();});return b}
+function subClose(){if(!SUB)return;try{if(SUB.audio){SUB.audio.pause()}}catch(e){}SUB.box.remove();SUB=null}
+const infoFmt=e=>{const q=e.text.split('\n').map(l=>'> '+l).join('\n');return e.scope=='all'?`> [b][i]T R I V I A[/i][/b]\n> \n${q}`:`> **📷 Fotoğraf ${e.photos.map(p=>p+1).join(', ')} · Meraklısına Info**\n>\n${q}`};
+const shrInfoResult=()=>shrInfo.filter(e=>e.text.trim()&&(e.scope=='all'||e.photos.length)).map(e=>({scope:e.scope,photos:[...e.photos],text:e.text,formatted:infoFmt(e)}));
+function shrInfoOpen(){kmClose();const multi=shrIt.length>1;let act=0;const E=shrInfo.length?shrInfo.map(e=>({...e,photos:[...e.photos]})):[{scope:'all',photos:[],text:''}];
+ const done=()=>{shrInfo=E;subClose();shrPrevUp();kmOpen()};
+ const b=subOpen('InfoModal','Info Ekle',null,done);const body=b.querySelector('#subBody');
+ const wrap=(t,a)=>{const ta=body.querySelector('#infoTa'),e=E[act],s0=ta.selectionStart,s1=ta.selectionEnd;e.text=e.text.slice(0,s0)+t+e.text.slice(s0,s1)+a+e.text.slice(s1);draw();const n=body.querySelector('#infoTa');n.focus();n.setSelectionRange(s0+t.length,s1+t.length)};
+ const FM={bold:['[b]','[/b]'],italic:['[i]','[/i]'],strike:['[s]','[/s]'],url:['[url]','[/url]'],quote:['[quote]','[/quote]'],code:['[code]','[/code]'],list:['[list]\n[*]','\n[/list]'],num:['[list=1]\n[*]','\n[/list]']};
+ function draw(){const e=E[act];const lab=(x,i)=>x.scope=='all'?`Info ${i+1} · Tüm gönderi`:`Info ${i+1} · ${x.photos.length?'Fotoğraf '+x.photos.map(p=>p+1).join(', '):'fotoğraf seçilmedi'}`;
+  body.innerHTML=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">${E.map((x,i)=>`<button class="KmChip${i==act?' on':''}" data-i="${i}">${esc(lab(x,i))}${E.length>1?` <span data-del="${i}" title="Kaldır">✕</span>`:''}</button>`).join('')}<button class="KmChip" data-add="1">＋ Info ekle</button></div>
+  ${multi?`<div class="KmBox" style="margin:0 0 12px"><b>Bu Info nereye ait?</b> <span class="KmCap" style="display:inline-flex;margin:0 0 0 8px"><button data-sc="all" class="${e.scope=='all'?'on':''}">Tüm gönderi</button><button data-sc="photos" class="${e.scope=='photos'?'on':''}">Seçilen fotoğraflar</button></span>${e.scope=='photos'?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${shrIt.map((x,i)=>`<div data-ph="${i}" style="position:relative;width:72px;height:54px;border-radius:8px;overflow:hidden;cursor:pointer;border:${e.photos.includes(i)?'3px solid var(--primary-color,#b0102a)':'1px solid #cbd5e1'};opacity:${e.photos.includes(i)?1:.65}"><img src="${x.th||''}" style="width:100%;height:100%;object-fit:cover"><span style="position:absolute;left:4px;top:3px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px">${i+1}</span></div>`).join('')}</div>`:''}</div>`:''}
+  <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">${[['bold','B'],['italic','I'],['strike','S'],['url','🔗'],['quote','❝'],['code','&lt;/&gt;'],['list','• Liste'],['num','1. Liste']].map(([k,l])=>`<button class="btn sm" data-f="${k}">${l}</button>`).join('')}<label class="btn sm" style="cursor:pointer">🎨<input type="color" id="infoClr" style="width:18px;height:18px;border:0;padding:0;margin-left:4px"></label></div>
+  <textarea id="infoTa" rows="9" style="width:100%;font-family:monospace" placeholder="${e.scope=='photos'?'Seçilen fotoğraflara özel bilgileri buraya girin…':'Gönderinin tamamı için detaylı bilgileri buraya girin…'}">${esc(e.text)}</textarea>
+  <div style="display:flex;justify-content:space-between;margin-top:12px"><button class="btn" data-bk="1">← Künye Ekranına Dön</button><button class="btn pri" data-ok="1">Info'yu Tamamla ve Bitir</button></div>`;}
+ body.addEventListener('input',ev=>{if(ev.target.id=='infoTa')E[act].text=ev.target.value});
+ body.addEventListener('change',ev=>{if(ev.target.id=='infoClr')wrap(`[color=${ev.target.value}]`,'[/color]')});
+ body.addEventListener('click',ev=>{const t=ev.target.closest('button,[data-ph],[data-del]');if(!t)return;const d=t.dataset;
+  if(d.del!==undefined){ev.stopPropagation();E.splice(+d.del,1);act=Math.max(0,Math.min(act,E.length-1))}
+  else if(d.i!==undefined)act=+d.i;else if(d.add){E.push({scope:multi?'photos':'all',photos:[],text:''});act=E.length-1}
+  else if(d.sc)E[act].scope=d.sc;else if(d.ph!==undefined){const p=+d.ph,a=E[act].photos;a.includes(p)?a.splice(a.indexOf(p),1):a.push(p);a.sort((x,y)=>x-y)}
+  else if(d.f){wrap(FM[d.f][0],FM[d.f][1]);return}
+  else if(d.bk)return done();
+  else if(d.ok){const bad=E.find(x=>x.text.trim()&&x.scope=='photos'&&!x.photos.length);if(bad){act=E.indexOf(bad);draw();return toast('Fotoğrafa özel Info için en az bir fotoğraf seçin',true)}return done()}
+  else return;draw()});
+ draw()}
+/* Gönderi Özelleştirme: müzik + konum (genel ya da fotoğraf başına) */
+function shrCustTags(){const c=shrCust,t=[];const one=(m,g,p)=>{if(m)t.push('🎵 '+m.title);if(g)t.push('📍 '+g.lat+', '+g.lon)};if(c.per&&c.per.some(x=>x&&(x.music||x.gps)))c.per.forEach((x,i)=>{if(x&&(x.music||x.gps)){const k=[];if(x.music)k.push('🎵');if(x.gps)k.push('📍');t.push('Foto '+(i+1)+' '+k.join(''))}});else one(c.music,c.gps);return t}
+const shrCustOf=x=>shrCust.per?(shrCust.per[shrIt.indexOf(x)]||{}):shrCust;
+function shrCustOpen(){kmClose();const multi=shrIt.length>1;const C={tab:'music',per:!!shrCust.per&&multi,idx:0,music:shrCust.music?{...shrCust.music}:null,gps:shrCust.gps?{...shrCust.gps}:null,P:shrIt.map((x,i)=>({music:shrCust.per&&shrCust.per[i]?shrCust.per[i].music:null,gps:shrCust.per&&shrCust.per[i]?shrCust.per[i].gps:null})),res:[],q:'',busy:false};
+ const cur=()=>C.per?C.P[C.idx]:C;let aud=null,map=null,mk=null,qt=0;
+ const stop=()=>{if(aud){try{aud.pause()}catch(e){}aud=null}};
+ const save=()=>{stop();shrCust={music:C.per?null:C.music,gps:C.per?null:C.gps,per:C.per?C.P.map(x=>({music:x.music,gps:x.gps})):null};subClose();shrPrevUp();kmOpen()};
+ const b=subOpen('CustomizeModal','Gönderi Özelleştirme',null,save);const body=b.querySelector('#subBody');
+ const search=async q=>{C.busy=true;drawList();try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio-media/music/search?q='+encodeURIComponent(q||'Türkiye En Çok Dinlenenler')});C.res=r.data||[]}catch(e){C.res=[]}C.busy=false;drawList()};
+ const drawList=()=>{const o=body.querySelector('#cuList');if(!o)return;o.innerHTML=C.busy?'<div class="WmA-loading">Aranıyor…</div>':C.res.length?C.res.map((t,i)=>`<button class="WmA-menuItem" data-tr="${i}" style="gap:10px;justify-content:flex-start"><img src="${esc(t.cover_url||'')}" style="width:40px;height:40px;border-radius:6px"><span style="flex:1"><b>${esc(t.title)}</b><br><small>${esc(t.artist||'')}</small></span><span data-pv="${i}" title="Dinle" style="padding:6px">▶</span></button>`).join(''):'<div class="WmA-loading">Sonuç yok</div>'};
+ const play=(t,from)=>{stop();if(!t||!t.preview_url)return;aud=new Audio(t.preview_url);aud.volume=.85;const st=from?(+t.start_offset||0):0,du=from?(+t.clip_duration||15):30;aud.currentTime=st;aud.ontimeupdate=()=>{if(aud&&aud.currentTime>=st+du){aud.currentTime=st}};aud.play().catch(()=>{})};
+ const setGps=(la,lo)=>{cur().gps={lat:+(+la).toFixed(6),lon:+(+lo).toFixed(6)};const a=body.querySelector('#cuLa'),o=body.querySelector('#cuLo');if(a)a.value=cur().gps.lat;if(o)o.value=cur().gps.lon};
+ const initMap=()=>{const el=body.querySelector('#cuMap');if(!el)return;const go=()=>{if(!window.L||!el.isConnected)return;try{if(map){map.remove();map=null;mk=null}}catch(e){}const g=cur().gps;map=L.map(el).setView(g?[g.lat,g.lon]:[39.0,35.0],g?14:6);L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap'}).addTo(map);
+  const put=(la,lo)=>{if(mk)mk.setLatLng([la,lo]);else{mk=L.marker([la,lo],{draggable:true}).addTo(map);mk.on('dragend',()=>{const p=mk.getLatLng();setGps(p.lat,p.lng)})}};if(g)put(g.lat,g.lon);map.on('click',e=>{put(e.latlng.lat,e.latlng.lng);setGps(e.latlng.lat,e.latlng.lng)});C.put=put;setTimeout(()=>map&&map.invalidateSize(),100)};
+  if(window.L)return go();if(!document.getElementById('lfCss')){const l=document.createElement('link');l.id='lfCss';l.rel='stylesheet';l.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(l)}
+  if(!document.getElementById('lfJs')){const sc=document.createElement('script');sc.id='lfJs';sc.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';sc.onload=go;document.head.appendChild(sc)}else setTimeout(go,400)};
+ function draw(){const c=cur(),m=c.music;
+  body.innerHTML=`${multi?`<div class="KmCap"><button data-md="all" class="${C.per?'':'on'}">Tüm gönderiye</button><button data-md="per" class="${C.per?'on':''}">Her fotoğrafa ayrı</button></div>${C.per?`<div class="WmPick-thumbs" style="margin-bottom:10px">${shrIt.map((x,i)=>`<div class="WmPick-thumb${i==C.idx?' is-active':''}" data-ix="${i}"><img src="${x.th||''}"></div>`).join('')}</div>`:''}`:''}
+  <div class="KmCap"><button data-tab="music" class="${C.tab=='music'?'on':''}">🎵 Gönderi Müziği</button><button data-tab="loc" class="${C.tab=='loc'?'on':''}">📍 Konum</button></div>
+  ${C.tab=='music'?`${m?`<div class="KmBox" style="display:flex;gap:10px;align-items:center"><img src="${esc(m.cover_url||'')}" style="width:48px;height:48px;border-radius:8px"><div style="flex:1"><b>${esc(m.title)}</b><br><small>${esc(m.artist||'')}</small></div><button class="btn sm" data-a2="pl">▶ Dinle</button><button class="btn sm" data-a2="rm">Kaldır</button></div>
+   <div class="KmBox"><label>Başlangıç: <b id="cuOf">${m.start_offset||0}</b> sn<input type="range" data-r="o" min="0" max="${Math.max(0,(C.dur||30)-(m.clip_duration||15))}" value="${m.start_offset||0}" style="width:100%"></label><label>Süre: <b id="cuDu">${m.clip_duration||15}</b> sn<input type="range" data-r="d" min="5" max="30" value="${m.clip_duration||15}" style="width:100%"></label></div>`:''}
+   <input id="cuQ" class="WmPa-q" style="width:100%;margin:10px 0" placeholder="Şarkı ya da sanatçı ara" value="${esc(C.q)}"><div id="cuList" class="WmPa-res" style="max-height:260px;overflow:auto"></div>`
+  :`<input id="cuAddr" class="WmPa-q" style="width:100%;margin-bottom:8px" placeholder="Adres ya da yer ara (Enter)"><div id="cuMap" style="height:260px;border-radius:10px;background:var(--control-bg)"></div><div style="display:flex;gap:8px;margin-top:8px"><input id="cuLa" class="WmPa-q" placeholder="Enlem" value="${c.gps?c.gps.lat:''}"><input id="cuLo" class="WmPa-q" placeholder="Boylam" value="${c.gps?c.gps.lon:''}"><button class="btn sm" data-a2="gps">Uygula</button><button class="btn sm" data-a2="rg">Konumu Kaldır</button></div>`}
+  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pri" data-a2="ok">✓ Tamamla ve Kaydet</button></div>`;
+  if(C.tab=='music'){drawList();if(!C.res.length&&!C.busy)search(C.q)}else initMap()}
+ body.addEventListener('input',ev=>{const t=ev.target;if(t.id=='cuQ'){C.q=t.value;clearTimeout(qt);qt=setTimeout(()=>search(C.q.trim().length>1?C.q.trim():''),350)}
+  else if(t.dataset.r){const m=cur().music;if(!m)return;if(t.dataset.r=='o'){m.start_offset=+t.value;body.querySelector('#cuOf').textContent=t.value}else{m.clip_duration=+t.value;body.querySelector('#cuDu').textContent=t.value}}});
+ body.addEventListener('keydown',async ev=>{if(ev.target.id=='cuAddr'&&ev.key=='Enter'){try{const r=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=tr&q='+encodeURIComponent(ev.target.value))).json();if(r[0]){setGps(r[0].lat,r[0].lon);if(map&&C.put){C.put(+r[0].lat,+r[0].lon);map.setView([+r[0].lat,+r[0].lon],14)}}else toast('Yer bulunamadı',true)}catch(e){toast('Arama yapılamadı',true)}}});
+ body.addEventListener('click',ev=>{const t=ev.target.closest('[data-md],[data-ix],[data-tab],[data-a2],[data-tr],[data-pv]');if(!t)return;const d=t.dataset;
+  if(d.pv!==undefined){ev.stopPropagation();return play(C.res[+d.pv],false)}
+  if(d.tr!==undefined){const k=C.res[+d.tr];cur().music={id:k.id,title:k.title,artist:k.artist,album:k.album,preview_url:k.preview_url,cover_url:k.cover_url,start_offset:0,clip_duration:15};C.dur=30;play(cur().music,true);return draw()}
+  if(d.md){C.per=d.md=='per';C.idx=0;stop();return draw()}if(d.ix!==undefined){C.idx=+d.ix;return draw()}if(d.tab){C.tab=d.tab;stop();return draw()}
+  if(d.a2=='pl')return play(cur().music,true);if(d.a2=='rm'){stop();cur().music=null;return draw()}if(d.a2=='rg'){cur().gps=null;return draw()}
+  if(d.a2=='gps'){const la=parseFloat(body.querySelector('#cuLa').value),lo=parseFloat(body.querySelector('#cuLo').value);if(isNaN(la)||isNaN(lo))return toast('Geçerli koordinat gir',true);setGps(la,lo);if(map&&C.put){C.put(la,lo);map.setView([la,lo],14)}return}
+  if(d.a2=='ok')save()});
+ draw()}
+/* Ortak Paylaş: ağ düğümleri paneli (sayfadaki #shrNodes) modal içinde açılır */
+function shrCrossOpen(){if(!shrTopic){toast('Önce bir başlık seç',true);return}kmClose();const n=$('shrNodes'),home=n.parentNode,nx=n.nextSibling;
+ const back=()=>{home.insertBefore(n,nx);subClose();kmOpen()};const b=subOpen('CrossModal','Ortak Paylaş (Ağa Aktar)',null,back);const body=b.querySelector('#subBody');
+ body.innerHTML='<div class="WmA-fileHint">Gönderi yayımlanınca seçtiğin forumlara da aktarılır. Hedef başlık, etiket ve imzayı her düğüm için ayarla.</div><div id="crossHost"></div><div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn pri" id="crossOk">Tamam</button></div>';
+ body.querySelector('#crossHost').appendChild(n);body.querySelector('#crossOk').onclick=back;shrNodesRender()}
 /* Arka plan yükleme: görsel eklenir eklenmez (seçili imzayla) forumun yükleme ucuna gider; paylaşımda hazır kullanılır */
 function shrDoUp(x){const id=shrFo();if(!id||!shrMeta[id])return;const wm=wmOf(x);if(x.up&&x.up.wm==wm&&x.up.name==x.name&&x.up.state!='err')return;
  const u={wm,name:x.name,state:'busy'};x.up=u;u.p=invoke('forum_upload_one',{id,src:x.src,name:x.name,watermark:wm,target:shrPA?shrPA.username:''}).then(c=>{u.bbcode=c;u.state='ok'}).catch(e=>{u.state='err';u.err=String(e)}).finally(()=>shrRender());shrRender()}
@@ -2656,19 +2730,20 @@ async function shrLoadNodes(){shrNodeList=[];shrNodeSt={};const t=shrTopic;if(!t
   shrNodesRender()}
  catch(e){$('shrNodes').textContent='Ağ bilgisi alınamadı: '+e}}
 $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo();if(!id){toast('Forum seç',true);return}if(!shrIt.length){toast('Görsel ekle',true);return}if(!shrTopic){toast('Bir başlık seç',true);return}
- const later=$('shrWhen').value=='later',at=$('shrAt').value;if(later&&!at){toast('Yayın zamanını seç',true);return}
+ const later=$('shrWhen').value=='later',draft=$('shrWhen').value=='draft',at=$('shrAt').value;if(later&&!at){toast('Yayın zamanını seç',true);return}
  const nodes=shrNodeList.filter(n=>shrNodeSt[n.id].on).map(n=>{const s=shrNodeSt[n.id];return {id:n.id,name:n.name,mode:s.mode,url:s.mode=='reply'?s.url.trim():'',title:s.title!==null?s.title:shrAuto(),tag:s.tag,wmMode:s.wmMode,wmByItem:shrIt.map(x=>s.wmMode=='target_site'?shrWmPick(s,shrOrient(x)):'')}});
  for(const n of nodes){if(n.mode=='reply'&&!n.url){toast(n.name+': hedef başlığın adresini seç ya da “Yeni başlık aç” de',true);return}if(n.mode!='reply'&&!n.title.trim()){toast(n.name+': yeni başlık için bir ad yaz',true);return}const s=shrNodeSt[n.id];if(s.wmMode=='target_site'&&!s.wmList){toast(n.name+': hedef forumun imzaları henüz yüklenmedi',true);return}}
- if(later&&nodes.length){toast('Ağa aktarma yalnızca hemen yayınlanan gönderilerde kullanılabilir',true);return}
+ if((later||draft)&&nodes.length){toast('Ağa aktarma yalnızca hemen yayınlanan gönderilerde kullanılabilir (taslak/zamanlamada kapalı tut)',true);return}
  if(shrIt.some(x=>x.ai.state=='busy')&&!await confirmBox('Yapay zekâ bitmedi','Bazı görsellerin künyesi hâlâ okunuyor; şu anki bilgilerle devam edilsin mi?','Devam et'))return;
- if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak ${later?'şu zamanda yayınlanmak üzere zamanlanacak: '+at.replace('T',' '):'gönderilecek ve hemen yayınlanacak'} (${shrWmSel=='none'?'imzasız':'imzalı'})${nodes.length?'; ağda '+nodes.length+' foruma da aktarılacak':''}.`,later?'Zamanla':'Paylaş'))return;
+ if(!await confirmBox('Foruma gönder',`${shrIt.length} görsel “${shrTopic.title}” başlığına yanıt olarak ${draft?'taslak olarak kaydedilecek (yayımlanmaz)':later?'şu zamanda yayınlanmak üzere zamanlanacak: '+at.replace('T',' '):'gönderilecek ve hemen yayınlanacak'} (${shrWmSel=='none'?'imzasız':'imzalı'})${nodes.length?'; ağda '+nodes.length+' foruma da aktarılacak':''}.`,draft?'Taslağa kaydet':later?'Zamanla':'Paylaş'))return;
  shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='0';$('shrMsg').textContent='Yüklemeler tamamlanıyor…';
  try{await Promise.all(shrIt.map(x=>x.up&&x.up.state=='busy'?x.up.p:null));
-  const items=shrIt.map(x=>({name:x.name,src:x.src,bbcode:x.up&&x.up.state=='ok'&&x.up.wm==wmOf(x)&&x.up.name==x.name?x.up.bbcode:'',watermark:wmOf(x),alt:shrAlt(x.f),kunye:shrKunye(x.f),fields:x.f}));
-  const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes,postAs:shrPA?shrPA.id:0,postAsName:shrPA?shrPA.username:''}});
-  if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
+  const items=shrIt.map(x=>({name:x.name,src:x.src,bbcode:x.up&&x.up.state=='ok'&&x.up.wm==wmOf(x)&&x.up.name==x.name?x.up.bbcode:'',watermark:wmOf(x),alt:shrAlt(x.f),kunye:shrKunye(x.f),fields:x.f,music:shrCustOf(x).music||null,gps:shrCustOf(x).gps||null}));
+  const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes,info:shrInfoResult(),draft,postAs:shrPA?shrPA.id:0,postAsName:shrPA?shrPA.username:''}});
+  if(r.draft){$('shrMsg').textContent='Taslak kaydedildi ✓';$('shrBar').style.width='100%';toast('Taslak kaydedildi')}
+  else if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
   else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:[];const bad=cr.filter(x=>x.error||(Array.isArray(x.results)&&x.results.some(y=>y&&y.success===false)));const nm=id=>(nodes.find(z=>z.id==id)||{}).name||id;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(bad.length?' — ağa aktarma sorunu: '+bad.map(x=>nm(x.node)+(x.error?' ('+x.error+')':'')).join(', '):' — ağa aktarıldı: '+cr.map(x=>nm(x.node)).join(', ')):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
-  shrIt=[];shrSelI=0;shrRender();shrFormRender()}
+  shrIt=[];shrSelI=0;shrInfo=[];shrCust={music:null,gps:null,per:null};shrNoK=false;shrRender();shrFormRender()}
  catch(e){$('shrMsg').textContent='';toast(String(e),true)}shrBusy=false;$('shrGo').disabled=false};
 $('shrOpen').onclick=()=>{if(shrUrl)invoke('open_url',{url:shrUrl}).catch(er=>toast(String(er),true))};
 evl('forum-share',e=>{const d=e.payload;$('shrMsg').textContent=d.msg;$('shrBar').style.width=Math.min(100,(d.i/d.total)*100)+'%'});
