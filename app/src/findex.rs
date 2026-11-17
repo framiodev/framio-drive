@@ -262,7 +262,7 @@ pub async fn fs_find(email: String, q: String, limit: Option<usize>, kind: Optio
     if let Some(i) = alias_hit { v.retain(|(_, j, _)| *j != i); v.push((150.0, i, 150.0)); }
     v.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal)
         .then_with(|| if qc.is_empty() { ix.ents[b.1].modified.cmp(&ix.ents[a.1].modified) } else { ix.ents[a.1].name.len().cmp(&ix.ents[b.1].name.len()) }));
-    let n = limit.unwrap_or(8).clamp(1, 30);
+    let n = limit.unwrap_or(8).clamp(1, 2000);
     let used = |id: &str| usage.get(id).map(|u| u.0).unwrap_or(0);
     Ok(json!({ "indexed": ix.ents.len(), "alias": alias_hit.is_some(), "total": v.len(), "results": v.iter().take(n).map(|(s, i, b)| {
         let mut r = row(&ix, &ix.ents[*i], *s); r["match"] = json!((*b * 10.0).round() / 10.0); r["used"] = json!(used(&ix.ents[*i].id)); r }).collect::<Vec<_>>() }))
