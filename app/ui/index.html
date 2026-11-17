@@ -796,7 +796,7 @@ async function loadFiles(silent){if(!sel)return;const tok=++fTok;if(fFor!=sel){f
  if(silent&&keep.size)setSel([...document.querySelectorAll('#frows .fr')].filter(x=>keep.has(x.dataset.id)));else selChanged();lastRow=null;
  try{const u=await invoke('fs_usage',{email:me});const lim=u.limit;$('ufill').style.width=lim?Math.min(100,u.used/lim*100)+'%':'3%';$('utext').textContent=lim?`${dsz(u.used)} / ${dsz(lim)} kullanılıyor`:`${dsz(u.used)} kullanılıyor`}catch(e){}}
 let lastRow=null;
-function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fdelsel').classList.toggle('hide',!any||fTrash);$('fclr').classList.toggle('hide',!any);$('fwm').classList.toggle('hide',fTrash||!selRows().some(isImg));$('frest').classList.toggle('hide',!any||!fTrash);$('fpurge').classList.toggle('hide',!any||!fTrash);$('frows').classList.toggle('hs',any)}
+function selChanged(){const any=!!document.querySelector('#frows .ck:checked');$('fclr').textContent='Seçimi bırak ('+document.querySelectorAll('#frows .ck:checked').length+')';$('fdelsel').classList.toggle('hide',!any||fTrash);$('fclr').classList.toggle('hide',!any);$('fwm').classList.toggle('hide',fTrash||!selRows().some(isImg));$('frest').classList.toggle('hide',!any||!fTrash);$('fpurge').classList.toggle('hide',!any||!fTrash);$('frows').classList.toggle('hs',any)}
 $('frows').onchange=e=>{const r=e.target.closest('.fr');if(r)r.classList.toggle('sel',e.target.checked);selChanged()};
 let fqT=0;$('fq').oninput=()=>{clearTimeout(fqT);fqT=setTimeout(()=>{const v=$('fq').value.trim();if(v===fSearch)return;fTrash=false;fRecent=false;fSearch=v;loadFiles()},260)};
 $('fq').onkeydown=e=>{if(e.key=='Enter'){clearTimeout(fqT);fSearch=$('fq').value.trim();loadFiles()}else if(e.key=='Escape'){$('fq').value='';fSearch='';loadFiles()}};
@@ -809,7 +809,30 @@ $('ftrash').onclick=()=>{fTrash=!fTrash;fRecent=false;fSearch='';$('fq').value='
 async function trRestore(rows){if(!rows.length)return;let bad=0;for(const r of rows){try{await invoke('fs_restore',{email:sel,id:r.dataset.id})}catch(x){bad++}}toast(`${rows.length-bad} öğe geri yüklendi`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()}
 async function trPurge(rows){if(!rows.length)return;if(!await confirmBox('Kalıcı olarak sil',`${rows.length} öğe kalıcı olarak silinecek. Bu işlem geri alınamaz.`,'Kalıcı sil'))return;let bad=0;for(const r of rows){try{await invoke('fs_purge',{email:sel,id:r.dataset.id})}catch(x){bad++}}toast(`${rows.length-bad} öğe kalıcı silindi`+(bad?` · ${bad} başarısız`:''),!!bad);loadFiles()}
 $('frest').onclick=()=>trRestore(selRows());$('fpurge').onclick=()=>trPurge(selRows());
-$('ftempty').onclick=async()=>{if(!await confirmBox('Çöp kutusunu boşalt','Çöp kutusundaki tüm öğeler kalıcı olarak silinecek. Bu işlem geri alınamaz.','Boşalt'))return;opStatus('Çöp kutusu boşaltılıyor…');try{await invoke('fs_empty_trash',{email:sel});opStatus('Çöp kutusu boşaltıldı','ok');loadFiles()}catch(x){opStatus(String(x),'bad')}};
+let trBusy=false;
+function trpPanel(){let p=document.getElementById('trp');if(!p){p=document.createElement('div');p.id='trp';p.className='glass upp';
+ p.innerHTML=`<div class="upH"><div class="upIc" id="trIc"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></div><div class="upT"><b id="trTi">Çöp kutusu boşaltılıyor</b><small id="trSub">Hazırlanıyor…</small></div></div><div class="upBody"><div class="upBar"><i id="trFill"></i></div><div class="upSt"><span id="trPct">0%</span><span id="trBy"></span><span id="trEta"></span></div></div>`;
+ document.body.appendChild(p)}
+ const u=document.getElementById('upp');p.style.bottom=u?(u.offsetHeight+34)+'px':'22px';return p}
+let TR=null;
+function trEv(e){if(!TR)return;const p=e.payload,pn=trpPanel(),q=x=>pn.querySelector(x);
+ if(p.k=='start'){TR.total=p.total;if(!p.total){q('#trSub').textContent='Çöp kutusu zaten boş'}else q('#trSub').textContent=p.total+' öğe siliniyor…'}
+ else if(p.k=='item'){TR.done=p.done;const r=document.querySelector(`#frows .fr[data-id="${CSS.escape(p.id)}"]`);if(r&&p.ok){r.style.transition='opacity .3s,transform .3s';r.style.opacity=0;r.style.transform='translateX(16px)';setTimeout(()=>r.remove(),300)}
+  const pct=TR.total?Math.min(99,p.done/TR.total*100):0,sec=(Date.now()-TR.t0)/1000,rate=p.done/Math.max(sec,.5);
+  q('#trFill').style.width=pct+'%';q('#trPct').textContent=Math.floor(pct)+'%';q('#trTi').textContent=`Çöp kutusu boşaltılıyor · ${p.done}/${TR.total}`;q('#trBy').textContent=rate>=.1?rate.toFixed(1)+' öğe/sn':'';
+  q('#trEta').textContent=rate>=.1&&TR.total>p.done?`~${upDur((TR.total-p.done)/rate)} kaldı`:'';q('#trSub').textContent=p.ok?'Siliniyor…':'Bir öğe silinemedi, devam ediliyor…'}
+ else if(p.k=='end'){TR.end=p}}
+function trpDone(r,err){const pn=trpPanel(),q=x=>pn.querySelector(x),bad=err||(r&&r.failed);
+ pn.classList.add(bad?'bad':'done');q('#trFill').style.width='100%';q('#trPct').textContent='100%';q('#trBy').textContent='';q('#trEta').textContent='';
+ q('#trIc').innerHTML=bad?XI:CKI;
+ q('#trTi').textContent=err?'Çöp kutusu boşaltılamadı':!r||!r.deleted&&!r.failed?'Çöp kutusu zaten boş':bad?`${r.deleted} öğe silindi, ${r.failed} silinemedi`:`Çöp kutusu boşaltıldı · ${r.deleted} öğe silindi`;
+ q('#trSub').textContent=err||`Süre: ${upDur((Date.now()-TR.t0)/1000)}`;
+ setTimeout(()=>{pn.classList.add('out');setTimeout(()=>pn.remove(),380)},bad?7000:4500)}
+window.__TAURI__.event.listen('trash_prog',trEv);
+$('ftempty').onclick=async()=>{if(trBusy)return;if(!await confirmBox('Çöp kutusunu boşalt','Çöp kutusundaki tüm öğeler kalıcı olarak silinecek. Bu işlem geri alınamaz.','Boşalt'))return;
+ trBusy=true;$('ftempty').disabled=true;TR={t0:Date.now(),total:0,done:0};const old=document.getElementById('trp');if(old)old.remove();trpPanel();
+ let r=null,err=null;try{r=await invoke('fs_empty_trash',{email:sel})}catch(x){err=String(x)}
+ trpDone(r,err);trBusy=false;$('ftempty').disabled=false;TR=null;loadFiles()};
 $('fall').onclick=()=>setSel([...document.querySelectorAll('#frows .fr')]);$('fclr').onclick=()=>setSel([]);
 $('fcrumbs').onclick=e=>{if(e.target.dataset.more){const r=e.target.getBoundingClientRect();showMenu(fPath.slice(1,-2).map((p,k)=>({t:p.name,f:()=>{fPath=fPath.slice(0,k+2);loadFiles()}})),r.left,r.bottom+4);return}
  const i=e.target.dataset.i;if(i===undefined)return;fTrash=false;fRecent=false;if(fSearch){fSearch='';$('fq').value=''}if(+i>=0)fPath=fPath.slice(0,+i+1);loadFiles()};
@@ -1072,7 +1095,7 @@ document.addEventListener('keydown',e=>{if(tab!='files'||document.querySelector(
  const rows=selRows();
  if(fTrash&&(e.key=='Delete'||e.key=='Enter'||e.key=='F2')){if(e.key=='Delete'&&rows.length)trPurge(rows);return}
  if(e.key=='Escape'){closeMenu();setSel([]);return}
- if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='a'){e.preventDefault();setSel([...document.querySelectorAll('#frows .fr')]);return}
+ if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()=='a'){e.preventDefault();const all=[...document.querySelectorAll('#frows .fr')];setSel(all.length&&rows.length==all.length?[]:all);return}
  if(e.key=='Enter'&&rows.length==1){openRow(rows[0]);return}
  if(e.key=='Delete'&&rows.length){rows.length>1?$('fdelsel').click():doAct('del',rows[0]);return}
  if(e.key=='F2'&&rows.length==1&&!fSearch)doAct('ren',rows[0])});
@@ -1082,7 +1105,7 @@ $('fdoc').onclick=async()=>{const k=await new Promise(r=>{const m=document.creat
  try{await invoke('fs_new_doc',{email:sel,parent:curId(),name:n,kind:k});toast('Oluşturuldu, tarayıcıda açılıyor…');loadFiles()}catch(x){toast(String(x),true)}};
 $('freload').onclick=()=>loadFiles();
 $('fplus').onclick=()=>{const r=$('fplus').getBoundingClientRect();showMenu([{t:'Yeni klasör',f:()=>$('fnew').click()},'-',{t:'Dosya yükle…',f:async()=>{try{upFiles(await invoke('pick_upload_files'))}catch(e){toast(String(e),true)}}},{t:'Klasör yükle…',f:async()=>{try{upFiles(await invoke('pick_upload_folder'))}catch(e){toast(String(e),true)}}},'-',{t:'Google belgesi / tablo / sunum…',f:()=>$('fdoc').click()}],r.left,r.bottom+4)};
-$('fmore').onclick=()=>{const r=$('fmore').getBoundingClientRect();showMenu([{t:'Tümünü seç',f:()=>$('fall').click()},{t:'Akıllı düzenle (yapay zekâ)',f:()=>$('forg').click()},'-',{t:'Yenile',f:()=>$('freload').click()},{t:'Gezgin’de aç',f:()=>$('freveal').click()}],Math.max(8,r.right-210),r.bottom+4)};
+$('fmore').onclick=()=>{const r=$('fmore').getBoundingClientRect();showMenu([...(()=>{const n=selRows().length,tot=document.querySelectorAll('#frows .fr').length;return[...(n<tot?[{t:'Tümünü seç',f:()=>$('fall').click()}]:[]),...(n?[{t:'Seçimi bırak',f:()=>$('fclr').click()}]:[])]})(),{t:'Akıllı düzenle (yapay zekâ)',f:()=>$('forg').click()},'-',{t:'Yenile',f:()=>$('freload').click()},{t:'Gezgin’de aç',f:()=>$('freveal').click()}],Math.max(8,r.right-210),r.bottom+4)};
 $('freveal').onclick=()=>invoke('fs_reveal',{email:sel,rel:fPath.slice(1).map(p=>p.name).join('\\')}).catch(e=>toast(String(e),true));
 const upCss=document.createElement('style');upCss.textContent=`
 .upp{position:fixed;right:22px;bottom:22px;width:380px;max-width:calc(100vw - 32px);z-index:55;padding:14px 16px 12px;border-radius:20px;animation:tin .45s var(--ease) both;transition:opacity .35s,transform .35s var(--ease)}

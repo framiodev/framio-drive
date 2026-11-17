@@ -668,8 +668,42 @@ async fn fs_restore(email: String, id: String) -> Result<(), String> { drv(&emai
 #[tauri::command]
 async fn fs_purge(email: String, id: String) -> Result<(), String> { drv(&email).await?.delete_forever(&id).await.map_err(de) }
 
+/// Çöpü tek tek (6 paralel) siler ve her öğede `trash_prog` olayı yollar; Drive'ın toplu boşaltma çağrısı
+/// arka planda geç işlendiği için ilerleme görünmüyordu.
 #[tauri::command]
-async fn fs_empty_trash(email: String) -> Result<(), String> { drv(&email).await?.empty_trash().await.map_err(de) }
+async fn fs_empty_trash(app: tauri::AppHandle, email: String) -> Result<Value, String> {
+    use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
+    use std::sync::{Arc, Mutex};
+    use tauri::Emitter;
+    let d = Arc::new(drv(&email).await?);
+    let items = d.trashed().await.map_err(de)?;
+    let total = items.len();
+    let _ = app.emit("trash_prog", json!({ "k": "start", "total": total }));
+    let queue = Arc::new(Mutex::new(items.into_iter().map(|f| f.id).collect::<std::collections::VecDeque<_>>()));
+    let (done, bad) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
+    let mut hs = vec![];
+    for _ in 0..6 {
+        let (d, q, done, bad, app) = (d.clone(), queue.clone(), done.clone(), bad.clone(), app.clone());
+        hs.push(tauri::async_runtime::spawn(async move {
+            loop {
+                let id = { q.lock().unwrap().pop_front() };
+                let Some(id) = id else { break };
+                let mut ok = false;
+                for n in 1..=3u64 {
+                    if d.delete_forever(&id).await.is_ok() { ok = true; break; }
+                    tokio::time::sleep(std::time::Duration::from_millis(600 * n)).await;
+                }
+                let n = if ok { done.fetch_add(1, SeqCst) + 1 } else { bad.fetch_add(1, SeqCst); done.load(SeqCst) };
+                let _ = app.emit("trash_prog", json!({ "k": "item", "id": id, "ok": ok, "done": n + bad.load(SeqCst), "total": total }));
+            }
+        }));
+    }
+    for h in hs { let _ = h.await; }
+    let _ = d.empty_trash().await;
+    let (okn, badn) = (done.load(SeqCst), bad.load(SeqCst));
+    let _ = app.emit("trash_prog", json!({ "k": "end", "deleted": okn, "failed": badn }));
+    Ok(json!({ "deleted": okn, "failed": badn }))
+}
 
 /// Sürücü bağlıysa Gezgin'de ilgili klasörü açar.
 #[tauri::command]

@@ -70,6 +70,7 @@ pub fn mime_for(name: &str) -> &'static str {
     }
 }
 
+#[derive(Clone)]
 pub struct Drive { http: reqwest::Client, token: String }
 
 #[derive(Debug)]
