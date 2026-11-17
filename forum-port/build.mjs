@@ -49,5 +49,8 @@ let css = res.css
 // Simge yazi tipleri CSS icine gomulur (uygulama cevrimdisi da dogru gorunsun); ttf yedekleri atilir
 css = css.replace(/,\s*url\((['"]?)\.\.\/webfonts\/[^)]*\.ttf\1\)\s*format\((['"]?)truetype\2\)/g, '');
 css = css.replace(/url\((['"]?)\.\.\/webfonts\/([^)'"]*\.woff2)\1\)/g, (_, q, f) => 'url(data:font/woff2;base64,' + fs.readFileSync(path.join(fa, 'webfonts', f)).toString('base64') + ')');
+// @font-face .fl-scope icinde gecersizdir: disari tasi
+const faces = css.match(/@font-face\s*\{[^}]*\}/g) || [];
+css = faces.join('\n') + '\n' + css.replace(/@font-face\s*\{[^}]*\}/g, '');
 fs.writeFileSync(path.join(out, 'forum-port.css'), css);
 console.log('forum-port.js ve forum-port.css hazir');
