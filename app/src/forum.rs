@@ -74,6 +74,10 @@ pub async fn forum_meta(id: String) -> Result<Value, String> {
     if let Ok(u) = forum::call(&base, &tok, "GET", &format!("/api/users/{uid}"), None).await {
         m["defaultWatermark"] = u["data"]["attributes"]["preferences"]["framio_assistant_watermark"].clone();
     }
+    // Yönetici mi? (üye adına paylaşım yalnız yöneticide)
+    let admin = forum::call(&base, &tok, "GET", &format!("/api/users/{uid}?include=groups"), None).await.ok()
+        .map(|u| u["included"].as_array().map(|a| a.iter().any(|g| g["type"] == "groups" && g["id"].as_str() == Some("1"))).unwrap_or(false)).unwrap_or(false);
+    m["isAdmin"] = json!(admin);
     m["base"] = json!(base);
     Ok(m)
 }
@@ -210,17 +214,36 @@ pub async fn forum_get(id: String, path: String) -> Result<Value, String> {
 
 /// Tek görseli (imzalı) arka planda yükler; BBCode döner. Görsel eklenir eklenmez çağrılır, paylaşımda hazır kullanılır.
 #[tauri::command]
-pub async fn forum_upload_one(id: String, src: Value, name: String, watermark: String) -> Result<String, String> {
+pub async fn forum_upload_one(id: String, src: Value, name: String, watermark: String, target: Option<String>) -> Result<String, String> {
+    let tu = target.unwrap_or_default();
     let (base, tok) = sess(&id).await?;
     let b = source_bytes(&src, &name).await?;
-    let r = match drivenet::forum::upload(&base, &tok, b.clone(), &name, &watermark).await {
+    let r = match drivenet::forum::upload_as(&base, &tok, b.clone(), &name, &watermark, &tu).await {
         Err(e) if e == "TOO_LARGE" => {
             let s = shrunk(b, 3840, 92, "up").await;
-            drivenet::forum::upload(&base, &tok, s, &name, &watermark).await.map_err(|e| if e == "TOO_LARGE" { "Görsel forumun boyut sınırını aşıyor".to_string() } else { e })?
+            drivenet::forum::upload_as(&base, &tok, s, &name, &watermark, &tu).await.map_err(|e| if e == "TOO_LARGE" { "Görsel forumun boyut sınırını aşıyor".to_string() } else { e })?
         }
         r => r?,
     };
     Ok(r["bbcode"].as_str().unwrap_or("").to_string())
+}
+
+/// Genel forum isteği (GET/POST/PATCH/DELETE; yalnız /api/ altı). Görsel silme, özel veri, taslak vb. için.
+#[tauri::command]
+pub async fn forum_req(id: String, method: String, path: String, body: Option<Value>) -> Result<Value, String> {
+    if !path.starts_with("/api/") { return Err("Geçersiz yol".into()); }
+    let m = method.to_uppercase();
+    if !["GET", "POST", "PATCH", "DELETE"].contains(&m.as_str()) { return Err("Geçersiz yöntem".into()); }
+    let (base, tok) = sess(&id).await?;
+    drivenet::forum::call(&base, &tok, &m, &path, body).await
+}
+
+/// Kişisel imza yükle (yalnız forum izin veriyorsa; ad forumun beklediği biçimde verilir).
+#[tauri::command]
+pub async fn forum_wm_upload(id: String, src: Value, name: String) -> Result<Value, String> {
+    let (base, tok) = sess(&id).await?;
+    let b = source_bytes(&src, &name).await?;
+    drivenet::forum::wm_upload(&base, &tok, b, &name).await
 }
 
 /// Künyeye göre önerilen başlıklar (forumun öğrenen yönlendiricisi).
@@ -289,7 +312,7 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
         if code.is_empty() {
             let _ = app.emit("forum-share", json!({ "i": i, "total": total, "msg": format!("Yükleniyor: {name}") }));
             let wmi = { let w = str_of(&it["watermark"]); if w.is_empty() { wm.clone() } else { w } };
-            code = forum_upload_one(id.clone(), it["src"].clone(), name.clone(), wmi).await?;
+            code = forum_upload_one(id.clone(), it["src"].clone(), name.clone(), wmi, Some(str_of(&req["postAsName"]))).await?;
         } else {
             let _ = app.emit("forum-share", json!({ "i": i, "total": total, "msg": format!("Hazır: {name}") }));
         }
@@ -315,7 +338,7 @@ pub async fn forum_share(app: AppHandle, id: String, req: Value) -> Result<Value
         return Ok(json!({ "scheduled": true, "at": publish_at, "count": total }));
     }
     let _ = app.emit("forum-share", json!({ "i": total, "total": total, "msg": "Mesaj gönderiliyor…" }));
-    let created = drivenet::forum::call(&base, &tok, "POST", "/api/posts", Some(json!({ "data": { "type": "posts", "attributes": { "content": content },
+    let created = drivenet::forum::call(&base, &tok, "POST", "/api/posts", Some(json!({ "data": { "type": "posts", "attributes": post_attrs(&content, &req["postAs"]),
         "relationships": { "discussion": { "data": { "type": "discussions", "id": topic } } } } }))).await?;
     let number = created["data"]["attributes"]["number"].as_i64();
     let post_id = created["data"]["id"].as_str().map(|s| s.to_string()).or(created["data"]["id"].as_i64().map(|n| n.to_string()));
@@ -387,4 +410,12 @@ pub fn share_mail(subject: String, body: String) -> Result<(), String> {
 pub fn share_reveal(path: String) -> Result<(), String> {
     if !std::path::Path::new(&path).exists() { return Err("Dosya bulunamadı".into()); }
     std::process::Command::new("explorer.exe").arg(format!("/select,{}", path)).spawn().map(|_| ()).map_err(|e| e.to_string())
+}
+
+/// Gönderi öznitelikleri; yönetici bir üye adına paylaşıyorsa `framioPostAs` (üye kimliği) eklenir.
+fn post_attrs(content: &str, post_as: &Value) -> Value {
+    let mut a = json!({ "content": content });
+    let id = post_as.as_i64().or(post_as.as_str().and_then(|s| s.parse().ok())).unwrap_or(0);
+    if id > 0 { a["framioPostAs"] = json!(id); }
+    a
 }

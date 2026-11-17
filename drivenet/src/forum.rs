@@ -50,6 +50,7 @@ fn client() -> Result<reqwest::Client, String> {
 async fn json_of(r: reqwest::Response) -> Result<(u16, Value), String> {
     let st = r.status().as_u16();
     let t = r.text().await.map_err(|e| e.to_string())?;
+    if t.trim().is_empty() && st < 400 { return Ok((st, json!({}))); }
     match serde_json::from_str::<Value>(&t) {
         Ok(v) => Ok((st, v)),
         Err(_) => Err(if st == 403 || st == 429 || st == 503 || t.contains("Cloudflare") || t.to_lowercase().contains("just a moment") || t.contains("cf-chl") {
@@ -157,7 +158,7 @@ fn err_text(st: u16, v: &Value) -> String {
 pub async fn call(base: &str, token: &str, method: &str, path: &str, body: Option<Value>) -> Result<Value, String> {
     let c = long_client()?;
     let url = format!("{base}{path}");
-    let mut rb = if method == "POST" { c.post(url) } else { c.get(url) };
+    let mut rb = match method { "POST" => c.post(url), "DELETE" => c.delete(url), "PATCH" => c.patch(url), _ => c.get(url) };
     rb = rb.header("Authorization", format!("Token {token}"));
     if let Some(b) = body { rb = rb.json(&b); }
     let r = rb.send().await.map_err(|e| format!("Foruma bağlanılamadı: {e}"))?;
@@ -168,10 +169,28 @@ pub async fn call(base: &str, token: &str, method: &str, path: &str, body: Optio
 
 /// Forumun yükleme ucu: görseli (orijinal baytlarıyla) yükler, imzayı ekletir; yanıtta BBCode döner.
 pub async fn upload(base: &str, token: &str, bytes: Vec<u8>, filename: &str, watermark: &str) -> Result<Value, String> {
+    upload_as(base, token, bytes, filename, watermark, "").await
+}
+
+/// Kişisel imzayı forumun imza ucuna yükler (yalnız PNG/WebP; ad `kisisel_dikey.`/`kisisel_yatay.` + uzantı).
+pub async fn wm_upload(base: &str, token: &str, bytes: Vec<u8>, filename: &str) -> Result<Value, String> {
+    let lower = filename.to_lowercase();
+    let mime = if lower.ends_with(".png") { "image/png" } else if lower.ends_with(".webp") { "image/webp" } else { return Err("Kişisel imza yalnız PNG veya WebP olabilir".into()) };
+    let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str(mime).map_err(|e| e.to_string())?;
+    let form = reqwest::multipart::Form::new().part("watermark", part);
+    let r = long_client()?.post(format!("{base}/api/framio-media/watermarks")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("İmza gönderilemedi: {e}"))?;
+    let (st, v) = json_of(r).await?;
+    if st >= 400 { return Err(err_text(st, &v)); }
+    Ok(v)
+}
+
+/// `target_user` doluysa görsel o üyenin adına (yönetici) yüklenir; imza onun kişisel imzası olabilir.
+pub async fn upload_as(base: &str, token: &str, bytes: Vec<u8>, filename: &str, watermark: &str, target_user: &str) -> Result<Value, String> {
     let lower = filename.to_lowercase();
     let mime = if lower.ends_with(".png") { "image/png" } else if lower.ends_with(".webp") { "image/webp" } else { "image/jpeg" };
     let part = reqwest::multipart::Part::bytes(bytes).file_name(filename.to_string()).mime_str(mime).map_err(|e| e.to_string())?;
     let form = reqwest::multipart::Form::new().part("image", part).text("watermark_type", if watermark.is_empty() { "none".to_string() } else { watermark.to_string() });
+    let form = if target_user.is_empty() { form } else { form.text("target_username", target_user.to_string()).text("target_watermark_type", if watermark.is_empty() { "none".to_string() } else { watermark.to_string() }) };
     let r = long_client()?.post(format!("{base}/api/framio-media/upload")).header("Authorization", format!("Token {token}")).multipart(form).send().await.map_err(|e| format!("Yükleme gönderilemedi: {e}"))?;
     let st = r.status().as_u16();
     if st == 413 { return Err("TOO_LARGE".into()); }

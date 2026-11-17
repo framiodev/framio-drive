@@ -2302,7 +2302,8 @@ function shrKText(f){const sc=shrCtx.schema;const j=(a,s)=>a.map(x=>String(x||''
   L=[j([f.brand,f.model],' '),j([f.fleetCode,f.plate],' | '),r,j([f.location,yy],' / ')]}
  else L=[j([f.company,f.plate],' | '),j([f.brand,f.model],' '),j([f.location,yy],' / ')];
  return L.filter(Boolean).map(l=>'- **'+l+'**').join('\n')}
-function shrKunye(f){const t=shrKText(f);return t?`[framio-kunye theme="${shrM().kunyeTheme||'classic'}"]\n${t}\n[/framio-kunye]`:''}
+let shrNoK=false,KM=null;
+function shrKunye(f){if(shrNoK)return '';const t=shrKText(f);return t?`[framio-kunye theme="${shrM().kunyeTheme||'classic'}"]\n${t}\n[/framio-kunye]`:''}
 function shrAlt(f){const j=(a,s)=>a.map(x=>String(x||'').trim()).filter(Boolean).join(s);return [j([shrCtx.city?f.fleetCode:f.company,f.plate],' | '),j([f.brand,f.model],' ')].filter(Boolean).join(' - ')}
 const shrWmList=()=>(shrM().watermarks&&shrM().watermarks.watermarks)||[];
 const shrWmUrl=o=>!o||!o.url?'':(/^https?:/.test(o.url)?o.url:(shrM().base||'')+o.url);
@@ -2312,7 +2313,7 @@ function shrRender(){
   const ab=a=='busy'?'Yapay zekâ okuyor…':a=='ok'?'Künye okundu ✓':a=='err'?'Yapay zekâ hatası':'',ub=u=='busy'?'Yükleniyor…':u=='ok'?'Yüklendi ✓':u=='err'?'Yükleme hatası':'';
   return `<div data-sel="${i}" style="width:150px;border:2px solid ${i==shrSelI?'var(--acc)':'var(--stroke)'};border-radius:12px;padding:6px;background:var(--track);cursor:pointer"><div data-sel="${i}" style="height:86px;border-radius:8px;background:rgba(127,127,127,.25) center/cover no-repeat${x.th?`;background-image:url(${x.th})`:''}"></div><div data-sel="${i}" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:4px 0 2px">${i+1}. ${esc(x.name)}</div><div data-sel="${i}" class="mut" style="font-size:11px;min-height:30px">${ab}<br>${ub}</div><div style="display:flex;gap:4px"><button class="btn sm" data-up="${i}">←</button><button class="btn sm danger" data-rm="${i}">×</button></div></div>`}).join('')+'</div>'
   :'Henüz görsel yok. Explorer’da görsele sağ tık > “Framio ile forumda paylaş…” ya da Dosyalar sekmesinden ekle.';
- shrThumbs();shrPvRender();shrPrevUp();try{if(WM)wmRender()}catch(e){}if(shrNodeList.length&&!$('shrNodes').contains(document.activeElement))shrNodesRender()}
+ shrThumbs();shrPvRender();shrPrevUp();try{if(WM)wmRender()}catch(e){}try{if(KM)kmPartial()}catch(e){}if(shrNodeList.length&&!$('shrNodes').contains(document.activeElement))shrNodesRender()}
 function shrPvRender(){const x=shrIt[shrSelI],box=$('shrPv');
  if(!x){box.innerHTML='';return}
  if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;shrPvRender()}).catch(()=>{x.pvBusy=0})}
@@ -2325,8 +2326,8 @@ function shrPrevUp(){const m=shrM(),tag=m.bbcodeTag||'görsel';const ks=shrIt.ma
  $('shrPrev').textContent=(same?parts.join('\n')+(ks[0]?'\n\n'+ks[0]:''):parts.join('\n\n'))+'\n\nBaşlık: '+(shrTopic?shrTopic.title:'(seçilmedi)');
  $('shrSel').innerHTML=shrTopic?`Seçili başlık: <b>${esc(shrTopic.title)}</b> <a href="#" id="shrTopicOpen" style="margin-left:8px">Forumda aç</a>`:'Başlık seçilmedi';const o=$('shrTopicOpen');if(o)o.onclick=ev=>{ev.preventDefault();invoke('forum_list').then(fl=>{const f=fl.find(x=>x.id==shrFo());const u=shrTopic.url||(f&&f.base+'/d/'+shrTopic.discussion_id);invoke('open_url',{url:u}).catch(er=>toast(String(er),true))})}}
 /* Künye formu (seçili görsel) */
-function shrFormRender(){const x=shrIt[shrSelI],box=$('shrForm');
- if(!x){box.innerHTML='<div class="mut">Görsel ekleyince künye alanları burada çıkar.</div>';$('shrAiMsg').textContent='';return}
+function shrFormRender(){const x=shrIt[shrSelI],box=(typeof KM!='undefined'&&KM&&$('kmForm'))||$('shrForm');
+ if(!x){box.innerHTML='<div class="mut">Görsel ekleyince künye alanları burada çıkar.</div>';if($('shrAiMsg'))$('shrAiMsg').textContent='';return}
  const F=shrFields(),bs=shrBrands(),f=x.f;const opt=(l,v)=>l.map(b=>`<option value="${esc(b)}"${b==v?' selected':''}>${esc(b)}</option>`).join('');
  const cell=fl=>{const k=fl.key,v=String(f[k]||''),lb=esc(fl.label);let h;
   if(k=='brand'&&bs.length)h=`<select data-fk="brand" style="width:100%;margin:0"><option value="">— ${lb} seç —</option>${opt(!v||bs.includes(v)?bs:[...bs,v],v)}</select>`;
@@ -2343,12 +2344,14 @@ function shrDlUp(){const id=shrFo(),x=shrIt[shrSelI];const c=$('shrCityDl'),r=$(
  if(r&&x)r.innerHTML=(shrRoutes[id+'|'+x.f.city]||[]).map(o=>{const l=o.display_name||(o.route_name?`${o.route_code} - ${o.route_name}`:o.route_code);return `<option value="${esc(l)}">`}).join('')}
 async function shrLoadCities(){const id=shrFo();if(shrCities[id])return;shrCities[id]=[];try{const r=await invoke('forum_get',{id,path:'/api/framio-media/city-routes'});shrCities[id]=(r.cities||[]).map(c=>c.name||c).filter(Boolean);shrDlUp()}catch(e){shrCities[id]=null}}
 async function shrLoadRoutes(city){const id=shrFo();city=String(city||'').trim();const k=id+'|'+city;if(!city||shrRoutes[k])return;shrRoutes[k]=[];try{const r=await invoke('forum_get',{id,path:'/api/framio-media/city-routes?city='+encodeURIComponent(city)});shrRoutes[k]=r.data||[];shrDlUp()}catch(e){delete shrRoutes[k]}}
-function shrAiMsgUp(){const x=shrIt[shrSelI];$('shrAiMsg').textContent=!x?'':x.ai.state=='busy'?'Yapay zekâ okuyor…':x.ai.state=='err'?x.ai.msg:x.ai.state=='ok'?(x.ai.note||'Dolduruldu; kontrol et.'):''}
-$('shrForm').oninput=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x||t.tagName=='SELECT')return;x.f[k]=t.value;x.dirty[k]=1;shrPrevUp()};
-$('shrForm').onchange=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x)return;x.f[k]=t.value;x.dirty[k]=1;
+function shrAiMsgUp(){const x=shrIt[shrSelI];const m=$('shrAiMsg')||{};m.textContent=!x?'':x.ai.state=='busy'?'Yapay zekâ okuyor…':x.ai.state=='err'?x.ai.msg:x.ai.state=='ok'?(x.ai.note||'Dolduruldu; kontrol et.'):''}
+function shrOne(k,v){if(typeof KM!='undefined'&&KM&&KM.one)shrIt.forEach(z=>{z.f[k]=v;z.dirty[k]=1})}
+const shrFormIn=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x||t.tagName=='SELECT')return;x.f[k]=t.value;x.dirty[k]=1;shrOne(k,t.value);shrPrevUp()};
+const shrFormCh=e=>{const t=e.target,k=t.dataset.fk,x=shrIt[shrSelI];if(!k||!x)return;x.f[k]=t.value;x.dirty[k]=1;shrOne(k,t.value);
  if(k=='brand'){if(x.f.model&&!shrModels(t.value).includes(x.f.model)){x.f.model='';delete x.dirty.model}shrFormRender()}
  if(k=='city'){shrLoadRoutes(t.value);shrDlUp()}
  shrPrevUp()};
+$('shrForm').oninput=shrFormIn;$('shrForm').onchange=shrFormCh;
 $('shrCopy').onclick=()=>{const s=shrIt[shrSelI];if(!s)return;shrIt.forEach((x,i)=>{if(i==shrSelI)return;['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){x.f[k]=s.f[k];x.dirty[k]=1}})});shrPrevUp();toast('Künye diğer karelere uygulandı (plaka ve filo kodu hariç)')};
 $('shrItems').onclick=e=>{const d=e.target.dataset;if(d.rm!==undefined){shrIt.splice(+d.rm,1);if(shrSelI>=shrIt.length)shrSelI=Math.max(0,shrIt.length-1)}
  else if(d.up!==undefined){const i=+d.up;if(i>0){[shrIt[i-1],shrIt[i]]=[shrIt[i],shrIt[i-1]];if(shrSelI==i)shrSelI=i-1;else if(shrSelI==i-1)shrSelI=i}}
@@ -2414,14 +2417,15 @@ const WMCSS=`.modal .glass.WatermarkModal{background:var(--bg);--control-bg:var(
 .WmA-allLabel{font-size:10px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--muted-color)}.WmA-allSwitch.is-on .WmA-allLabel{color:var(--primary-color)}
 .WmA-toggle{position:relative;width:32px;height:18px;border-radius:999px;background:var(--control-bg);transition:background .15s}.WmA-allSwitch.is-on .WmA-toggle{background:var(--primary-color)}.WmA-toggle span{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}.WmA-allSwitch.is-on .WmA-toggle span{transform:translateX(14px)}
 .WmPick-auto{display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:7px 10px;border-radius:8px;font-size:12px;font-weight:600;color:var(--primary-color);background:color-mix(in srgb,var(--primary-color) 10%,transparent)}
+.WmPa{margin-top:10px;display:flex;flex-direction:column;gap:8px}.WmPa-sw{flex-direction:row;justify-content:space-between;padding:0 14px}.WmPa-q{height:40px;padding:0 12px;border:1px solid var(--control-bg);border-radius:8px;background:var(--body-bg);color:var(--text-color)}.WmPa-res{display:flex;flex-direction:column}.WmPa-user{display:flex;align-items:center;justify-content:space-between;font-size:13px}
 .WmA-actions{display:flex;gap:8px;margin-top:auto;padding-top:16px;border-top:1px solid var(--control-bg)}.WmA-actions .btn{flex:1;height:42px;font-weight:700}
 .WmLb{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out}.WmLb .WmPvBox{cursor:zoom-out}.WmLb img.WmPv{max-width:95vw;max-height:95vh;border-radius:8px}`;
-let WM=null;
+let WM=null,shrPA=null;
 const wmNameBase=n=>{const i=n.lastIndexOf('.');return i>0?n.slice(0,i):n},wmExt=n=>{const i=n.lastIndexOf('.');return i>0?n.slice(i):''};
 function wmOrient(x){const d=x.dim;if(!d||!d.w||!d.h)return 'landscape';if(Math.abs(d.w-d.h)/Math.max(d.w,d.h)<.04)return 'square';return d.w<d.h?'portrait':'landscape'}
 const wmOLabel=o=>o=='portrait'?'Dikey':o=='square'?'Kare':'Yatay';
 function wmMeasure(x){if(x.dim||x.dimBusy)return;x.dimBusy=1;const src=x.pv||x.th;if(!src){x.dimBusy=0;return}const im=new Image();im.onload=()=>{x.dim={w:im.naturalWidth,h:im.naturalHeight};x.dimBusy=0;wmAuto();wmRender()};im.onerror=()=>{x.dimBusy=0};im.src=src}
-const wmData=()=>shrM().watermarks||{},wmAll=()=>wmData().watermarks||[],wmFUrl=o=>shrWmUrl(o),wmIdOf=o=>o.filename||o.id||o.name;
+const wmData=()=>shrM().watermarks||{},wmAll=()=>{const b=wmData().watermarks||[];return shrPA&&shrPA.marks?b.filter(w=>!w.is_personal).concat(shrPA.marks.map(w=>Object.assign({},w,{is_personal:true}))):b},wmFUrl=o=>shrWmUrl(o),wmIdOf=o=>o.filename||o.id||o.name;
 function wmPersonal(x){const L=wmAll().filter(w=>w.is_personal);if(!L.length)return null;const o=wmOrient(x);return L.find(w=>{const wo=(w.orientation||w.type||'').toLowerCase(),fn=(w.filename||'').toLowerCase();return o=='portrait'?wo=='portrait'||fn.includes('dikey'):wo=='landscape'||!fn.includes('dikey')})||L[0]}
 function wmTemplates(x){const o=wmOrient(x);return wmAll().filter(w=>!w.is_personal).filter(w=>{const wo=(w.orientation||w.type||'landscape').toLowerCase();return wo=='all'||wo==o})}
 /* otomatik seçim: kişisel imza varsa yöne uygun olan; elle seçilene dokunulmaz */
@@ -2454,7 +2458,7 @@ function wmRender(){if(!WM)return;const x=WM.items[WM.act],n=WM.items.length;if(
  const dd=`<div class="WmA-optWrap"><button class="WmA-opt is-site${selT?' is-selected':''}" data-a="dd" style="${selT?wmBtnStyle(selT):''}"><span>${esc(selT?selT.label:'Site İmzası Seç')}</span><span class="WmA-chevron${WM.dd?' is-open':''}">▾</span></button>${WM.dd?`<div class="WmA-menu"><div class="WmA-menuHead">${wmOLabel(o)} fotoğraf imzaları</div>${tpls.map(t=>{const id=wmIdOf(t),on=sel==id;return `<button class="WmA-menuItem${on?' is-selected':''}" data-a="pick" data-id="${esc(id)}"><span class="WmA-menuLabel"><span class="WmA-swatch" style="${wmBtnStyle(t,1)}"></span>${esc(t.label||id)}</span>${on?'✓':''}</button>`}).join('')}</div>`:''}</div>`;
  const none=big('none','İmza Ekleme (Orijinal Kalsın)',sel=='none','is-none');
  const auto=WM.auto[WM.act]?`<div class="WmPick-auto">${person?'İmzanız otomatik seçildi.':'Bu fotoğraf için imza otomatik seçildi.'} Değiştirebilirsiniz.</div>`:'';
- const opts=!shrM().watermarks?`<div class="WmA-loading">İmzalar yükleniyor…</div>`:`<div class="WmA-options">${auto}${person?big(wmIdOf(person),'Kişisel İmza',sel==wmIdOf(person),'is-primary'):''}${tpls.length?sw(dd):''}${tpls.length?none:sw(none)}</div>`;
+ const opts=!shrM().watermarks?`<div class="WmA-loading">İmzalar yükleniyor…</div>`:`<div class="WmA-options">${auto}${person?big(wmIdOf(person),'Kişisel İmza',sel==wmIdOf(person),'is-primary'):''}${tpls.length?sw(dd):''}${tpls.length?none:sw(none)}${wmPaPanel()}</div>`;
  const plate=/^[0-9]{2}\s*[A-ZÇĞİÖŞÜ]{1,3}\s*[0-9]{2,4}(?:\s*[-_.]\s*\d{1,3}|\s*\(\d{1,3}\))?$/i.test(name.trim());
  WM.box.innerHTML=`<div class="glass WatermarkModal"><div class="WmHead"><div class="WmTitle">İmza Seçimi (${WM.act+1} / ${n})</div><button class="WmX" data-a="close" title="Kapat">✕</button></div>
  <div class="Watermark-Layout"><div class="Watermark-Left"><div class="Preview-Wrapper"><div class="Watermark-preview-area">${pvh}<button class="WmDel" data-a="del" title="Bu fotoğrafı listeden çıkar">🗑</button><div class="WmCnt">${WM.act+1} / ${n}</div>${n>1?`<button class="WmNav l" data-a="nav" data-d="-1"${WM.act==0?' disabled':''}>‹</button><button class="WmNav r" data-a="nav" data-d="1"${WM.act==n-1?' disabled':''}>›</button>`:''}</div>
@@ -2469,6 +2473,7 @@ document.addEventListener('click',async e=>{if(!WM)return;const b=e.target.close
  if(a=='all'){WM.all=!WM.all;if(WM.all)wmSelect(WM.sel[WM.act]);else wmRender();return}
  if(a=='del'){const i=WM.act,x=WM.items[i];const k=shrIt.indexOf(x);if(k>-1)shrIt.splice(k,1);[WM.items,WM.sel,WM.names,WM.touched,WM.auto].forEach(ar=>ar.splice(i,1));WM.act=Math.min(WM.act,WM.items.length-1);shrRender();shrFormRender();if(!WM.items.length)return wmClose();return wmRender()}
  if(a=='add'){try{const ps=await invoke('pick_upload_files');if(!ps||!ps.length)return;const add=[];ps.forEach(p=>{const nm=String(p).split('\\').pop();if(shrPush(nm,{kind:'local',path:String(p)})){const x=shrIt[shrIt.length-1];x.asked=1;add.push(x)}});add.forEach(x=>{WM.items.push(x);WM.sel.push(WM.all?WM.sel[WM.act]:'none');WM.names.push(wmNameBase(x.name));WM.touched.push(WM.all);WM.auto.push(false);wmPv(x)});shrRender();wmRender();shrKickAi()}catch(er){toast(String(er),true)}return}
+ if(a=='pa'){WM.pa=WM.pa||{};WM.pa.on=!WM.pa.on;if(!WM.pa.on)shrPA=null;return wmRender()}if(a=='pacl'){shrPA=null;WM.items.forEach(x=>{x.up=null});return wmRender()}if(a=='pasel')return wmPaPick(WM.pa.res[+b.dataset.i]);if(a=='pup')return wmPUp(b.dataset.o);
  if(a=='ok')return wmConfirm()});
 document.addEventListener('input',e=>{if(!WM||e.target.id!='wmName')return;WM.names[WM.act]=e.target.value;const nm=e.target.value.trim(),plate=/^[0-9]{2}\s*[A-ZÇĞİÖŞÜ]{1,3}\s*[0-9]{2,4}(?:\s*[-_.]\s*\d{1,3}|\s*\(\d{1,3}\))?$/i.test(nm);$('wmWarn').innerHTML=nm&&!plate?'<div class="WmA-plateWarn">Dosya adı plakaya benzemiyor. Doğru künye eşleşmesi için plaka yazmanız tavsiye edilir.</div>':''});
 document.addEventListener('dragstart',e=>{const t=WM&&e.target.closest&&e.target.closest('.WmPick-thumb');if(!t)return;WM.drag=+t.dataset.i;try{e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',String(WM.drag))}catch(x){}});
@@ -2476,15 +2481,75 @@ document.addEventListener('dragover',e=>{const t=WM&&e.target.closest&&e.target.
 document.addEventListener('drop',e=>{const t=WM&&e.target.closest&&e.target.closest('.WmPick-thumb');if(!t)return;e.preventDefault();const f=WM.drag;WM.drag=null;WM.over=null;if(f!=null)wmMove(f,+t.dataset.i);else wmRender()});
 document.addEventListener('dragend',()=>{if(WM){WM.drag=null;WM.over=null;wmRender()}});
 document.addEventListener('click',e=>{if(WM&&WM.dd&&!e.target.closest('.WmA-optWrap')){WM.dd=false;wmRender()}});
+
+/* Üye adına paylaş (yalnız yönetici) + Kişisel İmza Yükle (yalnız forum izin veriyorsa) */
+function wmCanUp(){const d=wmData();return (d.mode||'hybrid')!='templates'&&d.allow_personal_upload!==false&&!wmAll().some(w=>w.is_personal)&&!shrPA}
+function wmPaPanel(){const m=shrM();let h='';
+ if(m.isAdmin){const on=WM.pa&&WM.pa.on;h+=`<div class="WmPa"><button class="WmA-allSwitch WmPa-sw${on?' is-on':''}" data-a="pa"><span class="WmA-allLabel">Üye adına paylaş</span><span class="WmA-toggle"><span></span></span></button>`;
+  if(on){h+=shrPA?`<div class="WmPa-user"><b>@${esc(shrPA.username)}</b> adına paylaşılıyor${shrPA.marks&&shrPA.marks.length?'':' (kişisel imzası yok)'}<button class="btn sm" data-a="pacl">Kaldır</button></div>`:`<input id="wmPaQ" class="WmPa-q" placeholder="Üye ara (kullanıcı adı)" autocomplete="off"><div id="wmPaRes" class="WmPa-res"></div>`}
+  h+='</div>'}
+ if(wmCanUp())h+=`<div class="WmPa"><div class="WmA-fileHint">Kendi imzanı yükle (PNG/WebP, şeffaf arka planlı)</div><div style="display:flex;gap:8px"><button class="btn sm" data-a="pup" data-o="yatay">Yatay imza yükle</button><button class="btn sm" data-a="pup" data-o="dikey">Dikey imza yükle</button></div></div>`;
+ return h}
+let wmPaT=0;
+document.addEventListener('input',e=>{if(!WM||e.target.id!='wmPaQ')return;const q=e.target.value.trim();clearTimeout(wmPaT);const out=$('wmPaRes');if(q.length<2){out.innerHTML='';return}
+ wmPaT=setTimeout(async()=>{try{const r=await invoke('forum_req',{id:shrFo(),method:'GET',path:'/api/users?filter[q]='+encodeURIComponent(q)+'&page[limit]=8'});WM.pa.res=(r.data||[]).map(u=>({id:u.id,username:u.attributes.username,name:u.attributes.displayName||u.attributes.username}));const o=$('wmPaRes');if(o)o.innerHTML=WM.pa.res.length?WM.pa.res.map((u,i)=>`<button class="WmA-menuItem" data-a="pasel" data-i="${i}"><span>${esc(u.name)}</span><small>@${esc(u.username)}</small></button>`).join(''):'<div class="WmA-loading">Üye bulunamadı</div>'}catch(x){}},300)});
+async function wmPaPick(u){try{let marks=[];try{const r=await invoke('forum_get',{id:shrFo(),path:'/api/framio-media/watermarks?for_user='+encodeURIComponent(u.username)});marks=(r.user||[]).map(w=>Object.assign({},w,{is_personal:true}))}catch(x){}
+ shrPA={id:u.id,username:u.username,marks};WM.sel=WM.sel.map(v=>{const c=(shrM().watermarks.watermarks||[]).find(w=>wmIdOf(w)==v&&w.is_personal);return c?shrWmSel:v});WM.touched=WM.touched.map(()=>false);WM.items.forEach(x=>{x.up=null});wmAuto();wmRender()}catch(e){toast(String(e),true)}}
+async function wmPUp(o){try{const ps=await invoke('pick_upload_files');if(!ps||!ps.length)return;const p=String(ps[0]),ext=(p.split('.').pop()||'').toLowerCase();if(ext!='png'&&ext!='webp'){toast('Kişisel imza yalnız PNG veya WebP olabilir',true);return}
+ toast('İmza yükleniyor…');const id=shrFo();await invoke('forum_wm_upload',{id,src:{kind:'local',path:p},name:'kisisel_'+o+'.'+ext});shrMeta[id]=await invoke('forum_meta',{id});shrMetaAt[id]=Date.now();wmAuto();wmRender();toast('Kişisel imza yüklendi')}catch(e){toast(String(e),true)}}
 function wmConfirm(){const its=WM.items,first=shrIt.indexOf(its[0]);
  its.forEach((x,i)=>{const nn=(WM.names[i]||'').trim()||wmNameBase(x.name),full=nn+wmExt(x.name);if(x.name!=full){x.name=full;x.up=null}x.wm=WM.sel[i];x.wmDone=1});
  const rest=shrIt.filter(x=>!its.includes(x));rest.splice(Math.max(0,Math.min(first,rest.length)),0,...its);shrIt=rest;shrSelI=Math.max(0,shrIt.indexOf(its[0]));
- wmClose();shrRender();shrFormRender();shrKick();shrPrevUp()}
+ wmClose();shrRender();shrFormRender();shrKick();shrPrevUp();kmOpen()}
 function shrWmAsk(){if(shrDest!='forum'||!shrM().watermarks)return;const p=shrIt.filter(x=>!x.asked);if(p.length)shrWmOpen(p)}
 
+
+/* Künye modalı (forumun "Araç Künye Bilgileri" penceresi): sol önizleme + açıklama kipi + şerit, sağ künye formu */
+const KMCSS=`.KmCap{display:flex;gap:6px;margin:10px 0}.KmCap button{flex:1;height:34px;border:2px solid var(--control-bg);border-radius:8px;background:var(--body-bg);color:var(--muted-color);font:inherit;font-size:12px;font-weight:700;cursor:pointer}.KmCap button.on{border-color:var(--primary-color);color:var(--primary-color)}
+.KmAi{margin-bottom:12px}.KmAi-top{display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:var(--muted-color);margin-bottom:5px}.KmAi-bar{height:6px;border-radius:99px;background:var(--control-bg);overflow:hidden}.KmAi-bar i{display:block;height:100%;background:var(--primary-color);transition:width .3s}
+.KmBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.KmBtns .btn{height:42px;font-weight:700}.KmBtns .full{grid-column:1/3}
+.KmBack{margin-top:8px;border:0;background:none;color:var(--muted-color);font:inherit;font-size:12px;text-decoration:underline;cursor:pointer;width:100%}
+.KmBox{margin-top:14px;padding:10px 12px;border:1px solid var(--control-bg);border-radius:10px;font-size:12px}`;
+function kmOpen(){if(shrDest!='forum'||document.querySelector('.KunyeModal')||!shrIt.length)return;
+ if(!document.getElementById('wmCss')){const s=document.createElement('style');s.id='wmCss';s.textContent=WMCSS;document.head.appendChild(s)}
+ if(!document.getElementById('kmCss')){const s=document.createElement('style');s.id='kmCss';s.textContent=KMCSS;document.head.appendChild(s)}
+ shrNoK=false;KM={one:false,box:document.createElement('div')};KM.box.className='modal';document.body.appendChild(KM.box);
+ KM.key=e=>{if(e.key=='Escape'){kmClose();e.stopPropagation()}};document.addEventListener('keydown',KM.key,true);
+ KM.box.addEventListener('click',kmClick);KM.box.addEventListener('input',shrFormIn);KM.box.addEventListener('change',shrFormCh);
+ kmRender()}
+function kmClose(){if(!KM)return;document.removeEventListener('keydown',KM.key,true);KM.box.remove();KM=null;shrRender();shrFormRender()}
+function kmAiPct(){const n=shrIt.length||1,d=shrIt.filter(x=>x.ai.state=='ok'||x.ai.state=='err').length;return Math.round(d*100/n)}
+function kmPartial(){if(!KM||!$('kmAi'))return;$('kmAi').innerHTML=kmAiHtml();const t=$('kmStrip');if(t)t.innerHTML=kmThumbs();const p=$('kmPvBox');if(p)p.innerHTML=kmPv();const m=$('shrAiMsg');shrAiMsgUp()}
+function kmAiHtml(){const p=kmAiPct(),x=shrIt[shrSelI];const msg=x?x.ai.state=='busy'?'Yapay zekâ okuyor…':x.ai.state=='err'?x.ai.msg:x.ai.state=='ok'?(x.ai.note||'Dolduruldu; kontrol et.'):'':'';
+ return `<div class="KmAi-top"><span>Framio AI</span><span>%${p}</span></div><div class="KmAi-bar"><i style="width:${p}%"></i></div><div class="WmA-fileHint" id="kmAiMsg" style="margin-top:6px">${esc(msg)}</div>`}
+function kmThumbs(){return shrIt.map((it,i)=>`<div class="WmPick-thumb${i==shrSelI?' is-active':''}" data-a="ksel" data-i="${i}" title="${esc(it.name)}"><img src="${it.th||''}" alt=""></div>`).join('')}
+function kmPv(){const x=shrIt[shrSelI];if(!x)return '';const cur=shrWmList().find(o=>(o.filename||o.id)==wmOf(x));
+ if(!x.pv&&!x.pvBusy){x.pvBusy=1;invoke('forum_thumb',{src:x.src,name:x.name,max:1000}).then(d=>{x.pv=d;kmPartial()}).catch(()=>{x.pvBusy=0})}
+ return x.pv?`<img class="WmPv" src="${x.pv}">${cur&&cur.url?`<img class="WmOv" src="${esc(shrWmUrl(cur))}" onerror="this.style.display='none'">`:''}`:'<div class="WmA-loading">Önizleme hazırlanıyor…</div>'}
+function kmRender(){if(!KM)return;const n=shrIt.length;if(!n){kmClose();return}if(shrSelI>=n)shrSelI=n-1;
+ const hasX=typeof shrCrossOpen=='function'&&shrNodeList.length,hasI=typeof shrInfoOpen=='function';
+ KM.box.innerHTML=`<div class="glass WatermarkModal KunyeModal"><div class="WmHead"><div class="WmTitle">Araç Künye Bilgileri (${shrSelI+1} / ${n})</div><button class="WmX" data-a="kclose" title="Kapat">✕</button></div>
+ <div class="Watermark-Layout"><div class="Watermark-Left"><div class="Preview-Wrapper"><div class="Watermark-preview-area"><div class="WmPvBox is-sharp" id="kmPvBox">${kmPv()}</div></div></div>
+ ${n>1?`<div class="KmCap"><button data-a="kone" class="${KM.one?'on':''}">Tek Açıklama</button><button data-a="kmany" class="${KM.one?'':'on'}">Birden Çok</button></div>`:''}
+ <div class="WmPick-strip"><div class="WmPick-thumbs" id="kmStrip">${kmThumbs()}</div></div></div>
+ <div class="Watermark-Right"><div class="KmAi" id="kmAi">${kmAiHtml()}</div><div id="kmForm"></div>
+ ${typeof shrCustOpen=='function'?`<div class="KmBox"><b>Gönderi Özelleştirme</b><div style="margin-top:6px"><button class="btn sm" data-a="kcust">Müzik · Konum…</button></div></div>`:''}
+ <div class="KmBtns">${hasX?'<button class="btn" data-a="kcross">Ortak Paylaş</button>':''}${hasI?'<button class="btn" data-a="kinfo">Info Ekle</button>':''}<button class="btn" data-a="knok">Künye Ekleme</button><button class="btn pri" data-a="kok">Bilgileri Onayla</button></div>
+ <button class="KmBack" data-a="kback">Yüklemeyi İptal Et ve Geri Dön</button></div></div></div>`;
+ shrFormRender()}
+async function kmClick(e){const b=e.target.closest('[data-a]');if(!b||!KM)return;const a=b.dataset.a;
+ if(a=='kclose')return kmClose();
+ if(a=='ksel'){shrSelI=+b.dataset.i;return kmRender()}
+ if(a=='kone'){KM.one=true;const s=shrIt[shrSelI];if(s)shrIt.forEach(z=>{if(z!==s)['company','brand','model','location','city','route','year'].forEach(k=>{if(s.f[k]){z.f[k]=s.f[k];z.dirty[k]=1}})});shrPrevUp();return kmRender()}
+ if(a=='kmany'){KM.one=false;return kmRender()}
+ if(a=='knok'){shrNoK=true;kmClose();shrPrevUp();return toast('Künye eklenmeyecek')}
+ if(a=='kok'){shrNoK=false;kmClose();shrPrevUp();return toast('Künye onaylandı')}
+ if(a=='kinfo')return shrInfoOpen();if(a=='kcross')return shrCrossOpen();if(a=='kcust')return shrCustOpen();
+ if(a=='kback'){const id=shrFo();for(const x of shrIt){const m=x.up&&x.up.bbcode&&/\bid="?(\d+)/.exec(x.up.bbcode);if(m){try{await invoke('forum_req',{id,method:'DELETE',path:'/api/framio-media/image/'+m[1]})}catch(er){}}x.up=null;x.wmDone=0;x.asked=0}
+  kmClose();shrWmOpen(shrIt.slice())}}
 /* Arka plan yükleme: görsel eklenir eklenmez (seçili imzayla) forumun yükleme ucuna gider; paylaşımda hazır kullanılır */
 function shrDoUp(x){const id=shrFo();if(!id||!shrMeta[id])return;const wm=wmOf(x);if(x.up&&x.up.wm==wm&&x.up.name==x.name&&x.up.state!='err')return;
- const u={wm,name:x.name,state:'busy'};x.up=u;u.p=invoke('forum_upload_one',{id,src:x.src,name:x.name,watermark:wm}).then(c=>{u.bbcode=c;u.state='ok'}).catch(e=>{u.state='err';u.err=String(e)}).finally(()=>shrRender());shrRender()}
+ const u={wm,name:x.name,state:'busy'};x.up=u;u.p=invoke('forum_upload_one',{id,src:x.src,name:x.name,watermark:wm,target:shrPA?shrPA.username:''}).then(c=>{u.bbcode=c;u.state='ok'}).catch(e=>{u.state='err';u.err=String(e)}).finally(()=>shrRender());shrRender()}
 function shrKickAi(){const id=shrFo();if(!id||!shrMeta[id])return;shrIt.forEach(x=>{if(x.ai.state=='idle')shrDoAi(x)})}
 function shrKick(){const id=shrFo();if(!id||!shrMeta[id])return;shrIt.forEach(x=>{if(x.ai.state=='idle')shrDoAi(x);if(x.wmDone)shrDoUp(x)})}
 function shrMk(name,src){return {name,src,th:'',f:{},dirty:{},ai:{state:'idle',kind:'',msg:'',note:''},up:null}}
@@ -2517,7 +2582,7 @@ async function shrLoadMeta(){const id=shrFo();if(!id)return;
  if(shrWmSel=='none'||!w.some(o=>(o.filename||o.id)==shrWmSel))shrWmSel=dv&&w.some(o=>(o.filename||o.id)==dv)?dv:'none';
  if(!shrTopic)await shrLoadCtx();else shrRender();
  shrRender();shrFormRender();shrKick();shrWmAsk()}
-$('shrForum').onchange=()=>{shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';shrCtx={slugs:[],city:false,schema:null,tax:[],kind:''};shrIt.forEach(x=>{x.ai={state:'idle',kind:'',msg:'',note:''};x.up=null;x.wm=null;x.wmDone=0;x.asked=0});shrLoadMeta()};
+$('shrForum').onchange=()=>{shrPA=null;shrTopic=null;shrSugList=[];$('shrSug').innerHTML='';shrCtx={slugs:[],city:false,schema:null,tax:[],kind:''};shrIt.forEach(x=>{x.ai={state:'idle',kind:'',msg:'',note:''};x.up=null;x.wm=null;x.wmDone=0;x.asked=0});shrLoadMeta()};
 /* Başlığın künye bağlamı: etiketleri → kategori şeması, şehir içi kipi, marka/model listesi */
 async function shrLoadCtx(){const t=shrTopic,id=shrFo(),m=shrM();let tags=[];
  if(t){try{tags=await invoke('forum_topic_tags',{id,discussionId:String(t.discussion_id)})}catch(e){}}
@@ -2600,7 +2665,7 @@ $('shrGo').onclick=async()=>{if(shrBusy)return;const id=shrFo();if(!id){toast('F
  shrBusy=true;$('shrGo').disabled=true;$('shrOpen').classList.add('hide');$('shrBar').style.width='0';$('shrMsg').textContent='Yüklemeler tamamlanıyor…';
  try{await Promise.all(shrIt.map(x=>x.up&&x.up.state=='busy'?x.up.p:null));
   const items=shrIt.map(x=>({name:x.name,src:x.src,bbcode:x.up&&x.up.state=='ok'&&x.up.wm==wmOf(x)&&x.up.name==x.name?x.up.bbcode:'',watermark:wmOf(x),alt:shrAlt(x.f),kunye:shrKunye(x.f),fields:x.f}));
-  const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes}});
+  const r=await invoke('forum_share',{id,req:{topic:String(shrTopic.discussion_id),items,watermark:shrWmSel,publish_at:later?at.replace('T',' '):'',nodes,postAs:shrPA?shrPA.id:0,postAsName:shrPA?shrPA.username:''}});
   if(r.scheduled){$('shrMsg').textContent='Zamanlandı ✓ ('+r.at+')';$('shrBar').style.width='100%';toast('Zamanlandı')}
   else{shrUrl=r.url;const cr=Array.isArray(r.cross)?r.cross:[];const bad=cr.filter(x=>x.error||(Array.isArray(x.results)&&x.results.some(y=>y&&y.success===false)));const nm=id=>(nodes.find(z=>z.id==id)||{}).name||id;$('shrMsg').textContent='Paylaşıldı ✓'+(nodes.length?(bad.length?' — ağa aktarma sorunu: '+bad.map(x=>nm(x.node)+(x.error?' ('+x.error+')':'')).join(', '):' — ağa aktarıldı: '+cr.map(x=>nm(x.node)).join(', ')):'');$('shrBar').style.width='100%';$('shrOpen').classList.remove('hide');toast('Paylaşıldı')}
   shrIt=[];shrSelI=0;shrRender();shrFormRender()}
