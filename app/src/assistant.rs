@@ -11,21 +11,25 @@ pub async fn assistant_gen(body: Value) -> Result<Value, String> {
 }
 
 /// Ctrl+Alt+Boşluk genel kısayolunu açar/kapatır; basılınca pencereyi öne getirip arayüze haber verir.
+/// Çağrılar sıraya konur; kayıt her seferinde önce temizlenip yeniden yapılır (çift kayıt hatası olmaz).
+static HK_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
 #[tauri::command]
 pub fn assistant_hotkey(app: AppHandle, on: bool) -> Result<(), String> {
     use tauri::Emitter;
+    let _g = HK_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let sc = Shortcut::new(Some(Modifiers::CONTROL | Modifiers::ALT), Code::Space);
     let gs = app.global_shortcut();
-    if on {
-        if gs.is_registered(sc) { return Ok(()); }
-        gs.on_shortcut(sc, |app, _s, ev| {
-            if ev.state() == ShortcutState::Pressed {
-                show_window(app);
-                let _ = app.emit("assistant-toggle", ());
-            }
-        }).map_err(|e| format!("Kısayol kaydedilemedi (başka uygulama kullanıyor olabilir): {e}"))
-    } else {
-        let _ = gs.unregister(sc);
-        Ok(())
-    }
+    let _ = gs.unregister(sc);
+    if !on { return Ok(()); }
+    let reg = |gs: &tauri_plugin_global_shortcut::GlobalShortcut<tauri::Wry>| gs.on_shortcut(sc, |app, _s, ev| {
+        if ev.state() == ShortcutState::Pressed {
+            show_window(app);
+            let _ = app.emit("assistant-toggle", ());
+        }
+    });
+    if reg(&gs).is_ok() { return Ok(()); }
+    let _ = gs.unregister(sc);
+    std::thread::sleep(std::time::Duration::from_millis(150));
+    reg(&gs).map_err(|e| format!("Kısayol kaydedilemedi (başka uygulama veya açık kalmış başka bir Framio Drive penceresi kullanıyor olabilir): {e}"))
 }

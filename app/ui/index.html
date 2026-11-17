@@ -718,7 +718,7 @@ const XIC={assistant:'<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M
 const xIc=x=>x.builtin&&XIC[x.id]?`<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${XIC[x.id]}</svg>`:esc((x.name||'?').trim().charAt(0).toUpperCase());
 async function loadExt(){let l=[];try{l=await invoke('ext_list')}catch(e){}EXT={};l.forEach(x=>EXT[x.id]=x.enabled);
  $('forumPanel').classList.toggle('hide',!EXT.forum);
- $('asstBtn').classList.toggle('hide',!EXT.assistant);$('asstPanel').classList.toggle('hide',!EXT.assistant);invoke('assistant_hotkey',{on:!!EXT.assistant}).catch(e=>{if(EXT.assistant)toast(String(e),true)});if(!EXT.assistant&&!$('asst').classList.contains('hide'))asstClose();
+ $('asstBtn').classList.toggle('hide',!EXT.assistant);$('asstPanel').classList.toggle('hide',!EXT.assistant);if(window._hkOn!==!!EXT.assistant){window._hkOn=!!EXT.assistant;if(EXT.assistant)setTimeout(asstWarm,4000);invoke('assistant_hotkey',{on:!!EXT.assistant}).catch(e=>{window._hkOn=null;if(EXT.assistant)toast(String(e),true)});}if(!EXT.assistant&&!$('asst').classList.contains('hide'))asstClose();
  const mt=document.querySelector('#tabs a[data-t=meta]');if(mt){mt.classList.toggle('hide',!EXT.meta);if(!EXT.meta&&tab=='meta')setTab('files')}
  const on=l.filter(x=>x.enabled).length,tp=l.filter(x=>!x.builtin).length;
  $('extSum').textContent=`${l.length} eklenti · ${on} etkin`+(tp?` · ${tp} üçüncü taraf`:'')}
@@ -813,7 +813,8 @@ const asStateTxt={idle:['Hazır','Ctrl+Alt+Boşluk ile konuş ya da yaz'],listen
 function asstState(s,sub){AS.state=s;const o=$('asOrb');o.className='orb s-'+s;if(s!='listen')o.style.setProperty('--lvl',0);$('asTi').textContent=asStateTxt[s][0];$('asSub').textContent=sub||asStateTxt[s][1]}
 function asstLevel(r){const v=Math.min(.12,r*1.4);if(AS.state=='listen')$('asOrb').style.setProperty('--lvl',v.toFixed(3));if(AS.onLvl)AS.onLvl(r)}
 function asstSay(who,text){const l=$('asLog'),d=document.createElement('div');d.className=who=='step'?'asS':'asM '+who;d.textContent=text;l.appendChild(d);while(l.children.length>40)l.firstChild.remove();l.scrollTop=l.scrollHeight}
-function asstOpen(){$('asst').classList.remove('hide')}
+function asstWarm(){if(sel&&EXT.assistant)invoke('fs_index_warm',{email:sel}).catch(()=>{})}
+function asstOpen(){$('asst').classList.remove('hide');asstWarm()}
 function asstCancel(){AS.tok++;try{speechSynthesis.cancel()}catch(e){}if(AS.conf)AS.conf.fin(false);if(AS.stopRec)AS.stopRec()}
 function asstClose(){asstCancel();$('asst').classList.add('hide');asstState('idle')}
 function asstToggle(){if($('asst').classList.contains('hide'))asstOpen();
@@ -853,6 +854,9 @@ function asstSpeak(text){return new Promise(res=>{if(!AS.cfg.speak||!window.spee
 const sv_=t=>({type:'STRING',description:t});
 const ASTOOLS=[
  {name:'duyulan',description:'Kullanıcının sesli komutunun yazıya dökülmüş hâli. Sesli komut gelirse HER ZAMAN ilk olarak çağır.',parameters:{type:'OBJECT',properties:{metin:sv_('Duyulan komut')},required:['metin']}},
+ {name:'dosya_bul',description:"Drive'daki tüm dosya/klasörleri yerel indeksten bulanık (yazım/boşluk/büyük-küçük harf toleranslı) arar; id, ad, yol ve skor döner. IMG_001 gibi adlar için en hızlı yol.",parameters:{type:'OBJECT',properties:{sorgu:sv_('Aranan ad ya da adın bir parçası'),tur:{type:'STRING',enum:['dosya','klasor','hepsi']}},required:['sorgu']}},
+ {name:'dosya_ac',description:"Adı verilen dosyayı bulup hemen açar (klasörse içine girer). sorgu verilmezse son konuşulan dosya (odak) açılır. Emin olamazsa aday listesi döner.",parameters:{type:'OBJECT',properties:{sorgu:sv_('Dosya adı (boş bırakılırsa odaktaki dosya)'),id:sv_('Biliniyorsa kesin id')}}},
+ {name:'gezginde_goster',description:"Windows Gezgini'nde gösterir (sanal sürücü bağlı olmalı). mod=dizin: dosyanın bulunduğu dizini açar; mod=dosya_secili: dizini açıp dosyayı seçili gösterir; mod=dosyayi_ac: dosyayı Gezgin yolu üzerinden açar. sorgu/id verilmezse odaktaki dosya kullanılır (\"bulunduğu dizin\", \"aynı dosya\", \"onu\").",parameters:{type:'OBJECT',properties:{sorgu:sv_('Dosya adı (boşsa odak)'),id:sv_('Biliniyorsa kesin id'),mod:{type:'STRING',enum:['dizin','dosya_secili','dosyayi_ac']}},required:['mod']}},
  {name:'drive_ara',description:"Drive'da dosya ve klasörleri ada göre arar. Sonuçta id, ad ve klasor döner.",parameters:{type:'OBJECT',properties:{sorgu:sv_('Aranan ad')},required:['sorgu']}},
  {name:'son_dosyalar',description:"En son açılan Drive dosyalarını listeler."},
  {name:'klasoru_listele',description:'Şu an açık olan klasörün içeriğini listeler.'},
@@ -868,7 +872,7 @@ const ASTOOLS=[
  {name:'guncelleme_ara',description:'Framio Drive için yeni sürüm var mı diye bakar.'},
  {name:'eklenti_ac_kapat',description:'Bir eklentiyi adıyla açar ya da kapatır.',parameters:{type:'OBJECT',properties:{ad:sv_('Eklenti adı'),ac:{type:'BOOLEAN'}},required:['ad','ac']}}];
 function asstSys(){const s=selRows().slice(0,8).map(r=>r.dataset.n).join(', ');
- return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Dosya adı belirsizse önce drive_ara kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yapamayacağını dürüstçe söyle, bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.`}
+ return `Sen Framio Drive uygulamasının Türkçe sesli asistanısın. Cevapların en fazla iki kısa cümle, konuşma diline uygun olsun; madde işareti, emoji ve markdown kullanma. Sesli komut gelirse önce duyulan aracını, sonra işi yapan araçları çağır. Dosya adı geçen her komutta önce dosya_ac / gezginde_goster gibi tek adımda işi yapan aracı dene; dosya_bul bulanık aramadır (yazım ve boşluk farkını tolere eder). "Onu", "aynı dosya", "bulunduğu dizin" gibi göndermeler odaktaki dosyayı kasteder, bu durumda sorgu verme. Birleşik komutları ("bul, dizinini aç, dosyayı seç") sırayla araç çağırarak tamamla. Yalnızca drive_ara'yı içerik/ad parçası için yedek olarak kullan; birden çok sonuç varsa en uygununu seç ya da kısaca sor. cope_at, copten_geri_yukle ve dosya_yukle araçları kullanıcıdan onayı kendisi alır; ayrıca sorma. Yapamayacağını dürüstçe söyle, bilmediğini uydurma. "bunlar/bunu" denince seçili dosyaları kastet. Bağlam: odak dosya ${AS.focus?AS.focus.name+' ('+(AS.focus.path||'yol bilinmiyor')+')':'yok'}; sekme ${tab}; klasör yolu ${fPath.map(p=>p.name).join(' / ')}; seçili: ${s||'yok'}; görünüm: ${fTrash?'çöp kutusu':fRecent?'son kullanılanlar':'normal'}; şimdi: ${new Date().toLocaleString('tr-TR')}.`}
 const asGen=(contents,tools)=>invoke('assistant_gen',{body:Object.assign({contents,generationConfig:{temperature:.3}},tools?{systemInstruction:{parts:[{text:asstSys()}]},tools:[{functionDeclarations:ASTOOLS}]}:{})});
 async function asstTurn(inp){const tok=AS.tok;asstState('think');
  const user={role:'user',parts:inp.audio?[{text:'(Sesli komut)'},{inline_data:{mime_type:'audio/wav',data:inp.audio}}]:[{text:inp.text}]};
@@ -891,6 +895,16 @@ async function asstFinish(heard,text,tok){AS.hist.push({role:'user',parts:[{text
 /* --- araçlar --- */
 const asNote=it=>{(Array.isArray(it)?it:[it]).forEach(x=>{if(x&&x.id)AS.seen[x.id]={name:x.name,folder:!!x.folder,mime:x.mime||''}})};
 const asRows=l=>l.map(x=>({id:x.id,ad:x.name,klasor:!!x.folder,tur:x.mime||''}));
+const asFr=x=>({id:x.id,ad:x.name,klasor:!!x.folder,yol:x.path||x.dir||'(paylaşılan/yol yok)',skor:x.score});
+function asFocus(x){AS.focus={id:x.id,name:x.name,path:x.path,folder:!!x.folder,mime:x.mime||''};AS.seen[x.id]={name:x.name,folder:!!x.folder,mime:x.mime||''}}
+async function asFind(q,tur){const r=await invoke('fs_find',{email:sel,q:String(q||''),limit:8,kind:tur=='dosya'||tur=='klasor'?tur:null});asNote(r.results);return r.results}
+async function asResolve(a,step){let x=null;
+ if(a.id&&AS.focus&&AS.focus.id==a.id)x=AS.focus;
+ else if(a.id){const l=await invoke('fs_find',{email:sel,q:(AS.seen[a.id]||{}).name||a.id,limit:30});x=(l.results||[]).find(y=>y.id==a.id)||(AS.seen[a.id]?{id:a.id,name:AS.seen[a.id].name,folder:AS.seen[a.id].folder,mime:AS.seen[a.id].mime}:null);if(!x)return{sonuc:{hata:'Bu id tanınmıyor'}}}
+ else if(a.sorgu){step('Aranıyor: '+a.sorgu);const r=await asFind(a.sorgu);if(!r.length)return{sonuc:{hata:'Eşleşen dosya bulunamadı',ipucu:'Yazımı farklı dene ya da drive_ara kullan'}};
+  if(r.length>1&&r[0].score-r[1].score<8&&r[0].score<98)return{sonuc:{belirsiz:true,adaylar:r.slice(0,5).map(asFr),not:'Birini seç; kullanıcıya kısaca sor ya da en uygununu id ile tekrar çağır'}};x=r[0]}
+ else if(AS.focus)x=AS.focus;else return{sonuc:{hata:'Hangi dosya? Henüz bir dosya konuşulmadı'}};
+ return{x}}
 const asNm=id=>(AS.seen[id]&&AS.seen[id].name)||id;
 async function asstConfirm(msg,tok){return new Promise(async res=>{let done=false;const fin=v=>{if(done)return;done=true;AS.conf=null;$('asConf').classList.add('hide');try{speechSynthesis.cancel()}catch(e){}if(AS.stopRec)AS.stopRec();res(v)};
  AS.conf={fin};$('asCq').textContent=msg;$('asConf').classList.remove('hide');asstSay('ai',msg);asstState('confirm');
@@ -905,7 +919,13 @@ async function asstExec(name,a,tok){const em=sel;const step=t=>asstSay('step',t)
  const need=()=>{if(!em)throw new Error('Önce bir Drive hesabı seçili olmalı')};
  switch(name){
  case'duyulan':return{tamam:true};
- case'drive_ara':{need();step('Drive’da aranıyor: '+a.sorgu);const l=await invoke('fs_search',{email:em,q:String(a.sorgu||'')});asNote(l);return{sonuclar:asRows(l.slice(0,10))}}
+case'dosya_bul':{need();step('Aranıyor: '+a.sorgu);const r=await asFind(a.sorgu,a.tur);if(r.length==1||(r[0]&&(!r[1]||r[0].score-r[1].score>=8)))asFocus(r[0]);return{bulunan:r.map(asFr),adet:r.length}}
+ case'dosya_ac':{need();const t=await asResolve(a,step);if(t.sonuc)return t.sonuc;const x=t.x;asFocus(x);
+  if(x.folder){step('Klasör açılıyor: '+x.name);fPath=[{id:'root',name:'Drive'},{id:x.id,name:x.name}];fTrash=false;fRecent=false;fSearch='';$('fq').value='';setTab('files');loadFiles();return{tamam:'Klasör açıldı',yol:x.path}}
+  step('Açılıyor: '+x.name);await invoke(String(x.mime).startsWith('application/vnd.google-apps')?'fs_web':'fs_open',{email:em,id:x.id,name:x.name,mime:x.mime});return{tamam:'Açıldı',ad:x.name,yol:x.path}}
+ case'gezginde_goster':{need();const t=await asResolve(a,step);if(t.sonuc)return t.sonuc;const x=t.x;asFocus(x);const m={dizin:'folder',dosya_secili:'reveal',dosyayi_ac:'open'}[a.mod]||'reveal';
+  step(({folder:'Gezgin’de dizin açılıyor: ',reveal:'Gezgin’de gösteriliyor: ',open:'Gezgin yolundan açılıyor: '})[m]+x.name);const r=await invoke('fs_explorer',{email:em,id:x.id,mode:m});return{tamam:true,ad:x.name,gezgin_yolu:r.path}}
+  case'drive_ara':{need();step('Drive’da aranıyor: '+a.sorgu);const l=await invoke('fs_search',{email:em,q:String(a.sorgu||'')});asNote(l);return{sonuclar:asRows(l.slice(0,10))}}
  case'son_dosyalar':{need();step('Son dosyalara bakılıyor');const l=await invoke('fs_recent',{email:em});asNote(l);return{sonuclar:asRows(l.slice(0,10))}}
  case'klasoru_listele':{need();step('Klasör listeleniyor');const l=await invoke('fs_list',{email:em,parent:curId()});asNote(l);return{klasor:fPath[fPath.length-1].name,sonuclar:asRows(l.slice(0,30)),toplam:l.length}}
  case'secili_dosyalar':{const rows=selRows().map(r=>({id:r.dataset.id,name:r.dataset.n,folder:r.dataset.f=='1',mime:r.dataset.m}));asNote(rows);return{secili:rows.map(x=>({id:x.id,ad:x.name,klasor:x.folder}))}}

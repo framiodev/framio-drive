@@ -98,6 +98,33 @@ impl Drive {
         }
     }
 
+    /// Kullanıcının tüm (çöpte olmayan) öğelerinin hafif listesi: yerel indeks için.
+    pub async fn list_all_light(&self) -> Result<Vec<DriveFile>, Error> {
+        let mut out = vec![]; let mut page: Option<String> = None;
+        loop {
+            let mut req = self.http.get(format!("{API}/files")).bearer_auth(&self.token).query(&[
+                ("q", "trashed=false".to_string()),
+                ("fields", "nextPageToken,files(id,name,mimeType,parents)".into()),
+                ("pageSize", "1000".into()),
+                ("corpora", "user".into()),
+            ]);
+            if let Some(p) = &page { req = req.query(&[("pageToken", p)]); }
+            let r = req.send().await?;
+            if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+            let l: FileList = r.json().await?;
+            out.extend(l.files); page = l.next_page_token;
+            if page.is_none() { return Ok(out); }
+        }
+    }
+
+    /// "Drive'ım" kök klasörünün id'si.
+    pub async fn root_id(&self) -> Result<String, Error> {
+        let r = self.http.get(format!("{API}/files/root")).bearer_auth(&self.token).query(&[("fields", "id")]).send().await?;
+        if !r.status().is_success() { return Err(Error::Status(r.status().as_u16(), r.text().await?)); }
+        let v: serde_json::Value = r.json().await?;
+        Ok(v["id"].as_str().unwrap_or("root").to_string())
+    }
+
     /// Ada göre arama (çöpteki dosyalar hariç, ilk 100 sonuç).
     /// Drive'daki "Son kullanılanlar": benim en son görüntülediğim dosyalar (yeniden eskiye).
     pub async fn recent(&self) -> Result<Vec<DriveFile>, Error> {
