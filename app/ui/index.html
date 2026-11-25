@@ -543,7 +543,8 @@ input.cs-combo{padding-right:36px;background-image:url("data:image/svg+xml;utf8,
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><b id="ver" style="font-size:18px"></b><button class="btn" id="chkupd">Güncelleme ara</button><button class="btn pri hide" id="updGo"></button><span class="mut" id="updNote"></span></div></div>
       <div class="glass panel"><h2>Genel</h2>
         <label style="display:flex;gap:10px;align-items:center;cursor:pointer"><input type="checkbox" id="autos" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Windows açılınca Framio Drive’ı arka planda başlat (sürücü otomatik bağlanır)</label>
-        <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label></div>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="classic" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Sağ tık menüsünde Framio komutları hemen görünsün (Windows 11 tam menüyü varsayılan yap)</label>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer;margin-top:10px"><input type="checkbox" id="autoupd" style="width:18px;height:18px;margin:0;accent-color:var(--acc)">Yeni sürümleri kendiliğinden kur (uygulama boştayken, 30 sn önceden haber verilir)</label></div>
       <div class="glass panel"><h2>Eklentiler <span>İsteğe bağlı özellikler; kendi eklentini de ekleyebilirsin</span></h2>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><span class="mut" id="extSum"></span><button class="btn pri" id="extMg">Eklentileri yönet</button><button class="btn" id="extDir">Eklenti klasörünü aç</button></div></div>
       <div class="glass panel"><h2>Bilgi kartları <span>Her sekmenin üstünde ne işe yaradığını gösteren küçük kartlar</span></h2>
@@ -704,9 +705,10 @@ $('signout').onclick=async()=>{const a=list.find(x=>x.email==sel);
  try{await invoke('sign_out',{email:sel});toast('Çıkış yapıldı (kullanıcı adın hatırlanır, parola silindi)');sel=null;localStorage.removeItem('sel');refresh()}catch(e){toast(String(e),true)}};
 
 let appVer='';invoke('app_version').then(v=>{appVer=v;$('ver').textContent='v'+v}).catch(()=>{});
-async function chkUpd(manual){try{const v=await invoke('check_update');const b=$('upd');
+let chkUpd=null;
+chkUpd=async function chkUpd0x(manual){try{const v=await invoke('check_update');const b=$('upd');
  if(v){b.textContent='Güncelle: v'+v;b.style.display='';$('updNote').textContent='Yeni sürüm hazır: v'+v;$('updGo').textContent='v'+v+' sürümüne güncelle';$('updGo').classList.remove('hide');if(manual)toast('Yeni sürüm var: v'+v)}
- else{b.style.display='none';$('updGo').classList.add('hide');$('updNote').textContent='Güncelsin';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}}
+ else{b.style.display='none';$('updGo').classList.add('hide');$('updNote').textContent='Güncelsin';if(manual)toast('Güncelsin (v'+appVer+')')}}catch(e){if(manual)toast('Güncelleme denetlenemedi: '+e,true)}};
 invoke('autostart_get').then(v=>$('autos').checked=v).catch(()=>{});
 $('autos').onchange=()=>invoke('autostart_set',{on:$('autos').checked}).then(()=>toast($('autos').checked?'Windows ile başlayacak':'Otomatik başlatma kapalı')).catch(e=>{toast(String(e),true);$('autos').checked=!$('autos').checked});
 invoke('classic_menu_get').then(v=>$('classic').checked=v).catch(()=>{});
@@ -717,6 +719,21 @@ $('gem').onclick=()=>invoke('open_gemini',{email:sel||''}).catch(e=>toast(String
 $('chkupd').onclick=()=>{toast('Denetleniyor…');chkUpd(true)};
 $('updGo').onclick=()=>$('upd').click();
 $('upd').onclick=async()=>{const b=$('upd');b.disabled=true;b.textContent='Güncelleniyor…';$('updGo').disabled=true;$('updGo').textContent='Güncelleniyor…';try{await invoke('install_update')}catch(e){toast('Güncelleme başarısız: '+e,true);b.disabled=false;$('updGo').disabled=false;chkUpd()}};
+/* Otomatik güncelleme: yeni sürüm bulununca uygulama boşta olduğunda 30 sn uyarıyla kurulur (Ertele: 1 saat) */
+const autoUpd=()=>localStorage.getItem('autoUpd')!=='0';
+$('autoupd').checked=autoUpd();$('autoupd').onchange=()=>{localStorage.setItem('autoUpd',$('autoupd').checked?'1':'0');if($('autoupd').checked)chkUpd();toast($('autoupd').checked?'Güncellemeler kendiliğinden kurulacak':'Otomatik güncelleme kapalı')};
+let updSnooze=0,updBan=null;
+const updIdle=()=>{let sb=false;try{sb=shrBusy}catch(e){}return !busy&&!sb&&!document.querySelector('#fl-root .Modal')&&!document.querySelector('.modal')};
+function updAutoGo(v){if(!autoUpd()||updBan||Date.now()<updSnooze)return;
+ if(!updIdle()){setTimeout(()=>{if(!updBan)chkUpd()},20000);return}
+ let n=30;updBan=document.createElement('div');updBan.className='glass';updBan.style.cssText='position:fixed;right:18px;bottom:18px;z-index:9999;padding:14px 16px;border-radius:16px;max-width:340px';
+ const draw=()=>{updBan.innerHTML=`<div style="font-weight:650;margin-bottom:4px">v${esc(v)} kuruluyor</div><div class="mut" style="margin-bottom:10px">${n} sn içinde uygulama güncellenip yeniden başlayacak.</div><div style="display:flex;gap:8px"><button class="btn sm pri" data-u="go">Şimdi kur</button><button class="btn sm" data-u="later">Ertele (1 saat)</button></div>`};
+ draw();document.body.appendChild(updBan);
+ const end=()=>{clearInterval(t);updBan.remove();updBan=null};
+ const go=()=>{end();$('upd').click()};
+ updBan.onclick=e=>{const k=e.target.dataset.u;if(k=='go')go();else if(k=='later'){updSnooze=Date.now()+3600000;end()}};
+ const t=setInterval(()=>{n--;if(!updIdle()){updSnooze=Date.now()+300000;end();return}if(n<=0)go();else draw()},1000)}
+const chkUpd0=chkUpd;chkUpd=async function(m){await chkUpd0(m);if($('upd').style.display!='none'&&!$('upd').disabled)updAutoGo($('upd').textContent.replace('Güncelle: v',''))};
 chkUpd();setInterval(chkUpd,600000);
 
 /* sekmeler + uygulama içi Drive gezgini */
@@ -1420,6 +1437,7 @@ const HLP={
  rename:['Adı değiştir','Hesap görünen adını değiştirir.','Birden çok hesap kullanıyorsan ayırt etmek için.'],
  signout:['Çıkış yap','Bu hesabın uygulamadan bağlantısını keser.','Dosyaların silinmez; istediğin zaman yeniden ekleyebilirsin.'],
  chkupd:['Güncelleme ara','Yeni sürüm olup olmadığını kontrol eder.','Varsa indirip kurar; uygulama yeniden başlar.'],
+ autoupd:['Otomatik güncelleme','Yeni sürüm çıkınca kendiliğinden indirip kurar.','Yükleme/gönderim sürerken beklenir; kurulumdan önce 30 sn uyarı çıkar ve ertelenebilir.'],
  autos:['Windows ile başlat','Bilgisayar açılınca uygulamayı arka planda başlatır.','Sesli asistan ve uyandırma kelimesi için gerekli.'],
  classic:['Sağ tık menüsü','Gezgin’de Framio komutlarını hemen gösterir.','Windows 11’de “daha fazla seçenek” adımını atlatır.'],
  extMg:['Eklentileri yönet','İsteğe bağlı eklentileri açıp kapatır.','İhtiyacın olmayanları kapalı tut.'],
